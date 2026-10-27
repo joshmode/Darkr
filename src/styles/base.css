@@ -13,6 +13,9 @@
   --ui-text-tertiary: #8a8d8a;
   --ui-accent: #d9d8d2;
   --ui-accent-ink: #111212;
+  /* Selected option pill: a warm cream that stands apart from the neutral UI. */
+  --ui-select-bg: #eadfc8;
+  --ui-select-ink: #1b1a14;
   --ui-danger: #d48b80;
   --ui-radius-small: 9px;
   --ui-radius: 14px;
@@ -200,9 +203,8 @@ a:focus-visible {
 
 .mode-button.is-selected {
   border-color: transparent;
-  background: var(--ui-selected);
-  color: var(--ui-text);
-  box-shadow: none;
+  background: var(--ui-select-bg);
+  color: var(--ui-select-ink);
 }
 
 .mode-button:disabled {

@@ -1,8 +1,8 @@
 {
   "name": "darkr-chrome",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Darkr — a calm, local-first reading theme for Chrome.",
+  "description": "Darkr \u2014 a calm, local-first reading theme for Chrome.",
   "type": "module",
   "engines": {
     "node": ">=20"

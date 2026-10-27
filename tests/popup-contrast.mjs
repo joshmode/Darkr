@@ -54,7 +54,26 @@ function audit() {
     const value = ratio(foreground, background);
     if (value < 4.5) failures.push(`"${text.slice(0, 28)}" ${value.toFixed(2)}`);
   }
+  // The selected option must stand out from its container (WCAG 1.4.11, 3:1).
+  for (const element of document.querySelectorAll(".mode-button.is-selected, .policy-control button.is-selected")) {
+    const pill = backgroundOf(element);
+    const container = backgroundOf(element.parentElement);
+    const value = ratio(pill, container);
+    if (value < 3) failures.push(`selected "${element.textContent.trim().slice(0, 14)}" pill vs container ${value.toFixed(2)}`);
+  }
   return failures;
+}
+
+/** Contrast of a selected option's own text, measured while hovered. */
+function hoveredSelectedContrast() {
+  const parse = (c) => (c.match(/[\d.]+/g) || []).map(Number);
+  const channel = (v) => { const x = v / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+  const lum = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  const ratio = (a, b) => { const x = lum(a); const y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  return [...document.querySelectorAll(".mode-button.is-selected, .policy-control button.is-selected")].map((element) => {
+    const style = getComputedStyle(element);
+    return { label: element.textContent.trim(), ratio: ratio(parse(style.color).slice(0, 3), parse(style.backgroundColor).slice(0, 3)) };
+  });
 }
 
 const browser = await chromium.launch({ channel: "chromium" });
@@ -75,7 +94,7 @@ for (const [statusName, status] of Object.entries(statuses)) {
           window.chrome = {
             storage: { local: { get: async (k) => ({ [k]: store[k] }), set: async (items) => Object.assign(store, items) }, onChanged: { addListener() {} } },
             tabs: { query: async () => [{ id: 1, url: "https://example.com/page" }], sendMessage: async (_i, m) => (m.type === "darkr:get-status" ? status : { ok: true }) },
-            runtime: { openOptionsPage: async () => {}, getManifest: () => ({ version: "1.0.0" }), getURL: (p) => p },
+            runtime: { openOptionsPage: async () => {}, getManifest: () => ({ version: "2.0.0" }), getURL: (p) => p },
           };
         }, { preferences, status });
         await page.goto(`${base}/popup.html`);
@@ -83,6 +102,13 @@ for (const [statusName, status] of Object.entries(statuses)) {
         await page.waitForTimeout(450); // let colour transitions finish
         for (const item of await page.evaluate(audit)) {
           failures.push(`${statusName}/${mode}/bg${darkBackground}/${withRule ? "rule" : "norule"}: ${item}`);
+        }
+        for (const target of await page.$$(".mode-button.is-selected, .policy-control button.is-selected")) {
+          await target.hover();
+          await page.waitForTimeout(220);
+          for (const { label, ratio } of await page.evaluate(hoveredSelectedContrast)) {
+            if (ratio < 4.5) failures.push(`${statusName}/${mode}/bg${darkBackground}/${withRule ? "rule" : "norule"}: hovered selected "${label.slice(0, 14)}" ${ratio.toFixed(2)}`);
+          }
         }
         await page.close();
         combinations += 1;

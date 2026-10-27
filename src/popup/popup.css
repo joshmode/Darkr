@@ -215,11 +215,6 @@ body {
   color: var(--ui-text);
 }
 
-.policy-control button.is-selected {
-  background: var(--ui-selected);
-  color: var(--ui-text);
-}
-
 .policy-control button:disabled {
   cursor: default;
   opacity: 0.45;
@@ -299,11 +294,6 @@ body {
 
 .mode-button:hover:not(:disabled) {
   color: var(--ui-text-secondary);
-}
-
-.mode-button.is-selected {
-  background: var(--ui-selected);
-  color: var(--ui-text);
 }
 
 .mode-button:disabled {
@@ -526,4 +516,44 @@ input[type="range"]::-webkit-slider-thumb {
 
 .site-block {
   flex: 0 0 auto;
+}
+
+/*
+ * Selected option (reading mode and site policy). A filled accent pill, not a
+ * subtle tint, so the current choice reads at a glance. Colours come from
+ * --ui-select-* so every popup theme keeps its contrast.
+ */
+.mode-button,
+.policy-control button {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.mode-button.is-selected,
+.policy-control button.is-selected {
+  background: var(--ui-select-bg);
+  color: var(--ui-select-ink);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 34%),
+    0 3px 10px rgb(0 0 0 / 30%);
+}
+
+.mode-button.is-selected span,
+.policy-control button.is-selected {
+  font-weight: 620;
+}
+
+/* Out-rank the generic hover colour so a hovered selection stays legible. */
+.mode-button.is-selected:hover:not(:disabled),
+.policy-control button.is-selected:hover:not(:disabled) {
+  color: var(--ui-select-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-button,
+  .policy-control button {
+    transition: none;
+  }
 }

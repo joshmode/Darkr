@@ -3,7 +3,7 @@
   "name": "Darkr",
   "short_name": "Darkr",
   "description": "A calm, local-first reading theme for the web. No account, tracking, or network requests.",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "minimum_chrome_version": "109",
   "icons": {
     "48": "images/icon-48.png",

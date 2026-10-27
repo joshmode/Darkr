@@ -28,6 +28,7 @@ import type {
   SitePolicy,
   ThemeConfig,
 } from "../shared/types";
+import { relativeLuminance } from "../shared/color";
 import {
   buildThemeTokens,
   contrastDescription,
@@ -342,6 +343,8 @@ function applyPopupTheme(config: ThemeConfig): void {
       "--ui-accent-ink",
       "--ui-track",
       "--ui-inset",
+      "--ui-select-bg",
+      "--ui-select-ink",
     ]) {
       root.style.removeProperty(name);
     }
@@ -363,6 +366,8 @@ function applyPopupTheme(config: ThemeConfig): void {
     root.style.setProperty("--ui-accent-ink", "#f6f6f2");
     root.style.setProperty("--ui-track", "#c5c5c0");
     root.style.setProperty("--ui-inset", "#deded9");
+    root.style.setProperty("--ui-select-bg", "#151515");
+    root.style.setProperty("--ui-select-ink", "#f6f6f2");
     return;
   }
   const variables = themeVariables(tokens);
@@ -384,6 +389,15 @@ function applyPopupTheme(config: ThemeConfig): void {
   root.style.setProperty("--ui-accent-ink", variables["--darkr-bg"] ?? "#111212");
   root.style.setProperty("--ui-track", variables["--darkr-border"] ?? "#303234");
   root.style.setProperty("--ui-inset", variables["--darkr-sunken"] ?? "#080909");
+  // Dark popups use the cream accent. On light themes (and the lighter dark
+  // greys) a cream pill would wash out, so invert: text colour as the fill.
+  if (tokens.scheme === "light" || relativeLuminance(tokens.background) > 0.2) {
+    root.style.setProperty("--ui-select-bg", variables["--darkr-text"] ?? "#1b1a14");
+    root.style.setProperty("--ui-select-ink", variables["--darkr-bg"] ?? "#f6f6f2");
+  } else {
+    root.style.removeProperty("--ui-select-bg");
+    root.style.removeProperty("--ui-select-ink");
+  }
 }
 
 function scheduleSave(config: ThemeConfig): void {
