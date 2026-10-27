@@ -3,6 +3,7 @@
 **Effective date:** 28 October 2026
 **Applies to:** the Darkr app and Safari extension for **macOS**, **iPhone** and **iPad**
 **Developer:** joshmode
+**See also:** the [general privacy policy](PRIVACY.md) for the Chrome extension.
 
 Darkr is a reading utility for Safari that changes how web pages look — dark, sepia, grayscale and warm-light themes. It is built to work entirely on your device.
 

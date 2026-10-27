@@ -2,7 +2,9 @@
 
 **Effective date:** October 28, 2026
 
-**Applies to:** Darkr for Chrome
+**Applies to:** Darkr for Chrome, and the Darkr Safari extension in the Darkr
+apps for macOS, iPhone, and iPad. The Apple apps also have their own
+[App Store privacy policy](PRIVACY-APPLE.md).
 
 **Developer:** joshmode
 
@@ -20,6 +22,7 @@ collect, receive, sell, or share your data.
 - No page text, form contents, passwords, files, or browsing history collected
 - The extension makes no network requests
 - Settings stay in your browser's local extension storage
+- No remote code is loaded, and Darkr contains no third-party code at runtime
 
 ## Information stored on your device
 
@@ -37,8 +40,10 @@ storage API:
 Darkr creates a site rule only when you configure one. It does not maintain a
 history of the pages you visit.
 
-This information is stored in `chrome.storage.local`. Darkr does not use Chrome
-Sync for these settings and does not send them to the developer or anyone else.
+This information is stored in the browser's local extension storage
+(`chrome.storage.local` in Chrome, Safari's local extension storage in Safari).
+Darkr does not use Chrome Sync or any other sync service for these settings and
+does not send them to the developer or anyone else.
 Your browser profile's security settings and any backup software you use may
 affect the storage on your device.
 
@@ -53,6 +58,10 @@ This processing happens locally and temporarily. Darkr does not copy, retain,
 or transmit page text, form values, passwords, files, images, browsing history,
 or other page content. A hostname remains in local extension storage only if
 you save a site rule for it.
+
+Darkr adds only a style sheet and small Darkr-specific attributes to the pages
+you allow. Choosing the Original mode, pausing Darkr, setting a site to Never,
+or removing the extension takes those additions off the page.
 
 Websites that you visit may still collect information independently under their
 own privacy policies. Darkr does not control those practices.
@@ -71,6 +80,29 @@ You can restrict Darkr's site access through your browser's extension
 settings. Restricting access may prevent Darkr from theming some or all pages.
 Darkr does not request access to cookies, downloads, bookmarks, passwords,
 browsing history, or the clipboard.
+
+## Safari, macOS, iPhone, and iPad
+
+The Darkr Safari extension runs the same code and follows the same rules as the
+Chrome extension: no data is collected, no network requests are made, and
+settings stay in Safari's local extension storage on your device. Safari asks
+which websites Darkr may run on, and you can change that at any time in Safari's
+settings.
+
+The Darkr app that carries the Safari extension is a small companion. It only
+checks, through Apple's Safari APIs, whether the extension is enabled and
+offers a shortcut to Safari's settings. It collects no data and contains no
+analytics. Its App Store privacy label is "Data Not Collected". See the
+[Apple apps privacy policy](PRIVACY-APPLE.md) for details.
+
+## Information handled by browser vendors and stores
+
+Chrome, Safari, the Chrome Web Store, and the App Store are operated by Google
+and Apple, who process some information under their own privacy policies, for
+example when you download or update Darkr. Darkr does not receive that
+information. If you share analytics with app developers in your Apple device
+settings, Apple may give the developer aggregated, anonymous crash and usage
+statistics; Darkr adds nothing to them and cannot identify you from them.
 
 ## Sale, sharing, and advertising
 
@@ -120,6 +152,11 @@ This policy may be updated to reflect changes to Darkr or applicable
 requirements. The effective date at the top will be revised when it changes.
 If a change materially affects how Darkr handles information, the developer
 will provide notice in the extension or its release notes where appropriate.
+
+## Open source
+
+Darkr's browser extension source code is public, so you can verify these
+statements yourself: <https://github.com/joshmode/Darkr>
 
 ## Contact
 
