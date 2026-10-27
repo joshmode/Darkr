@@ -1,15 +1,129 @@
-# Privacy model
+# Darkr Privacy Policy
 
-Darkr is designed to work entirely on the local device.
+**Effective date:** October 28, 2026
 
-- No analytics, telemetry, advertising, or remote logging
+**Applies to:** Darkr for Chrome
+
+**Developer:** joshmode
+
+**Contact:** [joshua.lfc@proton.me](mailto:joshua.lfc@proton.me)
+
+## The short version
+
+Darkr is a local-first browser extension. It changes the appearance of webpages
+on your device. The developer does not operate a server for Darkr and does not
+collect, receive, sell, or share your data.
+
 - No account or sign-in
-- No collection of page text, form input, browsing history, or personal data
-- No external runtime dependencies or network requests
-- Preferences are stored through the browser's local extension storage
-- Per-domain settings are stored locally and are not synchronized by Darkr
-- A single local flag records whether first-run privacy/access guidance was dismissed
+- No analytics, telemetry, advertising, or tracking
+- No sale or sharing of personal information
+- No page text, form contents, passwords, files, or browsing history collected
+- The extension makes no network requests
+- Settings stay in your browser's local extension storage
 
-The extension needs website access to inspect computed styles and apply a
-visual theme. It uses only CSS, DOM attributes scoped to Darkr, and local
-storage. Theme values are never sent to a server.
+## Information stored on your device
+
+Darkr stores the following information locally through the browser extension
+storage API:
+
+- **Appearance preferences**, such as whether Darkr is enabled, the selected
+  appearance mode, system-appearance behavior, and slider settings
+- **Site rules**, including the exact hostname of a site for which you created
+  an override, its appearance settings, and whether the site is set to always
+  theme or never theme
+- **An onboarding flag** recording whether you dismissed the first-run privacy
+  and website-access guidance
+
+Darkr creates a site rule only when you configure one. It does not maintain a
+history of the pages you visit.
+
+This information is stored in `chrome.storage.local`. Darkr does not use Chrome
+Sync for these settings and does not send them to the developer or anyone else.
+Your browser profile's security settings and any backup software you use may
+affect the storage on your device.
+
+## Information processed while you browse
+
+To decide how a page should look and to apply the selected theme, Darkr's
+content script processes the current page's hostname, page structure, and
+computed styles in your browser. When you open the Darkr popup, Darkr reads the
+active tab's URL to show controls for that site.
+
+This processing happens locally and temporarily. Darkr does not copy, retain,
+or transmit page text, form values, passwords, files, images, browsing history,
+or other page content. A hostname remains in local extension storage only if
+you save a site rule for it.
+
+Websites that you visit may still collect information independently under their
+own privacy policies. Darkr does not control those practices.
+
+## Browser permissions
+
+Darkr requests only the permissions needed to provide its single purpose:
+
+- **Storage** lets Darkr save your appearance preferences, site rules, and
+  onboarding flag in local extension storage.
+- **Access to HTTP and HTTPS pages** lets Darkr inspect rendered colors and
+  apply a visual theme automatically. This access also allows Darkr to run in
+  frames that make up part of a webpage.
+
+You can restrict Darkr's site access through your browser's extension
+settings. Restricting access may prevent Darkr from theming some or all pages.
+Darkr does not request access to cookies, downloads, bookmarks, passwords,
+browsing history, or the clipboard.
+
+## Sale, sharing, and advertising
+
+The developer does not sell, rent, trade, or share information handled by
+Darkr. Darkr does not use information for personalized advertising, profiling,
+creditworthiness, lending, or any purpose unrelated to applying your selected
+appearance settings.
+
+Darkr's use of information received through Chrome extension APIs complies
+with the Chrome Web Store User Data Policy, including its Limited Use
+requirements. The developer does not allow humans to read your data because
+the developer does not receive it.
+
+## Retention and your choices
+
+Settings remain in local extension storage until you change or reset them,
+delete site rules, clear the extension's data, or remove the extension. You can
+review and delete saved site rules from Darkr's settings page. Disabling Darkr
+stops it from theming pages, and removing the extension stops all processing by
+Darkr.
+
+Because the developer does not receive your settings or browsing information,
+the developer cannot access, export, or delete them for you. You can manage
+them directly in Darkr and your browser.
+
+If you are in a jurisdiction that grants rights to access, correct, delete, or
+port personal information, you can exercise those rights directly in the
+extension and your browser. The developer has no copy of that information to
+act on. You may still contact the developer with questions about this policy.
+
+## Security
+
+Darkr is designed without a backend, user accounts, or remote data transfer,
+which reduces the amount of information exposed outside your device. No method
+of storage is completely secure. You are responsible for maintaining the
+security of your browser profile and device.
+
+## Children
+
+Darkr is not directed to children, and the developer does not knowingly
+collect personal information from children. The extension does not provide
+accounts or transmit user data.
+
+## Changes to this policy
+
+This policy may be updated to reflect changes to Darkr or applicable
+requirements. The effective date at the top will be revised when it changes.
+If a change materially affects how Darkr handles information, the developer
+will provide notice in the extension or its release notes where appropriate.
+
+## Contact
+
+Questions about this policy can be sent to
+[joshua.lfc@proton.me](mailto:joshua.lfc@proton.me). You can also use the
+project's [GitHub issue tracker](https://github.com/joshmode/Darkr/issues);
+please do not include sensitive personal information in a public issue.
