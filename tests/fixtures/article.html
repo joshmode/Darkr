@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Darkr fixture article</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #fff; color: #202124; font: 16px/1.55 -apple-system, sans-serif; }
+    header { position: sticky; top: 0; background: #f7f7f8; border-bottom: 1px solid #ddd; padding: 14px 24px; }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
+    article h1 { font-size: 36px; line-height: 1.1; margin: 0 0 12px; }
+    .meta, .caption { color: #666; font-size: 13px; }
+    .lead { color: #444; font-size: 20px; }
+    .card { background: #f4f6f8; border: 1px solid #ddd; border-radius: 12px; padding: 18px; margin: 24px 0; }
+    .accent-card { background: #e7f1ff; border-color: #b7d5ff; }
+    blockquote { border-left: 3px solid #bbb; margin: 24px 0; padding-left: 18px; color: #555; }
+    pre { background: #f1f3f5; color: #24292f; padding: 14px; overflow: auto; border-radius: 9px; }
+    code { background: #eef0f2; padding: 2px 4px; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    a { color: #0756c9; }
+    input, textarea, select { border: 1px solid #bbb; background: #fff; color: #222; padding: 7px; }
+    .dark-panel { background: #15171a; color: #f4f3ee; border: 1px solid #333; padding: 14px; border-radius: 8px; }
+    .swatches { display: flex; gap: 6px; margin-top: 10px; }
+    .swatches span { width: 26px; height: 26px; border-radius: 6px; }
+    #shadow-host { display: block; margin-top: 20px; }
+    @media (prefers-color-scheme: dark) { body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <header><strong>Fixture News</strong> <nav><a href="#article">Article</a> · <a href="#more">More</a></nav></header>
+  <main>
+    <article id="article">
+      <h1>A calm reading surface for the web</h1>
+      <p class="meta">By Fixture Author · 6 min read</p>
+      <p class="lead">Readability comes from predictable contrast, restrained colour, and controls that feel immediate.</p>
+      <div class="card">A neutral panel with a <a href="#ref">reference link</a> and <strong>strong text</strong>.</div>
+      <div class="accent-card">Accent cards should retain a recognisable tint and readable copy.</div>
+      <blockquote>“A reading utility should be felt, not fought with.”</blockquote>
+      <p>Inline <code>theme.apply()</code> code and a <kbd>⌘ K</kbd> shortcut.</p>
+      <pre><code>const mode = "dark";
+const contrast = 62;</code></pre>
+      <h2>Editorial controls</h2>
+      <label for="search">Search this article</label>
+      <input id="search" type="search" placeholder="Search">
+      <select aria-label="Sort"><option>Newest</option><option>Oldest</option></select>
+      <textarea rows="3" aria-label="Comment">A comment field</textarea>
+      <button type="button">Subscribe</button>
+      <table><thead><tr><th>Mode</th><th>Purpose</th></tr></thead><tbody><tr><td>Dark</td><td>Low-light reading</td></tr><tr><td>Warm</td><td>Light reading</td></tr></tbody></table>
+      <p class="dark-panel">An author dark panel with <a href="#panel-link">a link inside</a>.</p>
+      <figure>
+        <img alt="Colour bars" width="320" height="90" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='90'%3E%3Crect width='64' height='90' fill='%23e63946'/%3E%3Crect x='64' width='64' height='90' fill='%23f4a261'/%3E%3Crect x='128' width='64' height='90' fill='%23e9c46a'/%3E%3Crect x='192' width='64' height='90' fill='%232a9d8f'/%3E%3Crect x='256' width='64' height='90' fill='%23264f7a'/%3E%3C/svg%3E">
+        <figcaption class="caption">Images should retain their original colour in semantic modes.</figcaption>
+      </figure>
+      <div class="swatches" aria-label="Colour swatches"><span style="background:#e63946"></span><span style="background:#f4a261"></span><span style="background:#2a9d8f"></span></div>
+      <div id="dynamic"></div>
+      <div id="shadow-host"></div>
+    </article>
+  </main>
+  <script>
+    const host = document.querySelector('#shadow-host');
+    const root = host.attachShadow({ mode: 'open' });
+    root.innerHTML = '<style>.panel { background: #fff; color: #222; padding: 14px; border: 1px solid #ddd; } a { color: #0756c9; }</style><div class="panel" id="shadow-panel">Shadow DOM content with <a href="#shadow">a link</a>.</div>';
+    window.addDynamicContent = () => {
+      const box = document.createElement('div');
+      box.className = 'card';
+      box.innerHTML = '<p>Dynamic card appears after load.</p><button>Dynamic button</button>';
+      document.querySelector('#dynamic').append(box);
+    };
+  </script>
+</body>
+</html>

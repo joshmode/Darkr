@@ -1,0 +1,31 @@
+{
+  "name": "darkr-chrome",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Darkr \u2014 a calm, local-first reading theme for Chrome.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "build:watch": "node build.mjs --watch",
+    "package": "npm run build && node scripts/package-chrome.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "node tests/e2e.mjs",
+    "test:perf": "node tests/performance.mjs",
+    "check": "npm run typecheck && npm test && npm run package && node scripts/check-extension.mjs && node scripts/check-manifest-version.mjs",
+    "check:all": "npm run check && npm run test:contrast && npm run test:e2e",
+    "test:contrast": "node tests/popup-contrast.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "esbuild": "0.21.5",
+    "jsdom": "25.0.1",
+    "playwright": "1.64.1",
+    "typescript": "5.7.3",
+    "vitest": "2.1.9"
+  }
+}

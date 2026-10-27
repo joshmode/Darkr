@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0c0d" />
+    <title>Darkr Settings</title>
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="options-shell">
+      <header class="options-header">
+        <div class="brand">
+          <div class="brand-lockup">
+            <img class="brand-mark" src="images/icon-128.png" width="44" height="44" alt="" aria-hidden="true" />
+            <div class="brand-copy">
+              <img class="brand-logo" src="images/wordmark.png" alt="darkr" />
+              <p class="brand-subtitle">reading utility</p>
+            </div>
+          </div>
+        </div>
+        <div id="extension-status" class="status-chip">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Extension enabled</span>
+        </div>
+      </header>
+
+      <main class="settings-grid">
+        <div class="settings-main">
+          <section class="settings-card" aria-labelledby="defaults-heading">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Defaults</p>
+                <h2 id="defaults-heading">Appearance for new sites</h2>
+              </div>
+              <button id="restore-defaults" class="text-button" type="button">Restore defaults</button>
+            </div>
+
+            <div class="field-block">
+              <label class="field-label" for="native-dark-policy">Sites with their own dark mode</label>
+              <select id="native-dark-policy" class="select">
+                <option value="keep">Leave them as they are (recommended)</option>
+                <option value="override">Apply Darkr to them as well</option>
+              </select>
+              <p class="help-copy">
+                Darkr normally skips pages that are already dark. Choose “Apply Darkr” to
+                override their dark mode everywhere; you can still change this per site
+                from the toolbar popup.
+              </p>
+            </div>
+
+            <div class="field-block">
+              <label class="field-label" for="default-mode">Default mode</label>
+              <select id="default-mode" class="select">
+                <option value="original">Original</option>
+                <option value="dark">Dark</option>
+                <option value="sepia">Sepia</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="warm">Warm Light</option>
+              </select>
+            </div>
+
+            <div class="range-grid">
+              <div class="range-row">
+                <div class="range-header">
+                  <label class="range-label" for="default-dark-background">Dark background</label>
+                  <output id="default-dark-background-value" class="range-value" for="default-dark-background">Charcoal</output>
+                </div>
+                <input id="default-dark-background" type="range" min="0" max="100" value="20" />
+                <div class="range-footer"><span>Pitch Black</span><span>Light Grey</span></div>
+              </div>
+              <div class="range-row">
+                <div class="range-header">
+                  <label class="range-label" for="default-dark-contrast">Contrast</label>
+                  <output id="default-dark-contrast-value" class="range-value" for="default-dark-contrast">Balanced</output>
+                </div>
+                <input id="default-dark-contrast" type="range" min="0" max="100" value="62" />
+                <div class="range-footer"><span>Lower</span><span>Higher</span></div>
+              </div>
+              <div class="range-row">
+                <div class="range-header">
+                  <label class="range-label" for="default-sepia">Sepia intensity</label>
+                  <output id="default-sepia-value" class="range-value" for="default-sepia">Paper</output>
+                </div>
+                <input id="default-sepia" type="range" min="0" max="100" value="58" />
+                <div class="range-footer"><span>Subtle</span><span>Strong</span></div>
+              </div>
+              <div class="range-row">
+                <div class="range-header">
+                  <label class="range-label" for="default-grayscale">Grayscale</label>
+                  <output id="default-grayscale-value" class="range-value" for="default-grayscale">Full</output>
+                </div>
+                <input id="default-grayscale" type="range" min="0" max="100" value="100" />
+                <div class="range-footer"><span>Off</span><span>Full</span></div>
+              </div>
+              <div class="range-row range-row--wide">
+                <div class="range-header">
+                  <label class="range-label" for="default-warmth">Warm Light</label>
+                  <output id="default-warmth-value" class="range-value" for="default-warmth">Subtle</output>
+                </div>
+                <input id="default-warmth" type="range" min="0" max="100" value="35" />
+                <div class="range-footer"><span>Cool</span><span>Warm</span></div>
+              </div>
+            </div>
+            <p class="help-copy">
+              Defaults apply to sites without a saved site override. Values are
+              percentages; Warmth is a visual adjustment, not a measured
+              reduction in screen blue light.
+            </p>
+          </section>
+
+          <section class="settings-card" aria-labelledby="sites-heading">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Per-site preferences</p>
+                <h2 id="sites-heading">Site rules</h2>
+              </div>
+            <button id="clear-sites" class="text-button" type="button">Clear all site rules</button>
+            </div>
+            <p class="help-copy help-copy--top">
+              Domains are matched exactly. A setting for <strong>example.com</strong>
+              does not automatically apply to <strong>docs.example.com</strong>.
+              The <strong>www.</strong> alias is treated as the same site when it
+              leaves a valid hostname.
+            </p>
+            <p class="help-copy help-copy--top">
+              “Always” themes a listed site even while Darkr is paused.
+              “Never” leaves it untouched. Sites without a rule are
+              “Automatic”, which follows the setting below.
+            </p>
+            <div class="field-block field-block--inline">
+              <label class="field-label" for="auto-mode">Automatic sites follow</label>
+              <select id="auto-mode" class="select">
+                <option value="globals">Global on/off switch</option>
+                <option value="system">System appearance (themed only in dark mode)</option>
+              </select>
+            </div>
+            <div id="sites-empty" class="empty-state">
+              <p>No site rules yet.</p>
+              <span>Use the toolbar popup or add an exact hostname below.</span>
+            </div>
+            <ul id="sites-list" class="sites-list" aria-label="Saved site overrides"></ul>
+            <form id="site-form" class="site-form" autocomplete="off">
+              <label class="sr-only" for="site-hostname">Website hostname</label>
+              <input id="site-hostname" class="text-input" type="text" inputmode="url" placeholder="example.com" />
+              <select id="site-policy" class="select select--compact" aria-label="Website policy">
+                <option value="block">Never theme</option>
+                <option value="allow">Always theme</option>
+              </select>
+              <button class="text-button text-button--solid" type="submit">Add site</button>
+            </form>
+          </section>
+          <section id="onboarding-card" class="settings-card onboarding-card" hidden>
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">First run</p>
+                <h2>Before you browse</h2>
+              </div>
+              <button id="onboarding-dismiss" class="text-button" type="button">Got it</button>
+            </div>
+            <div class="onboarding-grid">
+              <div>
+                <p class="field-label">Privacy</p>
+                <p class="help-copy">
+                  Settings stay in local extension storage. Darkr does not collect
+                  page text, browsing history, analytics, or account data.
+                </p>
+              </div>
+              <div>
+                <p class="field-label">Website access</p>
+                <p class="help-copy">
+                  Your browser controls which sites Darkr can read and restyle.
+                  If a page is unchanged, review Darkr’s site access.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </main>
+      <footer class="settings-footer">
+        <button id="about-button" class="text-button" type="button">About &amp; permissions</button>
+        <span id="version-line" class="version-line">Darkr 1.0</span>
+      </footer>
+    </div>
+    <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
+      <div class="about-dialog-header">
+        <div>
+          <p class="eyebrow">Darkr</p>
+          <h2 id="about-title">A quieter web.</h2>
+        </div>
+        <button id="about-close" class="icon-button" type="button" aria-label="Close about dialog">×</button>
+      </div>
+      <div class="about-dialog-body">
+        <section>
+          <p class="field-label">Privacy</p>
+          <p class="help-copy">
+            Settings stay in local extension storage. Darkr does not collect page
+            text, browsing history, analytics, or account data.
+          </p>
+        </section>
+        <section>
+          <p class="field-label">Website access</p>
+          <p class="help-copy">
+            Your browser controls which sites Darkr can read and restyle. If a
+            page is unchanged, review Darkr’s site access in browser settings.
+          </p>
+        </section>
+      </div>
+      <p id="about-version" class="version-line">Darkr 1.0</p>
+    </dialog>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

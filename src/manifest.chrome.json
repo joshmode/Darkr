@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Darkr",
+  "short_name": "Darkr",
+  "description": "A calm, local-first reading theme for the web. No account, tracking, or network requests.",
+  "version": "1.0.0",
+  "minimum_chrome_version": "109",
+  "icons": {
+    "48": "images/icon-48.png",
+    "96": "images/icon-96.png",
+    "128": "images/icon-128.png",
+    "256": "images/icon-256.png",
+    "512": "images/icon-512.png",
+    "16": "images/toolbar-icon-16.png",
+    "32": "images/toolbar-icon-32.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Darkr",
+    "default_icon": {
+      "16": "images/toolbar-icon-16.png",
+      "19": "images/toolbar-icon-19.png",
+      "32": "images/toolbar-icon-32.png",
+      "38": "images/toolbar-icon-38.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0c0d" />
+    <title>Darkr</title>
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup" aria-labelledby="app-title">
+      <header class="topbar">
+        <div class="brand">
+          <img class="brand-mark" src="images/icon-96.png" width="28" height="28" alt="" aria-hidden="true" />
+          <div class="wordmark-copy">
+            <img class="wordmark" src="images/wordmark.png" width="58" height="20" alt="darkr" />
+            <span id="status-text" role="status" aria-live="polite">Loading…</span>
+          </div>
+        </div>
+        <button
+          id="master-toggle"
+          class="switch is-on"
+          type="button"
+          role="switch"
+          aria-checked="true"
+          aria-label="Enable Darkr"
+        ></button>
+      </header>
+
+      <div class="popup-scroll">
+      <section class="site-block" aria-labelledby="site-heading">
+        <div class="site-head">
+          <div class="site-copy">
+            <p id="site-heading" class="eyebrow">Current website</p>
+            <p id="hostname" class="hostname">Loading…</p>
+            <p id="host-status" class="host-status">Using your global defaults</p>
+          </div>
+          <span id="site-badge" class="pill site-badge" hidden></span>
+        </div>
+
+        <div class="site-policy" role="group" aria-label="Website behavior">
+          <span class="policy-label">On this site</span>
+          <div class="policy-control" role="radiogroup" aria-label="Site policy">
+            <button type="button" role="radio" data-policy="auto" aria-checked="true">Automatic</button>
+            <button type="button" role="radio" data-policy="allow" aria-checked="false">Always</button>
+            <button type="button" role="radio" data-policy="block" aria-checked="false">Never</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="native-dark-notice" class="notice notice--action" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <path d="M19.1 15.2A7.5 7.5 0 0 1 8.8 4.9 8 8 0 1 0 19.1 15.2Z" />
+        </svg>
+        <div class="notice-body">
+          <span id="native-dark-copy">This site already has a dark appearance. Darkr leaves it untouched unless you choose otherwise.</span>
+          <div class="notice-action">
+            <label id="native-dark-label" for="native-dark-toggle">Use Darkr instead</label>
+            <button
+              id="native-dark-toggle"
+              class="switch"
+              type="button"
+              role="switch"
+              aria-checked="false"
+              aria-labelledby="native-dark-label"
+            ></button>
+          </div>
+        </div>
+      </div>
+
+      <section class="appearance" aria-labelledby="appearance-heading">
+        <div class="section-heading">
+          <h2 id="appearance-heading">Reading mode</h2>
+          <span class="section-note">Live</span>
+        </div>
+
+        <div
+          id="mode-selector"
+          class="segmented"
+          role="radiogroup"
+          aria-label="Appearance mode"
+        >
+          <button
+            class="mode-button"
+            type="button"
+            role="radio"
+            aria-checked="false"
+            aria-label="Original appearance"
+            data-mode="original"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" aria-hidden="true">
+              <rect x="4" y="4" width="16" height="16" rx="3" />
+              <path d="M8 9h8M8 13h5" />
+            </svg>
+            <span>Original</span>
+          </button>
+          <button
+            class="mode-button is-selected"
+            type="button"
+            role="radio"
+            aria-checked="true"
+            aria-label="Dark appearance"
+            data-mode="dark"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" aria-hidden="true">
+              <path d="M19.1 15.2A7.5 7.5 0 0 1 8.8 4.9 8 8 0 1 0 19.1 15.2Z" />
+              <path d="M16.2 6.2h.01" />
+            </svg>
+            <span>Dark</span>
+          </button>
+          <button
+            class="mode-button"
+            type="button"
+            role="radio"
+            aria-checked="false"
+            aria-label="Sepia appearance"
+            data-mode="sepia"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" aria-hidden="true">
+              <path d="M6 4.8h9.3A3.7 3.7 0 0 1 19 8.5V19H8.8A2.8 2.8 0 0 1 6 16.2V4.8Z" />
+              <path d="M9 9h6M9 12.5h6M9 16h3.5" />
+            </svg>
+            <span>Sepia</span>
+          </button>
+          <button
+            class="mode-button"
+            type="button"
+            role="radio"
+            aria-checked="false"
+            aria-label="Grayscale appearance"
+            data-mode="grayscale"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" aria-hidden="true">
+              <circle cx="12" cy="12" r="8.25" />
+              <path d="M12 3.75v16.5M12 6a6 6 0 0 1 0 12" fill="currentColor" />
+            </svg>
+            <span>Gray</span>
+          </button>
+          <button
+            class="mode-button"
+            type="button"
+            role="radio"
+            aria-checked="false"
+            aria-label="Warm light appearance"
+            data-mode="warm"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.75" />
+              <path d="M12 3.2v2M12 18.8v2M3.2 12h2M18.8 12h2M5.8 5.8l1.4 1.4M16.8 16.8l1.4 1.4M18.2 5.8l-1.4 1.4M7.2 16.8l-1.4 1.4" />
+            </svg>
+            <span>Warm</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="controls" class="controls" aria-live="polite">
+        <div id="dark-controls" class="control-group">
+          <div class="range-row">
+            <div class="range-header">
+              <label class="range-label" for="dark-background">Background</label>
+              <output id="dark-background-value" class="range-value" for="dark-background">Charcoal</output>
+            </div>
+            <input
+              id="dark-background"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="20"
+              aria-describedby="dark-background-hint"
+            />
+            <div id="dark-background-hint" class="range-footer">
+              <span>Pitch Black</span><span>Light Grey</span>
+            </div>
+          </div>
+          <div class="range-row">
+            <div class="range-header">
+              <label class="range-label" for="dark-contrast">Contrast</label>
+              <output id="dark-contrast-value" class="range-value" for="dark-contrast">Balanced</output>
+            </div>
+            <input
+              id="dark-contrast"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="62"
+              aria-describedby="dark-contrast-hint"
+            />
+            <div id="dark-contrast-hint" class="range-footer">
+              <span>Lower</span><span>Higher</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="sepia-controls" class="control-group" hidden>
+          <div class="range-row">
+            <div class="range-header">
+              <label class="range-label" for="sepia-intensity">Sepia intensity</label>
+              <output id="sepia-value" class="range-value" for="sepia-intensity">Paper</output>
+            </div>
+            <input
+              id="sepia-intensity"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="58"
+              aria-describedby="sepia-hint"
+            />
+            <div id="sepia-hint" class="range-footer">
+              <span>Subtle</span><span>Paper</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="grayscale-controls" class="control-group" hidden>
+          <div class="range-row">
+            <div class="range-header">
+              <label class="range-label" for="grayscale-intensity">Desaturation</label>
+              <output id="grayscale-value" class="range-value" for="grayscale-intensity">Full</output>
+            </div>
+            <input
+              id="grayscale-intensity"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="100"
+              aria-describedby="grayscale-hint"
+            />
+            <div id="grayscale-hint" class="range-footer">
+              <span>Off</span><span>Full</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="warm-controls" class="control-group" hidden>
+          <div class="range-row">
+            <div class="range-header">
+              <label class="range-label" for="warmth">Warmth</label>
+              <output id="warmth-value" class="range-value" for="warmth">Subtle</output>
+            </div>
+            <input
+              id="warmth"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="35"
+              aria-describedby="warm-hint"
+            />
+            <div id="warm-hint" class="range-footer">
+              <span>Cool</span><span>Warm</span>
+            </div>
+          </div>
+          <p class="mode-footnote">
+            A visual reading adjustment. It does not guarantee a specific
+            reduction in screen blue light.
+          </p>
+        </div>
+      </section>
+
+      <div id="permission-notice" class="notice" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.4" />
+          <path d="M12 8.2v4.6M12 16.1h.01" />
+        </svg>
+        <span>Darkr cannot access this page. Open a standard webpage and allow Darkr access in your browser’s extension settings. If it was just installed, reload the page.</span>
+      </div>
+
+      </div>
+
+      <footer class="popup-footer">
+        <button id="reset" class="text-button" type="button">Reset site rule</button>
+        <button id="settings" class="icon-button" type="button" aria-label="Open settings" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19 13.6v-3.2l-2-.5a7 7 0 0 0-.7-1.7l1.1-1.8-2.3-2.3-1.8 1.1a7 7 0 0 0-1.7-.7l-.5-2H8.9l-.5 2a7 7 0 0 0-1.7.7L4.9 4.1 2.6 6.4l1.1 1.8a7 7 0 0 0-.7 1.7l-2 .5v3.2l2 .5a7 7 0 0 0 .7 1.7l-1.1 1.8 2.3 2.3 1.8-1.1a7 7 0 0 0 1.7.7l.5 2h3.2l.5-2a7 7 0 0 0 1.7-.7l1.8 1.1 2.3-2.3-1.1-1.8a7 7 0 0 0 .7-1.7l2-.5Z" />
+          </svg>
+        </button>
+      </footer>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
