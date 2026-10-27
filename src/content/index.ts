@@ -179,7 +179,11 @@ if (!window.__DARKR_CONTENT__) {
     }
 
     if (message.type === "darkr:refresh") {
-      void applyResolvedPreferences().then(() => sendResponse({ ok: true }));
+      // Always answer, even if storage is unavailable (for example after the
+      // extension was reloaded), so the popup is never left waiting.
+      void applyResolvedPreferences()
+        .then(() => sendResponse({ ok: true }))
+        .catch(() => sendResponse({ ok: false }));
       return true;
     }
 
