@@ -859,7 +859,57 @@ export class ThemeEngine {
     // One batched read/write for everything above the fold, document order.
     this.processElements(initial);
     if (this.queuedElements.size > 0) {
+      this.prioritiseViewport();
       this.scheduleIdleWork();
+    }
+  }
+
+  /**
+   * Moves queued elements inside (or near) the viewport to the front, so a
+   * long page restored at a scroll position is themed where the user is
+   * looking before the rest. Only coarse containers (two levels under body)
+   * are measured, so the cost does not grow with the element count.
+   */
+  private prioritiseViewport(): void {
+    const body = this.doc.body;
+    if (!body || this.queuedElements.size < INITIAL_ELEMENT_BUDGET) {
+      return;
+    }
+    const height = this.win.innerHeight || 800;
+    const near: Element[] = [];
+    for (const child of body.children) {
+      const blocks = child.children.length > 1 ? [...child.children] : [child];
+      for (const block of blocks) {
+        const rect = block.getBoundingClientRect();
+        if (rect.bottom > -height && rect.top < height * 2) {
+          near.push(block);
+        }
+      }
+    }
+    if (near.length === 0) {
+      return;
+    }
+    const priority = new Set<Element>();
+    for (const block of near) {
+      if (this.queuedElements.has(block)) {
+        priority.add(block);
+      }
+      for (const element of block.querySelectorAll("*")) {
+        if (this.queuedElements.has(element)) {
+          priority.add(element);
+        }
+      }
+    }
+    if (priority.size === 0 || priority.size === this.queuedElements.size) {
+      return;
+    }
+    const rest = [...this.queuedElements].filter((element) => !priority.has(element));
+    this.queuedElements.clear();
+    for (const element of priority) {
+      this.queuedElements.add(element);
+    }
+    for (const element of rest) {
+      this.queuedElements.add(element);
     }
   }
 

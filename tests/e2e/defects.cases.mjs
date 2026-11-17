@@ -373,3 +373,15 @@ test("[E-14] late elements are mapped from the author's colours, like early ones
     { message: "late muted colour to match the early one" },
   );
 });
+
+// ---------------------------------------------------------------- B3
+test("[B3] content at the restored scroll position is themed first on a long page", async () => {
+  const page = await newPage("/e06-many-cards", { waitUntil: "commit" });
+  await page.waitForFunction(() => document.querySelector("#c11000"));
+  await page.evaluate(() => document.querySelector("#c11000").scrollIntoView());
+  await poll(
+    () => page.evaluate(() => getComputedStyle(document.querySelector("#c11000")).backgroundColor),
+    (bg) => bg !== "rgb(250, 250, 250)",
+    { timeout: 4000, message: "card at the viewport to be themed" },
+  );
+});
