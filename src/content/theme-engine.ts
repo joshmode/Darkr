@@ -59,6 +59,7 @@ const OBSERVED_ATTRIBUTES = [
 const RESAMPLE_ATTRIBUTES = new Set(["class", "aria-expanded", "aria-hidden", "data-state"]);
 const ROOT_WATCHED_ATTRIBUTES = [ROOT_ATTRIBUTE, "class", "data-theme", "data-color-mode", "style"];
 const REDETECT_DELAY_MS = 150;
+const SHADOW_SWEEP_DELAY_MS = 800;
 const ELEMENT_ATTRIBUTE = "data-darkr";
 const LINK_TOKEN = "l";
 const NO_SHADOW_TOKEN = "h";
@@ -450,6 +451,7 @@ export class ThemeEngine {
   private rootObserver: MutationObserver | null = null;
   private desiredRootValue: string | null = null;
   private redetectTimer: number | null = null;
+  private shadowSweepTimer: number | null = null;
   private style: HTMLStyleElement | null = null;
   private readonly palette = new Palette();
   private batchHandle: number | null = null;
@@ -640,6 +642,10 @@ export class ThemeEngine {
   private stopRootObserver(): void {
     this.rootObserver?.disconnect();
     this.rootObserver = null;
+    if (this.shadowSweepTimer !== null) {
+      this.win.clearTimeout(this.shadowSweepTimer);
+      this.shadowSweepTimer = null;
+    }
     if (this.redetectTimer !== null) {
       this.win.clearTimeout(this.redetectTimer);
       this.redetectTimer = null;
@@ -775,6 +781,35 @@ export class ThemeEngine {
     this.processElements(queued);
   }
 
+  /**
+   * Shadow roots can be attached after their host was inspected, and the DOM
+   * offers no event for it. After the page changes, look again (debounced) at
+   * inspected elements that now have an unstyled shadow root.
+   */
+  private scheduleShadowSweep(): void {
+    if (this.shadowSweepTimer !== null) {
+      return;
+    }
+    this.shadowSweepTimer = this.win.setTimeout(() => {
+      this.shadowSweepTimer = null;
+      if (!this.state.tokens || this.state.config?.mode === "grayscale") {
+        return;
+      }
+      for (const element of this.inspections.keys()) {
+        const root = element.shadowRoot;
+        if (root && !this.shadowStyles.has(root)) {
+          this.attachShadowStyle(root);
+          for (const child of root.children) {
+            this.queueSubtree(child);
+          }
+        }
+      }
+      if (this.queuedElements.size > 0) {
+        this.scheduleBatchWork();
+      }
+    }, SHADOW_SWEEP_DELAY_MS);
+  }
+
   private paletteCss(scope: string): string {
     return this.palette
       .rules(scope)
@@ -870,6 +905,7 @@ export class ThemeEngine {
     }
     // One batched read/write for everything above the fold, document order.
     this.processElements(initial);
+    this.scheduleShadowSweep();
     if (this.queuedElements.size > 0) {
       this.prioritiseViewport();
       this.scheduleIdleWork();
@@ -1465,6 +1501,9 @@ export class ThemeEngine {
     }
     if (this.removalsSincePrune >= PRUNE_AFTER_REMOVALS) {
       this.pruneDetached();
+    }
+    if (records.some((record) => record.type === "childList" && record.addedNodes.length > 0)) {
+      this.scheduleShadowSweep();
     }
     if (this.queuedElements.size > 0) {
       this.scheduleBatchWork();

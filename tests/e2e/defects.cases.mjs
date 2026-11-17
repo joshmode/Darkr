@@ -424,3 +424,23 @@ test("[B2] a configuration change rewrites the palette without touching elements
   assert.equal(await attr(), before, "element token changed");
   assert.equal(await page.evaluate(() => window.__attrWrites), 0, "elements were rewritten");
 });
+
+// ---------------------------------------------------------------- E-16
+test("[E-16] a shadow root attached after load is themed", async () => {
+  const page = await newPage("/e16-late-shadow");
+  await settle(page);
+  const inside = (property) =>
+    page.evaluate((prop) => {
+      const root = document.getElementById("host").shadowRoot;
+      const el = root?.getElementById("inner");
+      return el ? getComputedStyle(el)[prop] : null;
+    }, property);
+  await poll(
+    () => inside("backgroundColor"),
+    (bg) => bg && bg !== WHITE,
+    {
+      timeout: 6000,
+      message: "late shadow content to be themed",
+    },
+  );
+});

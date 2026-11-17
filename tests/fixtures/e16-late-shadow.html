@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>E-16 late shadow root</title>
+<style>body{background:#fff;color:#111;font-family:system-ui;padding:16px}</style></head>
+<body>
+<div id="host"></div>
+<script>
+  setTimeout(() => {
+    const root = document.getElementById("host").attachShadow({ mode: "open" });
+    root.innerHTML = '<div id="inner" style="background:#fff;padding:8px"><p id="innerText" style="color:#222">Late shadow text</p></div>';
+  }, 600);
+</script>
+</body></html>
