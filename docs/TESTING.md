@@ -58,6 +58,29 @@ Also verify:
 - Reduced Motion does not introduce animation problems.
 - Keyboard focus and screen-reader labels work in the popup and settings.
 
+## Real-site matrix (run 18 Nov 2026)
+
+`npm run build && npm run test:matrix` loads real public pages in headless
+Chromium with the built extension, then judges up to 1,500 visible text nodes per
+page against their effective opaque background (gradients and images are
+skipped) and saves screenshots to `test-results/matrix/`. It needs the network
+(the browser fetches the sites; the extension itself makes no requests).
+
+| Page | Themed | Text judged | Below 3:1 |
+| --- | --- | --- | --- |
+| Wikinews main page (news) | yes | 54 | 0 |
+| MDN `MutationObserver` (docs, code blocks, sticky header) | yes | 118 | 0 |
+| Wikipedia "Dark mode" (long article; print emulated → author background) | yes | 680 | 0 |
+| Hacker News thread 8863 (long forum thread) | yes | 740 | 0 |
+| GitHub `microsoft/vscode` (web app with menus) | yes | 471 | 0 |
+| mozilla.github.io PDF.js viewer embedded in an iframe on another host | yes (frame too) | 10 | 0 |
+
+Checked by eye on the screenshots: no doubled PDF text; page canvas stays white
+(by design). **Not run:** a web-mail composer and any signed-in app (need an
+account), a site that toggles its own dark mode on a real server (covered by the
+local `e13` fixture), the browser's real print preview (emulated print media
+only), and Incognito.
+
 ## Known test limitations
 
 Automated tests run in Chromium. Incognito behaviour and Chrome Web Store

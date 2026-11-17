@@ -36,6 +36,13 @@
 - The pre-paint hold applies to the top document only.
 
 ### Added
+- `::before`/`::after` backgrounds, text and borders are themed (E-20).
+- Shadow roots attached after load are picked up (E-16).
+- Palette indexing: one `data-darkr` token attribute per element, one rule per
+  colour; slider changes rewrite the palette without touching elements (B2).
+- UI text and manifest strings come from `_locales/en/messages.json` (English only).
+- axe accessibility runs on the popup, settings and welcome pages; real-popup
+  behaviour tests; `npm run test:matrix` for real-site checks.
 - Darkr is injected into tabs that were open at install/update (new `scripting` permission).
 - Welcome page on install; keyboard shortcuts (Alt+Shift+D, Alt+Shift+P);
   toolbar "off" badge; Reload button on the unreachable-page notice.

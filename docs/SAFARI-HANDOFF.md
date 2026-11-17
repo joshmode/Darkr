@@ -15,7 +15,10 @@ needs checking there. "Fallback" says what the code does when the API is absent.
 | `matchMedia("(forced-colors: active)")` | `src/content/index.ts` | Yes. Browsers without the feature report no match, so theming proceeds. |
 | `@media screen` around the generated sheet | `src/content/theme-engine.ts` | Universal. |
 | `chrome.scripting.executeScript` | `src/background/index.ts` (`injectIntoOpenTabs`, on install and update) | Yes. Skipped when `api.scripting` is absent, and each tab's failure is swallowed. Requires the `scripting` permission in the manifest (added to the Chrome manifest; the Safari manifest must add it or lose the feature). |
-| `adoptedStyleSheets` from a content script | **Not used** (palette indexing, B2, not done); the engine keeps `<style>` elements. |
+| `adoptedStyleSheets` | **Not used.** Palette rules are appended to a `<style>` element with `CSSStyleSheet.insertRule`, with a text-node fallback if `insertRule` throws. Constructed sheets from a content script were not adopted because cross-world adoption is unverified in Chrome 109 and Safari. |
+| `WeakRef` | `src/content/records.ts` (element records). Chrome 84+, Safari 14.1+. No fallback: if absent the content script would fail to run. |
+| `i18n.getMessage` | `src/shared/i18n.ts`. Falls back to the English text in the markup/code if the API is missing or returns nothing. `_locales/` must be in the Safari bundle (build copies it). |
+| `getComputedStyle(el, "::before")` | `src/content/theme-engine.ts` (`readPseudo`) | Standard; skipped only under jsdom. |
 | `runtime.id` becoming undefined after an update | `src/content/index.ts` (`teardownIfOrphaned`) | Yes. If `runtime.id` stays defined, the check is a no-op. |
 | `HTMLStyleElement.sheet.disabled` | `src/content/theme-engine.ts` (shadow sheets during clean reads) | Guarded by `if (style.sheet)`. |
 
@@ -25,6 +28,8 @@ Other things worth a Safari pass:
 - Stored settings migrate to schema 2 on first read (Original becomes off/Never).
 - `data-darkr` on `<html>` replaces the `darkr-active` classes. Anything in the
   private repo that referenced those class names needs updating.
-- `include subdomains` rules use plain string matching, no Public Suffix list;
-  a rule on a public suffix (for example `co.uk`) with the box ticked would
-  match every site under it.
+- `include subdomains` rules use plain string matching with a small built-in
+  guard (single labels, two-level country suffixes such as `co.uk`, and common
+  shared hosting suffixes are refused), not the full Public Suffix List.
+- Per-element state is now one `data-darkr` token attribute (`s3 t7 …`), and
+  all colours live in rules appended to the `#darkr-theme-styles` sheet.
