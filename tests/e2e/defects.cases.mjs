@@ -25,8 +25,6 @@ import {
 const HOST = "127.0.0.1";
 
 const KNOWN = {
-  "E-03":
-    "frames resolve preferences from their own host, and srcdoc frames get no script (task A3)",
   "E-04": "Darkr writes attributes and inline styles into contenteditable content (task A4)",
   "E-05": "JS-driven inline styles make the engine strip theming every other frame (task A5)",
   "E-06": "tracking stops at 9,000 elements, leaving later cards light with light text (task B3)",

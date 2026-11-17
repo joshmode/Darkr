@@ -4,7 +4,11 @@ import {
   resolveAppearance,
   themeConfigsEqual,
 } from "../shared/config";
-import { getBrowserApi, type ContentStatus } from "../shared/extension-api";
+import {
+  getBrowserApi,
+  topHostnameFromAncestorOrigins,
+  type ContentStatus,
+} from "../shared/extension-api";
 import { loadPreferences, preferencesFromStorageChange } from "../shared/preferences";
 import type { DarkrPreferences, ThemeConfig } from "../shared/types";
 import { ThemeEngine } from "./theme-engine";
@@ -27,7 +31,29 @@ if (!window.__DARKR_CONTENT__) {
   // previews must not override a paused extension or a blocked site.
   let themingAllowed = false;
 
-  const hostname = hostnamePreferenceKey(location.hostname);
+  // Preferences are resolved against the top-level site for every frame, so a
+  // site's rule (or Never) also governs the frames it embeds. In a subframe the
+  // top site comes from `location.ancestorOrigins` where the browser has it
+  // (Chromium); otherwise (Safari, opaque origins) the background answers from
+  // the sender's tab URL.
+  const isTopFrame = window === window.top;
+  let topHostname: string | null = isTopFrame
+    ? location.hostname
+    : topHostnameFromAncestorOrigins(
+        (location as Location & { ancestorOrigins?: DOMStringList }).ancestorOrigins,
+      );
+  const topHostnameReady: Promise<void> =
+    topHostname !== null || !browser
+      ? Promise.resolve()
+      : browser.runtime
+          .sendMessage<{ hostname?: string } | undefined>({ type: "darkr:get-top-host" })
+          .then((response) => {
+            topHostname = response?.hostname || location.hostname;
+          })
+          .catch(() => {
+            topHostname = location.hostname;
+          });
+  const hostname = hostnamePreferenceKey(topHostname ?? location.hostname);
 
   // Preferences live in asynchronous extension storage, so at document_start
   // the page would paint unthemed for a few frames. Hold painting until the
@@ -84,13 +110,21 @@ if (!window.__DARKR_CONTENT__) {
     if (!browser) {
       return;
     }
-    const preferences = await loadPreferences(browser.storage.local);
+    const [preferences] = await Promise.all([
+      loadPreferences(browser.storage.local),
+      topHostnameReady,
+    ]);
     syncToPreferences(preferences);
   };
 
   const syncToPreferences = (preferences: DarkrPreferences): void => {
     latestPreferences = preferences;
-    const resolved = resolveAppearance(preferences, location.hostname, {
+    if (topHostname === null) {
+      // The top-level host is still being resolved; the initial load applies
+      // the latest preferences once it is known.
+      return;
+    }
+    const resolved = resolveAppearance(preferences, topHostname, {
       systemDark: isSystemDark(),
     });
     themingAllowed = resolved.enabled;

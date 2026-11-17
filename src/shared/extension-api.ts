@@ -1,7 +1,7 @@
 import type { ThemeConfig } from "./types";
 
 export interface RuntimeMessage {
-  type: "darkr:preview" | "darkr:get-status" | "darkr:refresh";
+  type: "darkr:preview" | "darkr:get-status" | "darkr:refresh" | "darkr:get-top-host";
   config?: ThemeConfig;
 }
 
@@ -51,6 +51,7 @@ export interface BrowserApi {
     openOptionsPage(): Promise<void>;
     getURL(path: string): string;
     getManifest(): { version: string; name?: string };
+    sendMessage<TResponse>(message: RuntimeMessage): Promise<TResponse>;
     onMessage: {
       addListener(
         listener: (
@@ -92,4 +93,19 @@ export function hostnameFromUrl(url: string | undefined): string {
   } catch {
     return "";
   }
+}
+
+/**
+ * Hostname of the top-level site as reported by `location.ancestorOrigins`
+ * (the last entry is the top-level origin). Returns null when the list is
+ * missing (Safari, Firefox) or unusable (opaque "null" origins from sandboxed
+ * frames), so callers can fall back to asking the background.
+ */
+export function topHostnameFromAncestorOrigins(
+  origins: ArrayLike<string> | null | undefined,
+): string | null {
+  if (!origins || origins.length === 0) {
+    return null;
+  }
+  return hostnameFromUrl(origins[origins.length - 1]) || null;
 }

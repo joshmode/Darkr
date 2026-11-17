@@ -75,6 +75,20 @@ can also carry one of three policies:
 - **Always** themes the site even while Darkr is paused or the system is light.
 - **Never** leaves the site untouched.
 
+### Embedded frames
+
+The site in the address bar governs everything embedded in it. A page's policy,
+site overrides and native-dark choice apply to all of its frames, whichever host
+a frame is served from, so setting a site to **Never** also leaves an embedded
+document viewer or video player on another host untouched. A frame's own
+hostname is never consulted. Frames without a network address of their own
+(`about:blank`, `srcdoc`, `blob:`, `data:`) are covered too, so they match the
+page around them.
+
+Darkr finds the top-level site from `location.ancestorOrigins` where the browser
+provides it, and otherwise by asking its background script, which reads the
+tab's URL. Nothing is sent anywhere outside the browser.
+
 To avoid a flash of the unthemed page, Darkr briefly holds painting at
 `document_start` until your preferences have loaded (with a 400 ms safety
 timeout so a stalled storage call can never leave a page blank).
