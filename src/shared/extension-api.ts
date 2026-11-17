@@ -11,12 +11,7 @@ export interface StorageChange {
 }
 
 export interface StorageChangedEvent {
-  addListener(
-    listener: (
-      changes: Record<string, StorageChange>,
-      areaName: string,
-    ) => void,
-  ): void;
+  addListener(listener: (changes: Record<string, StorageChange>, areaName: string) => void): void;
 }
 
 export interface ContentStatus {
@@ -48,10 +43,7 @@ export interface BrowserApi {
       active: boolean;
       currentWindow: boolean;
     }): Promise<Array<{ id?: number; url?: string; title?: string }>>;
-    sendMessage<TResponse>(
-      tabId: number,
-      message: RuntimeMessage,
-    ): Promise<TResponse>;
+    sendMessage<TResponse>(tabId: number, message: RuntimeMessage): Promise<TResponse>;
   };
   runtime: {
     id?: string;
@@ -96,9 +88,7 @@ export function hostnameFromUrl(url: string | undefined): string {
   }
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.hostname
-      : "";
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.hostname : "";
   } catch {
     return "";
   }

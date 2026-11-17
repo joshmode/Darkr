@@ -35,9 +35,7 @@ export function rgbToHsl(color: Rgb): Hsl {
 
   const delta = maximum - minimum;
   const saturation =
-    lightness > 0.5
-      ? delta / (2 - maximum - minimum)
-      : delta / (maximum + minimum);
+    lightness > 0.5 ? delta / (2 - maximum - minimum) : delta / (maximum + minimum);
 
   let hue: number;
   if (maximum === red) {
@@ -62,7 +60,7 @@ function hueToRgb(p: number, q: number, input: number): number {
 }
 
 export function hslToRgb({ h, s, l }: Hsl): Rgb {
-  const hue = ((h % 360) + 360) % 360 / 360;
+  const hue = (((h % 360) + 360) % 360) / 360;
   if (s === 0) {
     return rgb(l * 255, l * 255, l * 255);
   }
@@ -92,10 +90,7 @@ function tintedDarkSurface(original: Rgba, tokens: ThemeTokens): Rgb {
   // Preserve the hue and a reduced amount of saturation of accent surfaces.
   // Converting every coloured card to the same grey is what makes badges,
   // alerts, and controls feel disconnected from the page.
-  const lightness = Math.min(
-    0.34,
-    0.055 + hsl.l * 0.14 + (hsl.s > 0.5 ? 0.03 : 0),
-  );
+  const lightness = Math.min(0.34, 0.055 + hsl.l * 0.14 + (hsl.s > 0.5 ? 0.03 : 0));
   const tint = hslToRgb({
     h: hsl.h,
     s: Math.min(0.52, Math.max(0.2, hsl.s * 0.62)),
@@ -119,10 +114,7 @@ function tintedLightSurface(original: Rgba, tokens: ThemeTokens): Rgb {
   return mixRgb(tokens.background, original, 0.1);
 }
 
-export function mapSurfaceColor(
-  original: Rgba,
-  tokens: ThemeTokens,
-): string {
+export function mapSurfaceColor(original: Rgba, tokens: ThemeTokens): string {
   const mapped =
     tokens.scheme === "dark"
       ? tintedDarkSurface(original, tokens)
@@ -130,10 +122,7 @@ export function mapSurfaceColor(
   return rgbToCss(mapped);
 }
 
-function textContrastTarget(
-  original: Rgb,
-  tokens: ThemeTokens,
-): number {
+function textContrastTarget(original: Rgb, tokens: ThemeTokens): number {
   const luminance = relativeLuminance(original);
   if (luminance >= 0.48) {
     return tokens.primaryContrast;
@@ -144,11 +133,7 @@ function textContrastTarget(
   return Math.max(4.5, tokens.primaryContrast * 0.7);
 }
 
-export function mapTextColor(
-  original: Rgba,
-  surface: Rgb,
-  tokens: ThemeTokens,
-): string {
+export function mapTextColor(original: Rgba, surface: Rgb, tokens: ThemeTokens): string {
   const direction = preferredTextDirection(surface);
   const target = textContrastTarget(original, tokens);
   const hsl = rgbToHsl(original);
@@ -161,21 +146,12 @@ export function mapTextColor(
         })
       : original;
   const mapped = colorForContrast(saturated, surface, target, direction);
-  return rgbToCss(
-    ensureContrast(mapped, surface, Math.max(4.5, target * 0.93), direction),
-  );
+  return rgbToCss(ensureContrast(mapped, surface, Math.max(4.5, target * 0.93), direction));
 }
 
-export function mapBorderColor(
-  original: Rgba,
-  surface: Rgb,
-  tokens: ThemeTokens,
-): string {
+export function mapBorderColor(original: Rgba, surface: Rgb, tokens: ThemeTokens): string {
   const originalLuminance = relativeLuminance(original);
-  const base =
-    originalLuminance > 0.5
-      ? tokens.border
-      : mixRgb(tokens.border, original, 0.16);
+  const base = originalLuminance > 0.5 ? tokens.border : mixRgb(tokens.border, original, 0.16);
   const blended = mixRgb(base, surface, 0.04);
   return rgbToCss(blended);
 }
@@ -199,10 +175,7 @@ export function safeHex(value: Rgba): string {
   return rgbToCss(rgb(clampChannel(value.r), clampChannel(value.g), clampChannel(value.b)));
 }
 
-export function contrastSummary(
-  foreground: Rgb,
-  background: Rgb,
-): number {
+export function contrastSummary(foreground: Rgb, background: Rgb): number {
   return Number(contrastRatio(foreground, background).toFixed(2));
 }
 

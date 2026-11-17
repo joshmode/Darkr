@@ -32,11 +32,10 @@ describe("durable preference storage", () => {
 
   it("saves normalized settings and reads them back", async () => {
     const storage = memoryStorage();
-    const preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      { ...DEFAULT_THEME_CONFIG, mode: "sepia" },
-    );
+    const preferences = setSiteAppearance(normalizePreferences(null), "example.com", {
+      ...DEFAULT_THEME_CONFIG,
+      mode: "sepia",
+    });
     await savePreferences(storage, preferences);
     expect(storage.set).toHaveBeenCalledOnce();
     const loaded = await loadPreferences(storage);
@@ -51,14 +50,20 @@ describe("durable preference storage", () => {
   });
 
   it("ignores storage errors", async () => {
-    const storage = { get: vi.fn(async () => { throw new Error("denied"); }), set: vi.fn() };
+    const storage = {
+      get: vi.fn(async () => {
+        throw new Error("denied");
+      }),
+      set: vi.fn(),
+    };
     const loaded = await loadPreferences(storage);
     expect(loaded.defaults).toEqual(DEFAULT_THEME_CONFIG);
   });
 
   it("extracts only the preferences storage change", () => {
     expect(
-      preferencesFromStorageChange({ [PREFERENCES_STORAGE_KEY]: { newValue: { enabled: false } } })?.enabled,
+      preferencesFromStorageChange({ [PREFERENCES_STORAGE_KEY]: { newValue: { enabled: false } } })
+        ?.enabled,
     ).toBe(false);
     expect(preferencesFromStorageChange({ other: { newValue: {} } })).toBeNull();
   });

@@ -1,6 +1,14 @@
 // The original e2e scenarios, one named case each.
 import {
-  assert, test, env, newPage, setPreferences, isThemed, waitThemed, settle, poll,
+  assert,
+  test,
+  env,
+  newPage,
+  setPreferences,
+  isThemed,
+  waitThemed,
+  settle,
+  poll,
   contrastAgainstAncestor,
 } from "./harness.mjs";
 
@@ -22,9 +30,13 @@ test("site policy block removes the theme and auto restores it", async () => {
   await setPreferences({}, { [HOST]: { policy: "block" } });
   const page = await newPage("/policy");
   assert.equal(await isThemed(page), false);
-  await poll(() => page.evaluate(() => !!document.querySelector("#darkr-theme-styles")), (v) => v === false, {
-    message: "no theme stylesheet on a blocked site",
-  });
+  await poll(
+    () => page.evaluate(() => !!document.querySelector("#darkr-theme-styles")),
+    (v) => v === false,
+    {
+      message: "no theme stylesheet on a blocked site",
+    },
+  );
   await setPreferences({}, { [HOST]: { policy: "auto" } });
   await waitThemed(page);
 });
@@ -56,9 +68,13 @@ test("popup renders its controls", async () => {
   const popup = await env.context.newPage();
   await popup.setViewportSize({ width: 390, height: 760 });
   await popup.goto(`chrome-extension://${env.extensionId}/popup.html`);
-  await poll(() => popup.locator("body").innerText(), (t) => t.includes("Darkr") && t.includes("Reading mode"), {
-    message: "popup content",
-  });
+  await poll(
+    () => popup.locator("body").innerText(),
+    (t) => t.includes("Darkr") && t.includes("Reading mode"),
+    {
+      message: "popup content",
+    },
+  );
   await popup.screenshot({ path: "test-results/popup.png", fullPage: true });
 });
 
@@ -75,8 +91,13 @@ test("settings page: sections present and onboarding stays dismissed", async () 
   await settings.locator("#onboarding-dismiss").click();
   await onboarding.waitFor({ state: "hidden" });
   await settings.reload();
-  await settings.locator("#onboarding-dismiss").waitFor({ state: "hidden" }).catch(() => undefined);
-  await poll(() => onboarding.isHidden(), Boolean, { message: "onboarding to stay hidden after reload" });
+  await settings
+    .locator("#onboarding-dismiss")
+    .waitFor({ state: "hidden" })
+    .catch(() => undefined);
+  await poll(() => onboarding.isHidden(), Boolean, {
+    message: "onboarding to stay hidden after reload",
+  });
   await settings.screenshot({ path: "test-results/settings.png", fullPage: true });
 });
 
@@ -89,7 +110,10 @@ test("natively dark page is left alone; global and per-site overrides apply", as
   await waitThemed(page, true);
   await setPreferences({}, { [HOST]: { policy: "auto", overrideNativeDark: false } });
   await waitThemed(page, false);
-  await setPreferences({ overrideNativeDark: false }, { [HOST]: { policy: "auto", overrideNativeDark: true } });
+  await setPreferences(
+    { overrideNativeDark: false },
+    { [HOST]: { policy: "auto", overrideNativeDark: true } },
+  );
   await waitThemed(page, true);
   await setPreferences({ overrideNativeDark: false }, { [HOST]: null });
   await waitThemed(page, false);
@@ -124,10 +148,11 @@ test("dynamically added content is themed", async () => {
   await settle(page);
   await page.evaluate(() => window.addDynamicContent());
   await poll(
-    () => page.evaluate(() => ({
-      surface: !!document.querySelector("#dynamic .card[data-darkr-surface]"),
-      text: !!document.querySelector("#dynamic p[data-darkr-text]"),
-    })),
+    () =>
+      page.evaluate(() => ({
+        surface: !!document.querySelector("#dynamic .card[data-darkr-surface]"),
+        text: !!document.querySelector("#dynamic p[data-darkr-text]"),
+      })),
     (r) => r.surface && r.text,
     { message: "dynamic card to be themed" },
   );
@@ -139,16 +164,34 @@ for (const mode of ["sepia", "grayscale", "warm", "original"]) {
     await settle(page);
     await setPreferences(
       {},
-      { [HOST]: { policy: "auto", overrides: { mode, darkBackground: 12, darkContrast: 62, sepiaIntensity: 58, grayscaleIntensity: 100, warmth: 35 } } },
+      {
+        [HOST]: {
+          policy: "auto",
+          overrides: {
+            mode,
+            darkBackground: 12,
+            darkContrast: 62,
+            sepiaIntensity: 58,
+            grayscaleIntensity: 100,
+            warmth: 35,
+          },
+        },
+      },
     );
     const expectSemantic = mode !== "grayscale" && mode !== "original";
     await poll(
-      () => page.evaluate(() => ({
-        semantic: document.documentElement.classList.contains("darkr-semantic"),
-        gray: document.documentElement.classList.contains("darkr-grayscale"),
-        active: document.documentElement.classList.contains("darkr-active"),
-      })),
-      (s) => (mode === "original" ? !s.active || (!s.semantic && !s.gray) : mode === "grayscale" ? s.gray : s.semantic === expectSemantic),
+      () =>
+        page.evaluate(() => ({
+          semantic: document.documentElement.classList.contains("darkr-semantic"),
+          gray: document.documentElement.classList.contains("darkr-grayscale"),
+          active: document.documentElement.classList.contains("darkr-active"),
+        })),
+      (s) =>
+        mode === "original"
+          ? !s.active || (!s.semantic && !s.gray)
+          : mode === "grayscale"
+            ? s.gray
+            : s.semantic === expectSemantic,
       { message: `${mode} mode state` },
     );
     await page.locator("#article").screenshot({ path: `test-results/article-${mode}.png` });

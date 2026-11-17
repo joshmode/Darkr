@@ -17,11 +17,7 @@ import {
   needsOnboarding,
   savePreferences,
 } from "../shared/preferences";
-import {
-  contrastDescription,
-  darknessDescription,
-  warmthDescription,
-} from "../shared/theme";
+import { contrastDescription, darknessDescription, warmthDescription } from "../shared/theme";
 import {
   DEFAULT_THEME_CONFIG,
   MODE_LABELS,
@@ -51,9 +47,7 @@ const contrast = byId<HTMLInputElement>("default-dark-contrast");
 const sepia = byId<HTMLInputElement>("default-sepia");
 const grayscale = byId<HTMLInputElement>("default-grayscale");
 const warmth = byId<HTMLInputElement>("default-warmth");
-const backgroundValue = byId<HTMLOutputElement>(
-  "default-dark-background-value",
-);
+const backgroundValue = byId<HTMLOutputElement>("default-dark-background-value");
 const contrastValue = byId<HTMLOutputElement>("default-dark-contrast-value");
 const sepiaValue = byId<HTMLOutputElement>("default-sepia-value");
 const grayscaleValue = byId<HTMLOutputElement>("default-grayscale-value");
@@ -94,11 +88,7 @@ function renderDefaults(config: ThemeConfig): void {
   backgroundValue.textContent = darknessDescription(config.darkBackground);
   contrastValue.textContent = contrastDescription(config.darkContrast);
   sepiaValue.textContent =
-    config.sepiaIntensity < 35
-      ? "Subtle"
-      : config.sepiaIntensity < 70
-        ? "Paper"
-        : "Strong";
+    config.sepiaIntensity < 35 ? "Subtle" : config.sepiaIntensity < 70 ? "Paper" : "Strong";
   grayscaleValue.textContent =
     config.grayscaleIntensity >= 99 ? "Full" : `${config.grayscaleIntensity}%`;
   warmthValue.textContent = warmthDescription(config.warmth);
@@ -127,9 +117,7 @@ function renderSites(): void {
   if (!preferences) {
     return;
   }
-  const entries = Object.entries(preferences.sites).sort(([a], [b]) =>
-    a.localeCompare(b),
-  );
+  const entries = Object.entries(preferences.sites).sort(([a], [b]) => a.localeCompare(b));
   sitesList.replaceChildren();
   sitesEmpty.hidden = entries.length > 0;
   clearSites.disabled = entries.length === 0;
@@ -180,11 +168,7 @@ function renderSites(): void {
       if (!preferences) {
         return;
       }
-      preferences = setSitePolicy(
-        preferences,
-        host,
-        policy.value as SitePolicy,
-      );
+      preferences = setSitePolicy(preferences, host, policy.value as SitePolicy);
       void persistAndRender();
     });
 
@@ -285,10 +269,7 @@ nativeDarkPolicy.addEventListener("change", () => {
   if (!preferences) {
     return;
   }
-  preferences = setGlobalNativeDarkOverride(
-    preferences,
-    nativeDarkPolicy.value === "override",
-  );
+  preferences = setGlobalNativeDarkOverride(preferences, nativeDarkPolicy.value === "override");
   void persistAndRender();
 });
 
@@ -306,7 +287,10 @@ clearSites.addEventListener("click", () => {
     return;
   }
   const count = Object.keys(preferences.sites).length;
-  if (count > 0 && !window.confirm(`Remove all ${count} saved site rule${count === 1 ? "" : "s"}?`)) {
+  if (
+    count > 0 &&
+    !window.confirm(`Remove all ${count} saved site rule${count === 1 ? "" : "s"}?`)
+  ) {
     return;
   }
   preferences = clearAllSiteAppearances(preferences);
@@ -337,11 +321,7 @@ siteForm.addEventListener("submit", (event) => {
     siteHostname.focus();
     return;
   }
-  const next = setSitePolicy(
-    preferences,
-    host,
-    sitePolicy.value as SitePolicy,
-  );
+  const next = setSitePolicy(preferences, host, sitePolicy.value as SitePolicy);
   if (next === preferences) {
     siteHostname.setAttribute("aria-invalid", "true");
     siteHostname.focus();
@@ -383,9 +363,7 @@ async function initialize(): Promise<void> {
     // Keep defaults the user is still dragging; the pending save will write
     // them. Everything else (sites, switches) takes the remote value.
     preferences =
-      saveTimer !== null && preferences
-        ? { ...updated, defaults: preferences.defaults }
-        : updated;
+      saveTimer !== null && preferences ? { ...updated, defaults: preferences.defaults } : updated;
     render();
   });
 }

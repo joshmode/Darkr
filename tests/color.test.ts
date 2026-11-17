@@ -65,7 +65,9 @@ describe("relative luminance and contrast", () => {
     const background = rgb(245, 240, 232);
     const strong = rgb(30, 27, 22);
     expect(ensureContrast(strong, background, 4.5)).toBe(strong);
-    expect(contrastRatio(ensureContrast(rgb(170, 168, 162), background, 4.5), background)).toBeGreaterThanOrEqual(4.45);
+    expect(
+      contrastRatio(ensureContrast(rgb(170, 168, 162), background, 4.5), background),
+    ).toBeGreaterThanOrEqual(4.45);
   });
 
   it("interpolates anchored colours", () => {
@@ -78,9 +80,15 @@ describe("modern computed colour spaces", () => {
     const parsed = parseCssColor(value);
     expect(parsed, value).not.toBeNull();
     if (!parsed) return;
-    expect(Math.abs(parsed.r - expected[0]), `${value} r=${parsed.r}`).toBeLessThanOrEqual(tolerance);
-    expect(Math.abs(parsed.g - expected[1]), `${value} g=${parsed.g}`).toBeLessThanOrEqual(tolerance);
-    expect(Math.abs(parsed.b - expected[2]), `${value} b=${parsed.b}`).toBeLessThanOrEqual(tolerance);
+    expect(Math.abs(parsed.r - expected[0]), `${value} r=${parsed.r}`).toBeLessThanOrEqual(
+      tolerance,
+    );
+    expect(Math.abs(parsed.g - expected[1]), `${value} g=${parsed.g}`).toBeLessThanOrEqual(
+      tolerance,
+    );
+    expect(Math.abs(parsed.b - expected[2]), `${value} b=${parsed.b}`).toBeLessThanOrEqual(
+      tolerance,
+    );
   };
 
   it("parses oklch and oklab", () => {

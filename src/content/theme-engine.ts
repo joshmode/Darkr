@@ -1,8 +1,4 @@
-import {
-  buildThemeTokens,
-  themeVariables,
-  type ThemeTokens,
-} from "../shared/theme";
+import { buildThemeTokens, themeVariables, type ThemeTokens } from "../shared/theme";
 import type { ThemeConfig } from "../shared/types";
 import {
   mapBorderColor,
@@ -11,12 +7,7 @@ import {
   opaqueColor,
   parseColorOrNull,
 } from "./color-map";
-import {
-  contrastRatio,
-  relativeLuminance,
-  type Rgb,
-  type Rgba,
-} from "../shared/color";
+import { contrastRatio, relativeLuminance, type Rgb, type Rgba } from "../shared/color";
 import { themeConfigsEqual } from "../shared/config";
 
 const STYLE_ID = "darkr-theme-styles";
@@ -86,8 +77,7 @@ const SKIP_SUBTREES = new Set([
   "MATH",
 ]);
 
-const TEXT_CONTROL_SELECTOR =
-  "input, textarea, select, option, optgroup, progress, meter";
+const TEXT_CONTROL_SELECTOR = "input, textarea, select, option, optgroup, progress, meter";
 const SKIP_TEXT_INSIDE =
   "a, button, input, textarea, select, option, code, pre, kbd, samp, " +
   "[contenteditable='true'], [role='textbox'], " +
@@ -146,9 +136,7 @@ function hasDirectText(element: Element): boolean {
 }
 
 function isProtectedEditor(element: Element): boolean {
-  return Boolean(
-    element.closest(".monaco-editor, .CodeMirror, .cm-editor, .ace_editor"),
-  );
+  return Boolean(element.closest(".monaco-editor, .CodeMirror, .cm-editor, .ace_editor"));
 }
 
 function isVisible(style: CSSStyleDeclaration): boolean {
@@ -195,10 +183,7 @@ function samplesEqual(
   );
 }
 
-function stylePass(
-  element: Element,
-  style: CSSStyleDeclaration,
-): InspectedElement["pass"] {
+function stylePass(element: Element, style: CSSStyleDeclaration): InspectedElement["pass"] {
   if (
     style.backgroundColor !== "rgba(0, 0, 0, 0)" ||
     (style.borderTopStyle !== "" &&
@@ -217,10 +202,7 @@ function stylePass(
   return "light";
 }
 
-function tokenColorFromVariable(
-  value: string,
-  tokens: ThemeTokens,
-): Rgba | null {
+function tokenColorFromVariable(value: string, tokens: ThemeTokens): Rgba | null {
   const variable = value.trim().match(/^var\(\s*(--darkr-[\w-]+)/)?.[1];
   if (!variable) {
     return null;
@@ -244,12 +226,8 @@ function tokenColorFromVariable(
   return resolved ? { ...resolved, a: 1 } : null;
 }
 
-function inspectableColor(
-  value: string,
-  tokens: ThemeTokens | null,
-): Rgba | null {
-  return parseColorOrNull(value) ??
-    (tokens ? tokenColorFromVariable(value, tokens) : null);
+function inspectableColor(value: string, tokens: ThemeTokens | null): Rgba | null {
+  return parseColorOrNull(value) ?? (tokens ? tokenColorFromVariable(value, tokens) : null);
 }
 
 function getOriginalSurface(doc: Document): Rgba {
@@ -257,8 +235,7 @@ function getOriginalSurface(doc: Document): Rgba {
   const bodyStyle = doc.body ? getComputedStyle(doc.body) : null;
   return (
     (bodyStyle ? opaqueColor(bodyStyle.backgroundColor) : null) ??
-    opaqueColor(rootStyle.backgroundColor) ??
-    { r: 255, g: 255, b: 255, a: 1 }
+    opaqueColor(rootStyle.backgroundColor) ?? { r: 255, g: 255, b: 255, a: 1 }
   );
 }
 
@@ -267,8 +244,7 @@ function detectNativeDark(doc: Document): boolean {
   const bodyStyle = doc.body ? getComputedStyle(doc.body) : null;
   const surface = getOriginalSurface(doc);
   const style = bodyStyle ?? rootStyle;
-  const foreground =
-    parseColorOrNull(style.color) ??
+  const foreground = parseColorOrNull(style.color) ??
     parseColorOrNull(rootStyle.color) ?? { r: 0, g: 0, b: 0, a: 1 };
   const darkSurface = relativeLuminance(surface) < NATIVE_DARK_THRESHOLD;
   const readableLightText =
@@ -280,8 +256,7 @@ function detectNativeDark(doc: Document): boolean {
     Boolean(
       doc.querySelector(
         'meta[name="color-scheme"][content*="dark"], meta[name="theme-color"][content]',
-      ) &&
-        darkSurface,
+      ) && darkSurface,
     );
   return darkSurface && (readableLightText || declaresDarkScheme);
 }
@@ -439,9 +414,7 @@ export class ThemeEngine {
     mode: ThemeConfig["mode"];
   } {
     return {
-      active:
-        this.doc.documentElement.classList.contains(ROOT_CLASS) &&
-        this.state.config !== null,
+      active: this.doc.documentElement.classList.contains(ROOT_CLASS) && this.state.config !== null,
       semanticActive: this.doc.documentElement.classList.contains(SEMANTIC_CLASS),
       nativeDark: this.state.nativeDark,
       mode: this.state.config?.mode ?? "original",
@@ -470,12 +443,9 @@ export class ThemeEngine {
 
     // Detection must see the page's own styling, so it is cached from the
     // first apply and only recomputed after a clear().
-    const nativeDark = this.state.hasApplied
-      ? this.state.nativeDark
-      : detectNativeDark(this.doc);
+    const nativeDark = this.state.hasApplied ? this.state.nativeDark : detectNativeDark(this.doc);
 
-    const preserveDarkPage =
-      nativeDark && config.mode !== "grayscale" && !overrideNativeDark;
+    const preserveDarkPage = nativeDark && config.mode !== "grayscale" && !overrideNativeDark;
     if (preserveDarkPage) {
       this.teardownPageRendering();
       this.state = {
@@ -490,9 +460,7 @@ export class ThemeEngine {
 
     const previousMode = this.state.config?.mode;
     const wasSemantic = Boolean(
-      previousMode &&
-        previousMode !== "grayscale" &&
-        previousMode !== "original",
+      previousMode && previousMode !== "grayscale" && previousMode !== "original",
     );
     const isSemantic = config.mode !== "grayscale";
 
@@ -664,11 +632,7 @@ export class ThemeEngine {
           this.queuedElements.add(shadowChild);
         }
       }
-      for (
-        let child = element.lastElementChild;
-        child;
-        child = child.previousElementSibling
-      ) {
+      for (let child = element.lastElementChild; child; child = child.previousElementSibling) {
         stack.push(child);
       }
     }
@@ -744,10 +708,7 @@ export class ThemeEngine {
     }
   }
 
-  private buildInspection(
-    element: Element,
-    style: CSSStyleDeclaration,
-  ): InspectedElement {
+  private buildInspection(element: Element, style: CSSStyleDeclaration): InspectedElement {
     const textControl = element.matches(TEXT_CONTROL_SELECTOR);
     const tokens = this.state.tokens;
     const samples = sampleStyle(style);
@@ -830,8 +791,8 @@ export class ThemeEngine {
    * colors changed.
    */
   private markForResample(container: Element): void {
-    const inspected = [container, ...container.querySelectorAll("*")].filter(
-      (element) => this.inspections.has(element),
+    const inspected = [container, ...container.querySelectorAll("*")].filter((element) =>
+      this.inspections.has(element),
     );
     if (inspected.length > LARGE_SUBTREE) {
       const signature = this.readAuthorStyles(() => {
@@ -850,29 +811,21 @@ export class ThemeEngine {
     }
   }
 
-  private styleInspectedElement(
-    element: Element,
-    inspection: InspectedElement,
-  ): void {
+  private styleInspectedElement(element: Element, inspection: InspectedElement): void {
     const tokens = this.state.tokens;
     if (!tokens || !element.isConnected) {
       return;
     }
 
     let surface = tokens.background;
-    const parentSurface = element.parentElement?.closest(
-      `[${SURFACE_ATTRIBUTE}]`,
-    );
+    const parentSurface = element.parentElement?.closest(`[${SURFACE_ATTRIBUTE}]`);
     if (parentSurface) {
-      const resolvedParent = parseColorOrNull(
-        getComputedStyle(parentSurface).backgroundColor,
-      );
+      const resolvedParent = parseColorOrNull(getComputedStyle(parentSurface).backgroundColor);
       if (resolvedParent) {
         surface = resolvedParent;
       }
     }
-    const hostStyleChanged =
-      inlineStyleSignature(element) !== inspection.hostStyleSignature;
+    const hostStyleChanged = inlineStyleSignature(element) !== inspection.hostStyleSignature;
     if (hostStyleChanged) {
       this.cleanupElement(element, inspection);
       this.inspections.delete(element);
@@ -882,10 +835,7 @@ export class ThemeEngine {
     if (inspection.background) {
       const mapped = mapSurfaceColor(inspection.background, tokens);
       element.setAttribute(SURFACE_ATTRIBUTE, "");
-      (element as HTMLElement).style.setProperty(
-        ELEMENT_SURFACE_VARIABLE,
-        mapped,
-      );
+      (element as HTMLElement).style.setProperty(ELEMENT_SURFACE_VARIABLE, mapped);
       surface = parseColorOrNull(mapped) ?? tokens.background;
       inspection.mappedSurface = surface;
     } else if (inspection.mappedSurface) {
@@ -894,11 +844,7 @@ export class ThemeEngine {
       inspection.mappedSurface = null;
     }
 
-    if (
-      inspection.text &&
-      inspection.hasDirectText &&
-      !isProtectedEditor(element)
-    ) {
+    if (inspection.text && inspection.hasDirectText && !isProtectedEditor(element)) {
       if (!element.matches(SKIP_TEXT_INSIDE)) {
         element.setAttribute(TEXT_ATTRIBUTE, "");
         (element as HTMLElement).style.setProperty(
@@ -997,10 +943,7 @@ export class ThemeEngine {
       if (record.target === this.style) {
         continue;
       }
-      if (
-        record.type === "attributes" &&
-        record.attributeName === "style"
-      ) {
+      if (record.type === "attributes" && record.attributeName === "style") {
         const target = record.target as Element;
         const inspection = this.inspections.get(target);
         if (inspection) {
@@ -1010,10 +953,7 @@ export class ThemeEngine {
             this.inspections.delete(target);
             this.queuedElements.add(target);
           }
-        } else if (
-          target.isConnected &&
-          !target.hasAttribute(IGNORE_ATTRIBUTE)
-        ) {
+        } else if (target.isConnected && !target.hasAttribute(IGNORE_ATTRIBUTE)) {
           // Never inspected, typically because it was hidden during the scan
           // and a script just revealed it through an inline style.
           this.queuedElements.add(target);
@@ -1022,10 +962,7 @@ export class ThemeEngine {
       }
       if (record.type === "attributes") {
         const target = record.target;
-        if (
-          target.nodeType === Node.ELEMENT_NODE &&
-          target !== this.doc.documentElement
-        ) {
+        if (target.nodeType === Node.ELEMENT_NODE && target !== this.doc.documentElement) {
           // A class/hidden/open toggle on a large container (scroll locks,
           // theme classes) must not re-walk everything already inspected.
           this.queueSubtree(target as Element, true);
@@ -1156,9 +1093,7 @@ export class ThemeEngine {
         Date.now() - start < max &&
         (!deadline || deadline.timeRemaining() > 1)
       ) {
-        const next = this.queuedElements.values().next().value as
-          | Element
-          | undefined;
+        const next = this.queuedElements.values().next().value as Element | undefined;
         if (!next) {
           break;
         }
@@ -1174,10 +1109,7 @@ export class ThemeEngine {
     if (this.win.requestIdleCallback) {
       this.idleHandle = this.win.requestIdleCallback(process, { timeout: 350 });
     } else {
-      this.idleHandle = this.win.setTimeout(
-        () => process(),
-        32,
-      ) as unknown as number;
+      this.idleHandle = this.win.setTimeout(() => process(), 32) as unknown as number;
     }
   }
 
@@ -1211,10 +1143,7 @@ export class ThemeEngine {
     root.host.removeAttribute("data-darkr-shadow");
   }
 
-  private cleanupElement(
-    element: Element,
-    _inspection: InspectedElement,
-  ): void {
+  private cleanupElement(element: Element, _inspection: InspectedElement): void {
     element.removeAttribute(SURFACE_ATTRIBUTE);
     element.removeAttribute(TEXT_ATTRIBUTE);
     element.removeAttribute(BORDER_ATTRIBUTE);

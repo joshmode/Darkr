@@ -1,10 +1,4 @@
-export const APPEARANCE_MODES = [
-  "original",
-  "dark",
-  "sepia",
-  "grayscale",
-  "warm",
-] as const;
+export const APPEARANCE_MODES = ["original", "dark", "sepia", "grayscale", "warm"] as const;
 
 export type AppearanceMode = (typeof APPEARANCE_MODES)[number];
 

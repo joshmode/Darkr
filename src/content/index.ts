@@ -5,10 +5,7 @@ import {
   themeConfigsEqual,
 } from "../shared/config";
 import { getBrowserApi, type ContentStatus } from "../shared/extension-api";
-import {
-  loadPreferences,
-  preferencesFromStorageChange,
-} from "../shared/preferences";
+import { loadPreferences, preferencesFromStorageChange } from "../shared/preferences";
 import type { DarkrPreferences, ThemeConfig } from "../shared/types";
 import { ThemeEngine } from "./theme-engine";
 
@@ -211,11 +208,7 @@ if (!window.__DARKR_CONTENT__) {
     { passive: true },
   );
 
-  window.addEventListener(
-    "pagehide",
-    () => engine.suspend(),
-    { passive: true },
-  );
+  window.addEventListener("pagehide", () => engine.suspend(), { passive: true });
 
   function schedulePreview(config: ThemeConfig): void {
     if (livePreviewTimer !== null) {

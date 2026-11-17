@@ -5,16 +5,31 @@
 // is removed here, so a fixed bug cannot stay marked as open.
 import process from "node:process";
 import {
-  assert, test, env, newPage, setPreferences, isThemed, waitThemed, settle, poll, holds,
-  contrastAgainstAncestor, colorOf, alphaOf, luminanceOf, knownBug,
+  assert,
+  test,
+  env,
+  newPage,
+  setPreferences,
+  isThemed,
+  waitThemed,
+  settle,
+  poll,
+  holds,
+  contrastAgainstAncestor,
+  colorOf,
+  alphaOf,
+  luminanceOf,
+  knownBug,
 } from "./harness.mjs";
 
 const HOST = "127.0.0.1";
 
 const KNOWN = {
-  "E-01": "text inside surfaces is mapped against the author's light background on first load (task A1)",
+  "E-01":
+    "text inside surfaces is mapped against the author's light background on first load (task A1)",
   "E-02": "transparent text is repainted opaque (task A2)",
-  "E-03": "frames resolve preferences from their own host, and srcdoc frames get no script (task A3)",
+  "E-03":
+    "frames resolve preferences from their own host, and srcdoc frames get no script (task A3)",
   "E-04": "Darkr writes attributes and inline styles into contenteditable content (task A4)",
   "E-05": "JS-driven inline styles make the engine strip theming every other frame (task A5)",
   "E-06": "tracking stops at 9,000 elements, leaving later cards light with light text (task B3)",
@@ -46,7 +61,10 @@ defect("E-01", "text inside header and card is readable on a fresh load", async 
   const page = await newPage("/e01-surfaces");
   await settle(page);
   for (const [selector, surface] of [
-    ["#head-text", "header"], ["#title", ".card"], ["#para", ".card"], ["#muted", ".card"],
+    ["#head-text", "header"],
+    ["#title", ".card"],
+    ["#para", ".card"],
+    ["#muted", ".card"],
   ]) {
     const ratio = await contrastAgainstAncestor(page, selector, surface);
     assert.ok(ratio >= 4.5, `${selector} on ${surface} is ${ratio.toFixed(2)}:1`);
@@ -79,7 +97,9 @@ defect("E-03", "a Never rule on the top site reaches a cross-host iframe", async
   const src = `${env.altOrigin}/e02-text`;
   const page = await newPage(`/e03-top?src=${encodeURIComponent(src)}`);
   await settle(page);
-  const frame = await poll(() => frameByHost(page, "localhost"), Boolean, { message: "viewer frame" });
+  const frame = await poll(() => frameByHost(page, "localhost"), Boolean, {
+    message: "viewer frame",
+  });
   await settle(frame); // control: themed while the top site is themed
   await setPreferences({}, { [HOST]: { policy: "block" } });
   await waitThemed(page, false);
@@ -90,15 +110,23 @@ defect("E-03", "a fresh load under a Never rule leaves the iframe unthemed", asy
   await setPreferences({}, { [HOST]: { policy: "block" } });
   const src = `${env.altOrigin}/e02-text`;
   const page = await newPage(`/e03-top?src=${encodeURIComponent(src)}`);
-  const frame = await poll(() => frameByHost(page, "localhost"), Boolean, { message: "viewer frame" });
+  const frame = await poll(() => frameByHost(page, "localhost"), Boolean, {
+    message: "viewer frame",
+  });
   await frame.waitForLoadState("load");
-  await holds(() => isThemed(frame), (v) => v === false, { message: "iframe stays unthemed" });
+  await holds(
+    () => isThemed(frame),
+    (v) => v === false,
+    { message: "iframe stays unthemed" },
+  );
 });
 
 defect("E-03", "a srcdoc iframe is themed when the top site is", async () => {
   const page = await newPage("/e03-top");
   await settle(page);
-  const frame = await poll(() => page.frames().find((f) => f.url() === "about:srcdoc"), Boolean, { message: "srcdoc frame" });
+  const frame = await poll(() => page.frames().find((f) => f.url() === "about:srcdoc"), Boolean, {
+    message: "srcdoc frame",
+  });
   await waitThemed(frame, true);
 });
 
@@ -140,23 +168,27 @@ defect("E-06", "cards beyond the element cap are themed", async () => {
       const card = document.querySelector(`#c${i}`);
       return { bg: getComputedStyle(card).backgroundColor };
     }, index);
-  await poll(() => state(11000), (s) => s.bg !== "rgb(250, 250, 250)", { timeout: 20000, message: "card 11000 to be themed" });
+  await poll(
+    () => state(11000),
+    (s) => s.bg !== "rgb(250, 250, 250)",
+    { timeout: 20000, message: "card 11000 to be themed" },
+  );
   for (const index of [5, 6000, 11000]) {
     assert.ok(luminanceOf((await state(index)).bg) < 0.2, `card ${index} is not dark`);
-    const ratio = await page.evaluate(
-      (i) => {
-        const parse = (v) => (v.match(/[\d.]+/g) ?? []).map(Number);
-        const lum = ([r, g, b]) => {
-          const c = (v) => { const x = v / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
-          return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
+    const ratio = await page.evaluate((i) => {
+      const parse = (v) => (v.match(/[\d.]+/g) ?? []).map(Number);
+      const lum = ([r, g, b]) => {
+        const c = (v) => {
+          const x = v / 255;
+          return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
         };
-        const p = document.querySelector(`#c${i} p`);
-        const a = lum(parse(getComputedStyle(p).color));
-        const b = lum(parse(getComputedStyle(p.parentElement).backgroundColor));
-        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-      },
-      index,
-    );
+        return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
+      };
+      const p = document.querySelector(`#c${i} p`);
+      const a = lum(parse(getComputedStyle(p).color));
+      const b = lum(parse(getComputedStyle(p.parentElement).backgroundColor));
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    }, index);
     assert.ok(ratio >= 4.5, `card ${index} text is ${ratio.toFixed(2)}:1`);
   }
 });
@@ -165,7 +197,11 @@ defect("E-06", "cards beyond the element cap are themed", async () => {
 defect("E-07", "role=dialog, buttons and inputs keep the author's intent", async () => {
   const page = await newPage("/e07-blanket");
   await settle(page);
-  assert.equal(alphaOf(await colorOf(page, "#overlay", "backgroundColor")), 0, "transparent overlay became opaque");
+  assert.equal(
+    alphaOf(await colorOf(page, "#overlay", "backgroundColor")),
+    0,
+    "transparent overlay became opaque",
+  );
   const bg = await colorOf(page, "#buy", "backgroundColor");
   const [r, , b] = bg.match(/[\d.]+/g).map(Number);
   assert.ok(b > r + 20, `button background lost its blue hue: ${bg}`);
@@ -191,7 +227,11 @@ defect("E-08", "borders are sampled and written per side", async () => {
   assert.equal(alphaOf(await colorOf(page, "#tri", "borderTopColor")), 0, "triangle top border");
   assert.equal(alphaOf(await colorOf(page, "#tri", "borderLeftColor")), 0, "triangle left border");
   assert.equal(alphaOf(await colorOf(page, "#ghost", "borderTopColor")), 0, "ghost border");
-  assert.notEqual(await colorOf(page, "#row", "borderBottomColor"), "rgb(238, 238, 238)", "row rule still #eee");
+  assert.notEqual(
+    await colorOf(page, "#row", "borderBottomColor"),
+    "rgb(238, 238, 238)",
+    "row rule still #eee",
+  );
 });
 
 // ---------------------------------------------------------------- E-09
@@ -201,13 +241,19 @@ defect("E-09", "text over gradients and translucent bars stays readable", async 
   const ratios = await page.evaluate(() => {
     const parse = (v) => (v.match(/[\d.]+/g) ?? []).map(Number);
     const lum = ([r, g, b]) => {
-      const c = (v) => { const x = v / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+      const c = (v) => {
+        const x = v / 255;
+        return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+      };
       return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
     };
     const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
     const body = parse(getComputedStyle(document.body).backgroundColor);
     const out = {};
-    for (const [text, box] of [["#gt", "#grad"], ["#bt", "#bar"]]) {
+    for (const [text, box] of [
+      ["#gt", "#grad"],
+      ["#bt", "#bar"],
+    ]) {
       const style = getComputedStyle(document.querySelector(box));
       const fg = parse(getComputedStyle(document.querySelector(text)).color);
       let stops;
@@ -231,9 +277,13 @@ defect("E-10", "a CSS-hover menu is themed when it opens", async () => {
   const page = await newPage("/e10-hover-menu");
   await settle(page);
   await page.hover("#nav");
-  await poll(() => page.evaluate(() => getComputedStyle(document.querySelector("#menu")).display), (v) => v === "block", {
-    message: "menu to open",
-  });
+  await poll(
+    () => page.evaluate(() => getComputedStyle(document.querySelector("#menu")).display),
+    (v) => v === "block",
+    {
+      message: "menu to open",
+    },
+  );
   await new Promise((done) => setTimeout(done, 300));
   assert.ok(luminanceOf(await colorOf(page, "#menu", "backgroundColor")) < 0.2, "menu is not dark");
   assert.ok((await contrastAgainstAncestor(page, "#mt", "#menu")) >= 4.5, "menu text contrast");
@@ -253,8 +303,13 @@ defect("E-11", "print media shows the author's colours", async () => {
 defect("E-12", "the theme returns after page code resets the root class", async () => {
   const page = await newPage("/e01-surfaces");
   await settle(page);
-  await page.evaluate(() => { document.documentElement.className = "x"; });
-  await poll(() => isThemed(page), Boolean, { timeout: 500, message: "theme after className reset" });
+  await page.evaluate(() => {
+    document.documentElement.className = "x";
+  });
+  await poll(() => isThemed(page), Boolean, {
+    timeout: 500,
+    message: "theme after className reset",
+  });
 });
 
 defect("E-12", "the theme returns after page code removes the stylesheet", async () => {

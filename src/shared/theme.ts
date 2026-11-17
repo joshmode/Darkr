@@ -67,11 +67,7 @@ function backgroundForDarkness(value: number): Rgb {
       return interpolateHex(start.color, end.color, amount);
     }
   }
-  return hexToRgb(DARK_BACKGROUND_ANCHORS.at(-1)?.color ?? "#a4a5aa") ?? rgb(
-    164,
-    165,
-    170,
-  );
+  return hexToRgb(DARK_BACKGROUND_ANCHORS.at(-1)?.color ?? "#a4a5aa") ?? rgb(164, 165, 170);
 }
 
 function primaryContrastForSetting(value: number): number {
@@ -94,12 +90,7 @@ function buildSemanticTokens(
 ): ThemeTokens {
   const direction = preferredTextDirection(background);
   const textBase = textBaseForDirection(direction);
-  const text = colorForContrast(
-    textBase,
-    background,
-    primaryContrast,
-    direction,
-  );
+  const text = colorForContrast(textBase, background, primaryContrast, direction);
   const muted = colorForContrast(
     mixRgb(text, background, 0.25),
     background,
@@ -127,11 +118,7 @@ function buildSemanticTokens(
   const linkTarget = Math.max(4.6, Math.min(primaryContrast, 8.5));
   const link = ensureContrast(accentBase, background, linkTarget, direction);
   const visitedBase =
-    mode === "dark"
-      ? rgb(191, 154, 235)
-      : mode === "sepia"
-        ? rgb(107, 58, 91)
-        : rgb(101, 66, 122);
+    mode === "dark" ? rgb(191, 154, 235) : mode === "sepia" ? rgb(107, 58, 91) : rgb(101, 66, 122);
   const visited = ensureContrast(visitedBase, background, linkTarget, direction);
   const selection =
     mode === "dark"
@@ -218,12 +205,7 @@ function buildWarmTokens(config: ThemeConfig): ThemeTokens {
   );
   const warmText = mixRgb(rgb(23, 22, 20), rgb(67, 42, 20), warmth * 0.72);
   tokens.text = ensureContrast(warmText, background, 8.5, "dark");
-  tokens.muted = ensureContrast(
-    mixRgb(warmText, background, 0.38),
-    background,
-    4.6,
-    "dark",
-  );
+  tokens.muted = ensureContrast(mixRgb(warmText, background, 0.38), background, 4.6, "dark");
   tokens.codeText = tokens.text;
   return tokens;
 }

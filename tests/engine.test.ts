@@ -216,9 +216,7 @@ describe("ThemeEngine", () => {
     document.getElementById("dynamic")!.append(editor);
     engine.apply(config({ mode: "dark" }));
     engine.flush();
-    expect(document.getElementById("token")!.hasAttribute("data-darkr-text")).toBe(
-      false,
-    );
+    expect(document.getElementById("token")!.hasAttribute("data-darkr-text")).toBe(false);
   });
 
   it("resumes after BFCache suspension", () => {
@@ -237,15 +235,11 @@ describe("ThemeEngine", () => {
     loadFixture("article");
     engine.apply(config({ mode: "dark", darkBackground: 0 }));
     engine.flush();
-    expect(document.documentElement.style.getPropertyValue("--darkr-bg")).toBe(
-      "#000000",
-    );
+    expect(document.documentElement.style.getPropertyValue("--darkr-bg")).toBe("#000000");
     expect(document.querySelector("#darkr-theme-styles")?.textContent).toContain(
       "background-color: var(--darkr-bg) !important",
     );
-    expect(
-      document.querySelector("#darkr-theme-styles")?.textContent,
-    ).toContain("--darkr-raised");
+    expect(document.querySelector("#darkr-theme-styles")?.textContent).toContain("--darkr-raised");
   });
 
   it("preserves accent hue on coloured surfaces", () => {
@@ -278,8 +272,12 @@ describe("ThemeEngine", () => {
     const card = document.getElementById("card")!;
     card.remove();
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect((engine as unknown as { inspections: Map<Element, unknown> }).inspections.has(card)).toBe(false);
-    expect((engine as unknown as { queuedElements: Set<Element> }).queuedElements.has(card)).toBe(false);
+    expect(
+      (engine as unknown as { inspections: Map<Element, unknown> }).inspections.has(card),
+    ).toBe(false);
+    expect((engine as unknown as { queuedElements: Set<Element> }).queuedElements.has(card)).toBe(
+      false,
+    );
   });
   it("prunes bookkeeping for shadow descendants of removed hosts", async () => {
     loadFixture("article");

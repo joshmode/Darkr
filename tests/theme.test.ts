@@ -39,7 +39,9 @@ describe("semantic theme tokens", () => {
     expect(nearBlack).not.toBeNull();
     expect(lightGrey).not.toBeNull();
     if (!nearBlack || !lightGrey) return;
-    expect(relativeLuminance(lightGrey.background)).toBeGreaterThan(relativeLuminance(nearBlack.background) + 0.2);
+    expect(relativeLuminance(lightGrey.background)).toBeGreaterThan(
+      relativeLuminance(nearBlack.background) + 0.2,
+    );
     expect(lightGrey.direction).toBe("dark");
     expect(contrastRatio(lightGrey.text, lightGrey.background)).toBeGreaterThanOrEqual(4.5);
   });
@@ -47,7 +49,9 @@ describe("semantic theme tokens", () => {
   it("keeps text contrast across the entire dark range", () => {
     for (let bg = 0; bg <= 100; bg += 5) {
       for (let contrast = 0; contrast <= 100; contrast += 10) {
-        const tokens = buildThemeTokens(config({ mode: "dark", darkBackground: bg, darkContrast: contrast }));
+        const tokens = buildThemeTokens(
+          config({ mode: "dark", darkBackground: bg, darkContrast: contrast }),
+        );
         expect(tokens).not.toBeNull();
         if (!tokens) continue;
         expect(contrastRatio(tokens.text, tokens.background)).toBeGreaterThanOrEqual(4.45);

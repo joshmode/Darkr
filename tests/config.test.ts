@@ -27,16 +27,14 @@ const warmConfig: ThemeConfig = {
 describe("domain matching", () => {
   it("normalizes case, whitespace, trailing dots, and www aliases", () => {
     expect(normalizeHostname(" WWW.Example.COM. ")).toBe("example.com");
-    expect(hostnamePreferenceKey(new URL("https://docs.example.com/path"))).toBe("docs.example.com");
+    expect(hostnamePreferenceKey(new URL("https://docs.example.com/path"))).toBe(
+      "docs.example.com",
+    );
     expect(normalizeHostname("not a host")).toBe("");
   });
 
   it("keeps subdomains independent", () => {
-    const preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      warmConfig,
-    );
+    const preferences = setSiteAppearance(normalizePreferences(null), "example.com", warmConfig);
     expect(resolveAppearance(preferences, "example.com").source).toBe("site");
     expect(resolveAppearance(preferences, "docs.example.com").source).toBe("defaults");
     expect(resolveAppearance(preferences, "www.example.com").source).toBe("site");

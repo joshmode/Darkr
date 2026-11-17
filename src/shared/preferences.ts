@@ -1,7 +1,4 @@
-import {
-  cloneDefaultPreferences,
-  normalizePreferences,
-} from "./config";
+import { cloneDefaultPreferences, normalizePreferences } from "./config";
 import type { DarkrPreferences } from "./types";
 
 export const PREFERENCES_STORAGE_KEY = "darkr.preferences.v1";
@@ -12,9 +9,7 @@ export interface StorageAreaLike {
   set(items: Record<string, unknown>): Promise<void>;
 }
 
-export async function loadPreferences(
-  storage: StorageAreaLike,
-): Promise<DarkrPreferences> {
+export async function loadPreferences(storage: StorageAreaLike): Promise<DarkrPreferences> {
   try {
     const stored = await storage.get(PREFERENCES_STORAGE_KEY);
     return normalizePreferences(stored[PREFERENCES_STORAGE_KEY]);
@@ -42,9 +37,7 @@ export function preferencesFromStorageChange(
   return normalizePreferences(change.newValue);
 }
 
-export async function needsOnboarding(
-  storage: StorageAreaLike,
-): Promise<boolean> {
+export async function needsOnboarding(storage: StorageAreaLike): Promise<boolean> {
   try {
     const stored = await storage.get(ONBOARDING_STORAGE_KEY);
     return stored[ONBOARDING_STORAGE_KEY] !== true;
@@ -53,8 +46,6 @@ export async function needsOnboarding(
   }
 }
 
-export async function completeOnboarding(
-  storage: StorageAreaLike,
-): Promise<void> {
+export async function completeOnboarding(storage: StorageAreaLike): Promise<void> {
   await storage.set({ [ONBOARDING_STORAGE_KEY]: true });
 }

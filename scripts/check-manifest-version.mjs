@@ -9,9 +9,7 @@ const packageJson = await read("package.json");
 const chrome = await read("src", "manifest.chrome.json");
 
 if (packageJson.version !== chrome.version) {
-  console.error(
-    `Version mismatch: package ${packageJson.version}, Chrome ${chrome.version}`,
-  );
+  console.error(`Version mismatch: package ${packageJson.version}, Chrome ${chrome.version}`);
   process.exitCode = 1;
 } else {
   console.log(`✓ versions aligned at ${chrome.version}`);

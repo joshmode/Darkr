@@ -26,25 +26,22 @@ describe("domain edge cases", () => {
 
 describe("partial domain overrides", () => {
   it("stores only fields that differ from defaults", () => {
-    const preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      { ...DEFAULT_THEME_CONFIG, mode: "sepia" },
-    );
+    const preferences = setSiteAppearance(normalizePreferences(null), "example.com", {
+      ...DEFAULT_THEME_CONFIG,
+      mode: "sepia",
+    });
     expect(preferences.sites["example.com"]?.overrides).toEqual({
       mode: "sepia",
     });
-    expect(resolveAppearance(preferences, "example.com").config.mode).toBe(
-      "sepia",
-    );
+    expect(resolveAppearance(preferences, "example.com").config.mode).toBe("sepia");
   });
 
   it("inherits later global changes for unstored values", () => {
-    let preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      { ...DEFAULT_THEME_CONFIG, mode: "sepia", sepiaIntensity: 90 },
-    );
+    let preferences = setSiteAppearance(normalizePreferences(null), "example.com", {
+      ...DEFAULT_THEME_CONFIG,
+      mode: "sepia",
+      sepiaIntensity: 90,
+    });
     preferences = {
       ...preferences,
       defaults: { ...preferences.defaults, darkBackground: 65 },
@@ -55,11 +52,9 @@ describe("partial domain overrides", () => {
   });
 
   it("does not create an empty site entry", () => {
-    const preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      { ...DEFAULT_THEME_CONFIG },
-    );
+    const preferences = setSiteAppearance(normalizePreferences(null), "example.com", {
+      ...DEFAULT_THEME_CONFIG,
+    });
     expect(preferences.sites).toEqual({});
   });
 
@@ -75,22 +70,17 @@ describe("partial domain overrides", () => {
 
 describe("site policies", () => {
   it("blocks a site independently of the global switch", () => {
-    const preferences = setSitePolicy(
-      normalizePreferences(null),
-      "example.com",
-      "block",
-    );
+    const preferences = setSitePolicy(normalizePreferences(null), "example.com", "block");
     expect(resolveAppearance(preferences, "example.com").enabled).toBe(false);
     expect(resolveAppearance(preferences, "example.com").policy).toBe("block");
     expect(resolveAppearance(preferences, "other.example").enabled).toBe(true);
   });
 
   it("allows a site while preserving an appearance override", () => {
-    let preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      { ...DEFAULT_THEME_CONFIG, mode: "warm" },
-    );
+    let preferences = setSiteAppearance(normalizePreferences(null), "example.com", {
+      ...DEFAULT_THEME_CONFIG,
+      mode: "warm",
+    });
     preferences = setSitePolicy(preferences, "example.com", "allow");
     const resolved = resolveAppearance(preferences, "example.com");
     expect(resolved.enabled).toBe(true);
@@ -99,25 +89,16 @@ describe("site policies", () => {
   });
 
   it("keeps a policy when appearance overrides reset", () => {
-    let preferences = setSitePolicy(
-      normalizePreferences(null),
-      "example.com",
-      "block",
-    );
-    preferences = setSiteAppearance(
-      preferences,
-      "example.com",
-      DEFAULT_THEME_CONFIG,
-    );
+    let preferences = setSitePolicy(normalizePreferences(null), "example.com", "block");
+    preferences = setSiteAppearance(preferences, "example.com", DEFAULT_THEME_CONFIG);
     expect(preferences.sites["example.com"]).toEqual({ policy: "block" });
   });
 
   it("removes a policy and appearance override together when requested", () => {
-    let preferences = setSiteAppearance(
-      normalizePreferences(null),
-      "example.com",
-      { ...DEFAULT_THEME_CONFIG, mode: "warm" },
-    );
+    let preferences = setSiteAppearance(normalizePreferences(null), "example.com", {
+      ...DEFAULT_THEME_CONFIG,
+      mode: "warm",
+    });
     preferences = setSitePolicy(preferences, "example.com", "allow");
     preferences = removeSiteRule(preferences, "example.com");
     expect(preferences.sites).toEqual({});
@@ -167,7 +148,10 @@ describe("site policy semantics", () => {
     expect(resolveAppearance(system, "example.com", { systemDark: true }).enabled).toBe(true);
     expect(resolveAppearance(system, "example.com", { systemDark: false }).enabled).toBe(false);
     expect(resolveAppearance(system, "example.com").enabled).toBe(true);
-    expect(resolveAppearance(setMasterEnabled(system, false), "example.com", { systemDark: true }).enabled).toBe(false);
+    expect(
+      resolveAppearance(setMasterEnabled(system, false), "example.com", { systemDark: true })
+        .enabled,
+    ).toBe(false);
     const always = setSitePolicy(system, "example.com", "allow");
     expect(resolveAppearance(always, "example.com", { systemDark: false }).enabled).toBe(true);
   });
@@ -216,7 +200,10 @@ describe("native dark override", () => {
   it("round-trips through normalization and rejects non-booleans", () => {
     const stored = normalizePreferences({
       overrideNativeDark: true,
-      sites: { "a.com": { policy: "auto", overrideNativeDark: false }, "b.com": { overrideNativeDark: "yes" } },
+      sites: {
+        "a.com": { policy: "auto", overrideNativeDark: false },
+        "b.com": { overrideNativeDark: "yes" },
+      },
     });
     expect(stored.overrideNativeDark).toBe(true);
     expect(stored.sites["a.com"]).toEqual({ policy: "auto", overrideNativeDark: false });

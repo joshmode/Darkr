@@ -87,10 +87,7 @@ export async function startEnvironment() {
   env.context = await chromium.launchPersistentContext(profile, {
     channel: "chromium",
     headless: true,
-    args: [
-      `--disable-extensions-except=${extensionPath}`,
-      `--load-extension=${extensionPath}`,
-    ],
+    args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
     viewport: { width: 1280, height: 900 },
   });
   env.context.on("page", (page) => {
@@ -122,7 +119,11 @@ export async function stopEnvironment() {
 }
 
 /** Retry `read` until `accept(value)` is true; fail with the last value. */
-export async function poll(read, accept = Boolean, { timeout = 5000, interval = 50, message = "condition" } = {}) {
+export async function poll(
+  read,
+  accept = Boolean,
+  { timeout = 5000, interval = 50, message = "condition" } = {},
+) {
   const end = Date.now() + timeout;
   let last;
   for (;;) {
@@ -140,7 +141,11 @@ export async function poll(read, accept = Boolean, { timeout = 5000, interval = 
 }
 
 /** Assert `read` keeps satisfying `accept` for `duration` ms (negative checks). */
-export async function holds(read, accept, { duration = 600, interval = 50, message = "condition" } = {}) {
+export async function holds(
+  read,
+  accept,
+  { duration = 600, interval = 50, message = "condition" } = {},
+) {
   const end = Date.now() + duration;
   do {
     const value = await read();
@@ -193,23 +198,33 @@ export const isThemed = (frameOrPage) =>
   frameOrPage.evaluate(() => document.documentElement.classList.contains("darkr-active"));
 
 export const waitThemed = (frameOrPage, themed = true, timeout = 5000) =>
-  poll(() => isThemed(frameOrPage), (v) => v === themed, {
-    timeout,
-    message: themed ? "page to be themed" : "page to be unthemed",
-  });
+  poll(
+    () => isThemed(frameOrPage),
+    (v) => v === themed,
+    {
+      timeout,
+      message: themed ? "page to be themed" : "page to be unthemed",
+    },
+  );
 
 /** Wait until the engine has finished its initial work on a themed page. */
 export async function settle(frameOrPage) {
   await waitThemed(frameOrPage);
-  await poll(() => frameOrPage.evaluate(() => !document.querySelector("#darkr-prepaint")), Boolean, {
-    message: "pre-paint hold to be released",
-  });
+  await poll(
+    () => frameOrPage.evaluate(() => !document.querySelector("#darkr-prepaint")),
+    Boolean,
+    {
+      message: "pre-paint hold to be released",
+    },
+  );
   // Two frames plus an idle slot cover the engine's rAF / idle batches.
   await frameOrPage.evaluate(
     () =>
       new Promise((done) => {
         const idle = window.requestIdleCallback ?? ((cb) => setTimeout(cb, 50));
-        requestAnimationFrame(() => requestAnimationFrame(() => idle(() => done(), { timeout: 300 })));
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => idle(() => done(), { timeout: 300 })),
+        );
       }),
   );
 }

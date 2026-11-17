@@ -20,8 +20,7 @@ export function rgb(r: number, g: number, b: number): Rgb {
 }
 
 export function rgbToHex(color: Rgb): string {
-  const channel = (value: number) =>
-    clampChannel(value).toString(16).padStart(2, "0");
+  const channel = (value: number) => clampChannel(value).toString(16).padStart(2, "0");
   return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
 }
 
@@ -64,11 +63,7 @@ export function hexToRgb(hex: string): Rgb | null {
  */
 export function parseCssColor(value: string): Rgba | null {
   const normalized = value.trim().toLowerCase();
-  if (
-    !normalized ||
-    normalized === "transparent" ||
-    normalized === "none"
-  ) {
+  if (!normalized || normalized === "transparent" || normalized === "none") {
     return null;
   }
 
@@ -78,8 +73,7 @@ export function parseCssColor(value: string): Rgba | null {
       return null;
     }
     const digits = normalized.slice(1);
-    const alpha =
-      digits.length === 8 ? Number.parseInt(digits.slice(6, 8), 16) / 255 : 1;
+    const alpha = digits.length === 8 ? Number.parseInt(digits.slice(6, 8), 16) / 255 : 1;
     return { ...parsed, a: alpha };
   }
 
@@ -121,19 +115,16 @@ function multiply(matrix: Matrix, v: readonly [number, number, number]): [number
 }
 
 const XYZ_D65_TO_LINEAR_SRGB: Matrix = [
-  3.2409699419, -1.5373831776, -0.4986107603,
-  -0.9692436363, 1.8759675015, 0.0415550574,
+  3.2409699419, -1.5373831776, -0.4986107603, -0.9692436363, 1.8759675015, 0.0415550574,
   0.0556300797, -0.2039769589, 1.0569715142,
 ];
 const XYZ_D50_TO_D65: Matrix = [
-  0.9555766, -0.0230393, 0.0631636,
-  -0.0282895, 1.0099416, 0.0210077,
-  0.0122982, -0.020483, 1.3299098,
+  0.9555766, -0.0230393, 0.0631636, -0.0282895, 1.0099416, 0.0210077, 0.0122982, -0.020483,
+  1.3299098,
 ];
 const LINEAR_P3_TO_XYZ_D65: Matrix = [
-  0.4865709486, 0.2656676932, 0.1982172852,
-  0.2289745641, 0.6917385218, 0.0792869141,
-  0, 0.0451133819, 1.0439443689,
+  0.4865709486, 0.2656676932, 0.1982172852, 0.2289745641, 0.6917385218, 0.0792869141, 0,
+  0.0451133819, 1.0439443689,
 ];
 
 function linearSrgbToRgb(linear: readonly [number, number, number], a: number): Rgba {
@@ -215,18 +206,33 @@ function parseModernColor(value: string): Rgba | null {
     const [x, y, z] = c as [number, number, number];
     switch (space) {
       case "srgb":
-        return { r: clampChannel(x * 255), g: clampChannel(y * 255), b: clampChannel(z * 255), a: alpha };
+        return {
+          r: clampChannel(x * 255),
+          g: clampChannel(y * 255),
+          b: clampChannel(z * 255),
+          a: alpha,
+        };
       case "srgb-linear":
         return linearSrgbToRgb([x, y, z], alpha);
       case "display-p3": {
-        const linear: [number, number, number] = [srgbToLinear(x * 255), srgbToLinear(y * 255), srgbToLinear(z * 255)];
-        return linearSrgbToRgb(multiply(XYZ_D65_TO_LINEAR_SRGB, multiply(LINEAR_P3_TO_XYZ_D65, linear)), alpha);
+        const linear: [number, number, number] = [
+          srgbToLinear(x * 255),
+          srgbToLinear(y * 255),
+          srgbToLinear(z * 255),
+        ];
+        return linearSrgbToRgb(
+          multiply(XYZ_D65_TO_LINEAR_SRGB, multiply(LINEAR_P3_TO_XYZ_D65, linear)),
+          alpha,
+        );
       }
       case "xyz":
       case "xyz-d65":
         return linearSrgbToRgb(multiply(XYZ_D65_TO_LINEAR_SRGB, [x, y, z]), alpha);
       case "xyz-d50":
-        return linearSrgbToRgb(multiply(XYZ_D65_TO_LINEAR_SRGB, multiply(XYZ_D50_TO_D65, [x, y, z])), alpha);
+        return linearSrgbToRgb(
+          multiply(XYZ_D65_TO_LINEAR_SRGB, multiply(XYZ_D50_TO_D65, [x, y, z])),
+          alpha,
+        );
       default:
         return null;
     }
@@ -264,25 +270,19 @@ function parseModernColor(value: string): Rgba | null {
 
 export function srgbToLinear(channel: number): number {
   const value = channel / 255;
-  return value <= 0.04045
-    ? value / 12.92
-    : Math.pow((value + 0.055) / 1.055, 2.4);
+  return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
 }
 
 export function linearToSrgb(value: number): number {
   const clamped = Math.max(0, Math.min(1, value));
   const encoded =
-    clamped <= 0.0031308
-      ? clamped * 12.92
-      : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+    clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
   return encoded * 255;
 }
 
 export function relativeLuminance(color: Rgb): number {
   return (
-    0.2126 * srgbToLinear(color.r) +
-    0.7152 * srgbToLinear(color.g) +
-    0.0722 * srgbToLinear(color.b)
+    0.2126 * srgbToLinear(color.r) + 0.7152 * srgbToLinear(color.g) + 0.0722 * srgbToLinear(color.b)
   );
 }
 
@@ -315,18 +315,9 @@ export function mixRgbContinuous(from: Rgb, to: Rgb, amount: number): Rgb {
 function mixLinear(from: Rgb, to: Rgb, amount: number): Rgb {
   const ratio = Math.max(0, Math.min(1, amount));
   return {
-    r: linearToSrgb(
-      srgbToLinear(from.r) +
-        (srgbToLinear(to.r) - srgbToLinear(from.r)) * ratio,
-    ),
-    g: linearToSrgb(
-      srgbToLinear(from.g) +
-        (srgbToLinear(to.g) - srgbToLinear(from.g)) * ratio,
-    ),
-    b: linearToSrgb(
-      srgbToLinear(from.b) +
-        (srgbToLinear(to.b) - srgbToLinear(from.b)) * ratio,
-    ),
+    r: linearToSrgb(srgbToLinear(from.r) + (srgbToLinear(to.r) - srgbToLinear(from.r)) * ratio),
+    g: linearToSrgb(srgbToLinear(from.g) + (srgbToLinear(to.g) - srgbToLinear(from.g)) * ratio),
+    b: linearToSrgb(srgbToLinear(from.b) + (srgbToLinear(to.b) - srgbToLinear(from.b)) * ratio),
   };
 }
 
@@ -389,9 +380,7 @@ export function colorForContrast(
   const lightTarget = (backgroundLuminance + 0.05) * ratio - 0.05;
   const darkTarget = (backgroundLuminance + 0.05) / ratio - 0.05;
   const targetLuminance =
-    direction === "light"
-      ? Math.min(1, lightTarget)
-      : Math.max(0, darkTarget);
+    direction === "light" ? Math.min(1, lightTarget) : Math.max(0, darkTarget);
 
   if (
     (direction === "light" && backgroundLuminance >= 0.92) ||

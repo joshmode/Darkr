@@ -22,12 +22,7 @@ import {
   savePreferences as writePreferences,
   type StorageAreaLike,
 } from "../shared/preferences";
-import type {
-  AppearanceMode,
-  DarkrPreferences,
-  SitePolicy,
-  ThemeConfig,
-} from "../shared/types";
+import type { AppearanceMode, DarkrPreferences, SitePolicy, ThemeConfig } from "../shared/types";
 import { relativeLuminance } from "../shared/color";
 import {
   buildThemeTokens,
@@ -160,9 +155,7 @@ function isSiteOverride(): boolean {
 }
 
 function hasSiteRule(): boolean {
-  return Boolean(
-    app.preferences && getSiteRule(app.preferences, app.hostname),
-  );
+  return Boolean(app.preferences && getSiteRule(app.preferences, app.hostname));
 }
 
 function renderMode(config: ThemeConfig): void {
@@ -184,9 +177,7 @@ function renderMode(config: ThemeConfig): void {
   view.grayscaleIntensity.value = String(config.grayscaleIntensity);
   view.warmth.value = String(config.warmth);
 
-  view.darkBackgroundValue.textContent = darknessDescription(
-    config.darkBackground,
-  );
+  view.darkBackgroundValue.textContent = darknessDescription(config.darkBackground);
   view.darkBackground.setAttribute(
     "aria-valuetext",
     `${darknessDescription(config.darkBackground)}, ${config.darkBackground} percent`,
@@ -197,11 +188,7 @@ function renderMode(config: ThemeConfig): void {
     `${contrastDescription(config.darkContrast)}, ${config.darkContrast} percent`,
   );
   view.sepiaValue.textContent =
-    config.sepiaIntensity < 35
-      ? "Subtle"
-      : config.sepiaIntensity < 70
-        ? "Paper"
-        : "Strong";
+    config.sepiaIntensity < 35 ? "Subtle" : config.sepiaIntensity < 70 ? "Paper" : "Strong";
   view.grayscaleValue.textContent =
     config.grayscaleIntensity >= 99 ? "Full" : `${config.grayscaleIntensity}%`;
   view.sepiaIntensity.setAttribute(
@@ -259,9 +246,9 @@ function renderStatus(): void {
         ? "Excluded from theming"
         : resolved.policy === "allow"
           ? "Always themed on this domain"
-      : siteOverride
-        ? "Saved for this domain"
-        : "Changes create a site rule";
+          : siteOverride
+            ? "Saved for this domain"
+            : "Changes create a site rule";
   const config = currentConfig();
   for (const button of view.policyButtons) {
     const active = button.dataset.policy === resolved.policy;
@@ -297,8 +284,7 @@ function renderStatus(): void {
     view.nativeDarkNotice.hidden = true;
   }
 
-  const canChangePage =
-    Boolean(app.tabId) && Boolean(app.hostname) && app.tabReachable;
+  const canChangePage = Boolean(app.tabId) && Boolean(app.hostname) && app.tabReachable;
   view.controls.classList.toggle("is-disabled", !canChangePage);
   view.permissionNotice.hidden = canChangePage || app.loading;
   for (const button of view.modeButtons) {
@@ -474,11 +460,7 @@ function bindSlider(
   input: HTMLInputElement,
   key: keyof Pick<
     ThemeConfig,
-    | "darkBackground"
-    | "darkContrast"
-    | "sepiaIntensity"
-    | "grayscaleIntensity"
-    | "warmth"
+    "darkBackground" | "darkContrast" | "sepiaIntensity" | "grayscaleIntensity" | "warmth"
   >,
 ): void {
   input.addEventListener("input", () => {
@@ -513,12 +495,7 @@ for (const button of view.modeButtons) {
     }
     event.preventDefault();
     const index = view.modeButtons.indexOf(button);
-    const delta =
-      event.key === "ArrowLeft"
-        ? -1
-        : event.key === "ArrowRight"
-          ? 1
-          : 0;
+    const delta = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
     const nextIndex =
       event.key === "Home"
         ? 0
@@ -537,10 +514,7 @@ view.enabled.addEventListener("click", async () => {
   if (!browser || !app.preferences) {
     return;
   }
-  app.preferences = setMasterEnabled(
-    app.preferences,
-    !app.preferences.enabled,
-  );
+  app.preferences = setMasterEnabled(app.preferences, !app.preferences.enabled);
   await savePreferences(browser.storage.local, app.preferences);
   render();
 });
@@ -628,8 +602,7 @@ view.settings.addEventListener("click", async () => {
 view.darkBackground.addEventListener("keydown", (event) => {
   if (event.key === "Home" || event.key === "End") {
     event.preventDefault();
-    view.darkBackground.value =
-      event.key === "Home" ? "0" : view.darkBackground.max;
+    view.darkBackground.value = event.key === "Home" ? "0" : view.darkBackground.max;
     view.darkBackground.dispatchEvent(new Event("input", { bubbles: true }));
   }
 });
@@ -656,10 +629,9 @@ async function initialize(): Promise<void> {
 
   if (app.tabId) {
     try {
-      app.pageStatus = await browser.tabs.sendMessage<ContentStatus>(
-        app.tabId,
-        { type: "darkr:get-status" },
-      );
+      app.pageStatus = await browser.tabs.sendMessage<ContentStatus>(app.tabId, {
+        type: "darkr:get-status",
+      });
       app.tabReachable = true;
     } catch {
       app.pageStatus = null;
@@ -672,9 +644,7 @@ async function initialize(): Promise<void> {
 
   // "Automatic" sites may follow the OS appearance; keep the status in step
   // while the popup is open. The popup's lifetime bounds this listener.
-  window
-    .matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", () => render());
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => render());
 
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "local") {

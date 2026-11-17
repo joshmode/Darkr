@@ -15,11 +15,9 @@ interface InstallApi {
   };
 }
 
-const api = (
-  globalThis as typeof globalThis & { browser?: InstallApi; chrome?: InstallApi }
-).browser ?? (
-  globalThis as typeof globalThis & { browser?: InstallApi; chrome?: InstallApi }
-).chrome;
+const api =
+  (globalThis as typeof globalThis & { browser?: InstallApi; chrome?: InstallApi }).browser ??
+  (globalThis as typeof globalThis & { browser?: InstallApi; chrome?: InstallApi }).chrome;
 
 if (api) {
   api.runtime.onInstalled.addListener((details) => {

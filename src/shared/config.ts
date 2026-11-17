@@ -28,10 +28,7 @@ export function roundSetting(value: number): number {
 }
 
 export function isAppearanceMode(value: unknown): value is AppearanceMode {
-  return (
-    typeof value === "string" &&
-    (APPEARANCE_MODES as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (APPEARANCE_MODES as readonly string[]).includes(value);
 }
 
 export function isAutoMode(value: unknown): value is AutoMode {
@@ -46,10 +43,7 @@ export function isSitePolicy(value: unknown): value is SitePolicy {
  * Looks up a site rule by own key only. Hostnames such as "constructor" are
  * valid and must not resolve to Object.prototype members.
  */
-export function getSiteRule(
-  preferences: DarkrPreferences,
-  host: string,
-): SiteRule | undefined {
+export function getSiteRule(preferences: DarkrPreferences, host: string): SiteRule | undefined {
   return Object.prototype.hasOwnProperty.call(preferences.sites, host)
     ? preferences.sites[host]
     : undefined;
@@ -94,10 +88,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function normalizeHostname(hostname: string): string {
-  const normalized = hostname
-    .trim()
-    .toLowerCase()
-    .replace(/\.$/, "");
+  const normalized = hostname.trim().toLowerCase().replace(/\.$/, "");
 
   if (/^\[[0-9a-f:.]+\]$/i.test(normalized)) {
     return normalized;
@@ -126,9 +117,7 @@ export function normalizeThemeConfig(
   fallback: ThemeConfig = DEFAULT_THEME_CONFIG,
 ): ThemeConfig {
   const candidate = isRecord(value) ? value : {};
-  const normalizedNumber = (
-    key: keyof Omit<ThemeConfig, "mode">,
-  ): number => {
+  const normalizedNumber = (key: keyof Omit<ThemeConfig, "mode">): number => {
     const current = candidate[key];
     if (typeof current === "number" && Number.isFinite(current)) {
       return roundSetting(current);
@@ -150,10 +139,7 @@ export function normalizePreferences(value: unknown): DarkrPreferences {
     return cloneDefaultPreferences();
   }
 
-  const defaults = normalizeThemeConfig(
-    value.defaults,
-    DEFAULT_THEME_CONFIG,
-  );
+  const defaults = normalizeThemeConfig(value.defaults, DEFAULT_THEME_CONFIG);
   const sites: Record<string, SiteRule> = {};
 
   if (isRecord(value.sites)) {
@@ -162,9 +148,7 @@ export function normalizePreferences(value: unknown): DarkrPreferences {
       if (!host || !isRecord(rawConfig)) {
         continue;
       }
-      const rawOverrides = isRecord(rawConfig.overrides)
-        ? rawConfig.overrides
-        : rawConfig;
+      const rawOverrides = isRecord(rawConfig.overrides) ? rawConfig.overrides : rawConfig;
       const normalized = normalizeThemeConfig(rawOverrides, defaults);
       const overrides: DomainPreferences = {};
       for (const key of [
@@ -219,10 +203,7 @@ export function cloneThemeConfig(config: ThemeConfig): ThemeConfig {
   return { ...config };
 }
 
-export function themeConfigsEqual(
-  left: ThemeConfig,
-  right: ThemeConfig,
-): boolean {
+export function themeConfigsEqual(left: ThemeConfig, right: ThemeConfig): boolean {
   return (
     left.mode === right.mode &&
     left.darkBackground === right.darkBackground &&
@@ -271,16 +252,11 @@ export function resolveAppearance(
   const overrides = rule?.overrides ?? {};
   const hasOverrides = Object.keys(overrides).length > 0;
   const automaticallyOn =
-    preferences.enabled &&
-    (preferences.autoMode === "globals" || environment.systemDark !== false);
+    preferences.enabled && (preferences.autoMode === "globals" || environment.systemDark !== false);
   return {
-    enabled:
-      policy === "block" ? false : policy === "allow" ? true : automaticallyOn,
+    enabled: policy === "block" ? false : policy === "allow" ? true : automaticallyOn,
     config: hasOverrides
-      ? normalizeThemeConfig(
-          { ...preferences.defaults, ...overrides },
-          preferences.defaults,
-        )
+      ? normalizeThemeConfig({ ...preferences.defaults, ...overrides }, preferences.defaults)
       : { ...preferences.defaults },
     overrideNativeDark: rule?.overrideNativeDark ?? preferences.overrideNativeDark,
     source: hasOverrides ? "site" : "defaults",
@@ -288,10 +264,7 @@ export function resolveAppearance(
   };
 }
 
-export function resolvedThemeConfig(
-  preferences: DarkrPreferences,
-  hostname: string,
-): ThemeConfig {
+export function resolvedThemeConfig(preferences: DarkrPreferences, hostname: string): ThemeConfig {
   return resolveAppearance(preferences, hostname).config;
 }
 
@@ -329,17 +302,10 @@ export function clearSiteAppearance(
   if (!host || !rule) {
     return preferences;
   }
-  return withRule(
-    preferences,
-    host,
-    composeRule(rule.policy, undefined, rule.overrideNativeDark),
-  );
+  return withRule(preferences, host, composeRule(rule.policy, undefined, rule.overrideNativeDark));
 }
 
-export function removeSiteRule(
-  preferences: DarkrPreferences,
-  hostname: string,
-): DarkrPreferences {
+export function removeSiteRule(preferences: DarkrPreferences, hostname: string): DarkrPreferences {
   const host = hostnamePreferenceKey(hostname);
   if (!host || !getSiteRule(preferences, host)) {
     return preferences;
@@ -427,24 +393,17 @@ export function setMasterEnabled(
   return { ...preferences, enabled };
 }
 
-export function restoreDefaultValues(
-  preferences: DarkrPreferences,
-): DarkrPreferences {
+export function restoreDefaultValues(preferences: DarkrPreferences): DarkrPreferences {
   return {
     ...preferences,
     defaults: { ...DEFAULT_THEME_CONFIG },
   };
 }
 
-export function clearAllSiteAppearances(
-  preferences: DarkrPreferences,
-): DarkrPreferences {
+export function clearAllSiteAppearances(preferences: DarkrPreferences): DarkrPreferences {
   return { ...preferences, sites: {} };
 }
 
-export function setAutoMode(
-  preferences: DarkrPreferences,
-  autoMode: AutoMode,
-): DarkrPreferences {
+export function setAutoMode(preferences: DarkrPreferences, autoMode: AutoMode): DarkrPreferences {
   return { ...preferences, autoMode };
 }

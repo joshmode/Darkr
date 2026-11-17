@@ -63,9 +63,7 @@ const staticFiles = [
 
 async function copyStatic() {
   await Promise.all(
-    staticFiles.map(([from, to]) =>
-      cp(path.join(source, from), path.join(output, to)),
-    ),
+    staticFiles.map(([from, to]) => cp(path.join(source, from), path.join(output, to))),
   );
   await cp(path.join(source, "images"), path.join(output, "images"), {
     recursive: true,
@@ -73,16 +71,11 @@ async function copyStatic() {
 
   const manifest = JSON.parse(await readFile(manifestSource, "utf8"));
   manifest.version = process.env.DARKR_VERSION ?? manifest.version;
-  await writeFile(
-    path.join(output, "manifest.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
-  );
+  await writeFile(path.join(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
 async function verifyOutput() {
-  const manifest = JSON.parse(
-    await readFile(path.join(output, "manifest.json"), "utf8"),
-  );
+  const manifest = JSON.parse(await readFile(path.join(output, "manifest.json"), "utf8"));
   const required = [
     ...(manifest.background?.scripts ?? []),
     manifest.background?.service_worker,
@@ -92,9 +85,7 @@ async function verifyOutput() {
     ...Object.values(manifest.icons ?? {}),
     ...Object.values(manifest.action?.default_icon ?? {}),
   ].filter(Boolean);
-  const missing = required.filter(
-    (file) => !existsSync(path.join(output, file)),
-  );
+  const missing = required.filter((file) => !existsSync(path.join(output, file)));
   if (missing.length) {
     throw new Error(`Missing web extension resources: ${missing.join(", ")}`);
   }
@@ -110,14 +101,10 @@ await mkdir(output, { recursive: true });
 await copyStatic();
 
 if (watch) {
-  const contexts = await Promise.all(
-    entries.map((options) => context({ ...shared, ...options })),
-  );
+  const contexts = await Promise.all(entries.map((options) => context({ ...shared, ...options })));
   await Promise.all(contexts.map((buildContext) => buildContext.watch()));
   console.log(`Watching TypeScript → ${path.relative(process.cwd(), output)}`);
 } else {
-  await Promise.all(
-    entries.map((options) => build({ ...shared, ...options })),
-  );
+  await Promise.all(entries.map((options) => build({ ...shared, ...options })));
   await verifyOutput();
 }
