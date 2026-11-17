@@ -30,6 +30,8 @@ if (!window.__DARKR_CONTENT__) {
   // Whether stored preferences currently allow theming this page. Popup
   // previews must not override a paused extension or a blocked site.
   let themingAllowed = false;
+  // Set once the extension context is invalidated (reload/update).
+  let orphaned = false;
 
   // Preferences are resolved against the top-level site for every frame, so a
   // site's rule (or Never) also governs the frames it embeds. In a subframe the
@@ -64,7 +66,9 @@ if (!window.__DARKR_CONTENT__) {
   let prepaintStyle: HTMLStyleElement | null = null;
   let prepaintTimer: number | null = null;
   const holdPainting = (): void => {
-    if (!browser || !document.documentElement) {
+    // Subframes (ads, embeds, viewers) are not held: only the top document
+    // flashes visibly, and hiding every frame delays unrelated content.
+    if (!browser || !isTopFrame || !document.documentElement) {
       return;
     }
     prepaintStyle = document.createElement("style");
@@ -111,7 +115,8 @@ if (!window.__DARKR_CONTENT__) {
   };
 
   const applyResolvedPreferences = async (): Promise<void> => {
-    if (!browser) {
+    teardownIfOrphaned();
+    if (!browser || orphaned) {
       return;
     }
     const [preferences] = await Promise.all([
@@ -250,6 +255,24 @@ if (!window.__DARKR_CONTENT__) {
     },
     { passive: true },
   );
+
+  // After an extension reload or update this script is orphaned: its storage
+  // and messaging calls throw and it never hears about preference changes.
+  // Detect that on the next sign of life, put the page back and stop.
+  function teardownIfOrphaned(): void {
+    if (orphaned || !browser || browser.runtime.id) {
+      return;
+    }
+    orphaned = true;
+    engine.destroy();
+    currentConfig = null;
+    themingAllowed = false;
+    releasePainting();
+    document.removeEventListener("visibilitychange", teardownIfOrphaned);
+    window.removeEventListener("focus", teardownIfOrphaned);
+  }
+  document.addEventListener("visibilitychange", teardownIfOrphaned);
+  window.addEventListener("focus", teardownIfOrphaned);
 
   window.addEventListener("pagehide", () => engine.suspend(), { passive: true });
 
