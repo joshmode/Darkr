@@ -7,7 +7,7 @@ Reviewed at commit `15d2a9f` (17 Nov 2026). Scope: everything under `src/`, `tes
 - Severity: **P0** breaks the core promise on ordinary pages · **P1** visible breakage on common patterns, or data leaving the page altered · **P2** robustness, performance, UX friction · **P3** cleanup.
 - Evidence: **[repro]** means I loaded the built extension in headless Chromium against a small fixture page and measured the result. **[code]** means it follows from reading the source and was not run.
 
-**Status.** E-01, E-02, E-03 and E-08 are fixed (commit hashes on each entry; the Phase 0 e2e cases for them now pass). E-04…E-07, E-09…E-12 and E-15 have expected-fail cases in `tests/e2e/defects.cases.mjs` awaiting their tasks.
+**Status.** Fixed (commit on each entry): E-01…E-13, E-15, E-21, E-24. Still open: E-14, E-16…E-20, E-22, E-23, all U-* findings and the release items. The Phase 0 e2e suite has no expected-fail cases left.
 
 Baseline: `npm run check` passes (typecheck, 87 unit tests, package, manifest checks). I did not run `npm run test:e2e` or `test:perf`. Nothing in the repo was changed apart from adding this file and `HANDBOOK.md`.
 
@@ -70,7 +70,7 @@ It also erases hierarchy: muted `#666` and primary `#111` text come out identica
 
 **E-03 · Frames ignore the top site's rule [repro].** See section 2. Related: `about:blank`, `srcdoc`, `blob:` and `data:` frames get no content script at all (no `match_about_blank` / `match_origin_as_fallback` in the manifest), so they stay white inside a dark page. Measured: a `srcdoc` iframe was not themed. **Fixed in `df4c6bf`.**
 
-**E-04 · Darkr writes into editable content [repro].**
+**E-04 · Darkr writes into editable content [repro].** **Fixed in `3cc6b4f`.**
 Only four code editors are protected ([:148-152](src/content/theme-engine.ts:148)). Inside a plain `contenteditable`, children came back as:
 
 ```html
@@ -79,13 +79,13 @@ Only four code editors are protected ([:148-152](src/content/theme-engine.ts:148
 
 Webmail composers, CMS editors and note apps serialise that HTML. The attributes and inline properties end up in sent emails and saved documents. It also fights editors that watch their own DOM (ProseMirror, Slate, Lexical).
 
-**E-05 · Elements with JS-driven inline styles flicker [repro].**
+**E-05 · Elements with JS-driven inline styles flicker [repro].** **Fixed in `5156c4b`.**
 Any change to an element's `style` attribute changes its "host style signature", which makes the engine strip its theming and re-queue it ([:1000-1012](src/content/theme-engine.ts:1000)). The signature includes every property, not just colours. An element animated with `style.transform` every frame was unthemed in **60 of 120 frames**. Carousels, sticky headers, virtual scrollers and progress bars all do this.
 
-**E-06 · Past the element cap, pages become unreadable [repro].**
+**E-06 · Past the element cap, pages become unreadable [repro].** **Fixed in `0dbcd3a` — (cap removed; viewport-first scheduling still open, task B3).**
 Tracking stops at 9,000 inspected elements ([:41](src/content/theme-engine.ts:41), [:724-731](src/content/theme-engine.ts:724)); the initial queue is cut at the same number. On a 12,000-card page, cards past the cap kept `rgb(250,250,250)` backgrounds while their text inherited Darkr's light colour: light on light. Long threads, docs pages and diffs hit this.
 
-**E-07 · Blanket `!important` rules override the page regardless of what was there [repro].**
+**E-07 · Blanket `!important` rules override the page regardless of what was there [repro].** **Fixed in `7a7d1e2`.**
 From `buildDocumentCss` ([:306-359](src/content/theme-engine.ts:306)):
 
 - `a { color: link }` forces every link to one colour. A white-on-blue "Buy now" button became link-blue text on dark navy; nav bars, logos and footers lose their own colours.
@@ -101,20 +101,20 @@ From `buildDocumentCss` ([:306-359](src/content/theme-engine.ts:306)):
 - `border: 1px solid transparent` (used to reserve space) became a visible border.
 - A CSS triangle (three transparent sides, one coloured) had all four sides painted, turning it into a square.
 
-**E-09 · Gradient and translucent backgrounds are ignored but their text is still lightened [repro].**
+**E-09 · Gradient and translucent backgrounds are ignored but their text is still lightened [repro].** **Fixed in `2413691` — (minimum bar only; full gradient remapping is Phase B).**
 Only `background-color` with alpha ≥ 0.82 counts as a surface. A `linear-gradient(#fff, #eee)` header and an `rgba(255,255,255,.7)` bar both stayed light while their text was mapped to `rgb(179,179,179)`.
 
-**E-10 · Content revealed by CSS alone is half-themed [repro].**
+**E-10 · Content revealed by CSS alone is half-themed [repro].** **Fixed in `2413691`.**
 Hidden elements are skipped ([:733-736](src/content/theme-engine.ts:733)) and only `class`, `hidden`, `open` and `style` mutations are watched. A `:hover` dropdown opened with a white background and light text. Menus driven by `aria-expanded` or `data-state` have the same gap when they do not mount new nodes.
 
-**E-11 · Printing uses the dark theme [repro].**
+**E-11 · Printing uses the dark theme [repro].** **Fixed in `bfd3b24`.**
 No rule is scoped to `screen`. Under print media the body stayed `rgb(21,22,25)` with light text. Browsers drop backgrounds when printing by default, so the output is pale grey text on white paper.
 
-**E-12 · The theme can be knocked out by ordinary page code and does not recover [repro].**
+**E-12 · The theme can be knocked out by ordinary page code and does not recover [repro].** **Fixed in `19c1f2f`.**
 - `document.documentElement.className = "…"` removes `darkr-active`; the page went back to white. The observer deliberately ignores the root element ([:1026-1027](src/content/theme-engine.ts:1026)).
 - Removing the `<style id="darkr-theme-styles">` node (head-managing libraries do this) had the same effect; nothing reinstalls it.
 
-**E-13 · Native-dark detection runs once and never again [code].**
+**E-13 · Native-dark detection runs once and never again [code].** **Fixed in `19c1f2f`.**
 The result is cached at first apply ([:471-475](src/content/theme-engine.ts:471)) and refreshed only at DOMContentLoaded. A site that applies its dark theme from JS after that, or whose user toggles the site's own theme, is mis-classified until reload. Root `class` changes are ignored and `data-theme`-style attributes are not observed. Detection also looks only at `html`/`body` backgrounds, so apps that paint a full-page wrapper are missed.
 
 ### P2
@@ -122,7 +122,7 @@ The result is cached at first apply ([:471-475](src/content/theme-engine.ts:471)
 **E-14 · Late-inspected elements sample Darkr's own colours [code, consistent with repro].**
 Everything after the first 700 elements is inspected with the theme already active, so `getComputedStyle` returns Darkr's forced body colour, input background and so on instead of the author's. On the long test page inherited text came out `rgb(224,222,217)` for late elements; early ones use a different contrast target. `readAuthorStyles` exists but is used only on the resample path.
 
-**E-15 · `SKIP_SUBTREES` skips neither subtrees nor SVG [repro for tag case].**
+**E-15 · `SKIP_SUBTREES` skips neither subtrees nor SVG [repro for tag case].** **Fixed in `1753546` — (SVG mapped; subtree skipping still open, task B4).**
 The set is consulted only for the element itself, and the traversal still descends. `tagName` for inline SVG is lowercase `svg`, so `"SVG"` and `"MATH"` never match. Every `<path>` is inspected and counts against the cap. Separately, SVG `fill`/`stroke` colours are never mapped: a `#111` icon stayed `#111` on the dark page.
 
 **E-16 · Shadow DOM [code].**
@@ -143,7 +143,7 @@ Each inline custom property it sets produces a `style` mutation record that is t
 **E-20 · Pseudo-elements are out of reach [code].**
 `::before`/`::after` backgrounds and borders (custom checkboxes, dividers, overlays) keep their light colours. This is inherent to sampling elements.
 
-**E-21 · Forced-colors mode [code].**
+**E-21 · Forced-colors mode [code].** **Fixed in `bfd3b24`.**
 Only the grayscale filter stands down under `forced-colors: active`; the semantic theme still applies over the user's high-contrast palette.
 
 **E-22 · Pre-paint hold applies to every frame of every page [code].**
@@ -152,7 +152,7 @@ Only the grayscale filter stands down under `forced-colors: active`; the semanti
 **E-23 · No handling of extension reload/update [code].**
 Old content scripts are orphaned (their storage calls throw) but keep observing. Already-open tabs get no script on install, so the popup says "reload this page" on the first thing a new user tries.
 
-**E-24 · Hostnames the pattern rejects are themed but uncontrollable [code].**
+**E-24 · Hostnames the pattern rejects are themed but uncontrollable [code].** **Fixed in `26fdf9b`.**
 A host with an underscore normalises to `""`; the content script falls through to Automatic while the popup shows "Unavailable on this page".
 
 ### P3
