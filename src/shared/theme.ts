@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   colorForContrast,
   contrastRatio,
@@ -290,22 +291,22 @@ export function tokenContrastSummary(tokens: ThemeTokens): {
 }
 
 export function warmthDescription(value: number): string {
-  if (value <= 5) return "Original";
-  if (value < 35) return "Subtle";
-  if (value < 70) return "Creamy";
-  return "Warm ivory";
+  if (value <= 5) return t("warmthOriginal", "Original");
+  if (value < 35) return t("levelSubtle", "Subtle");
+  if (value < 70) return t("warmthCreamy", "Creamy");
+  return t("warmthIvory", "Warm ivory");
 }
 
 export function darknessDescription(value: number): string {
-  if (value <= 3) return "OLED black";
-  if (value < 18) return "Near black";
-  if (value < 45) return "Charcoal";
-  if (value < 72) return "Dark grey";
-  return "Light grey";
+  if (value <= 3) return t("darkOled", "OLED black");
+  if (value < 18) return t("darkNearBlack", "Near black");
+  if (value < 45) return t("darkCharcoal", "Charcoal");
+  if (value < 72) return t("darkGrey", "Dark grey");
+  return t("darkLightGrey", "Light grey");
 }
 
 export function contrastDescription(value: number): string {
-  if (value < 30) return "Soft";
-  if (value < 70) return "Balanced";
-  return "High";
+  if (value < 30) return t("contrastSoft", "Soft");
+  if (value < 70) return t("contrastBalanced", "Balanced");
+  return t("contrastHigh", "High");
 }

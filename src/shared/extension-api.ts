@@ -41,6 +41,7 @@ export interface BrowserApi {
       ): void;
     };
   };
+  i18n?: { getMessage(key: string, substitutions?: string[]): string };
   tabs: {
     reload(tabId: number): Promise<void>;
     query(query: {

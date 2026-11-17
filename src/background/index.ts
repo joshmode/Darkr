@@ -1,5 +1,6 @@
 import { hostnamePreferenceKey, setMasterEnabled, toggleSiteEnabled } from "../shared/config";
 import { hostnameFromUrl, type PageState } from "../shared/extension-api";
+import { t } from "../shared/i18n";
 import {
   loadPreferences,
   needsOnboarding,
@@ -54,12 +55,14 @@ interface BackgroundApi {
 const scope = globalThis as typeof globalThis & { browser?: BackgroundApi; chrome?: BackgroundApi };
 const api = scope.browser ?? scope.chrome;
 
-const TITLES: Record<PageState, string> = {
-  on: "Darkr — on for this site",
-  "off-site": "Darkr — off for this site",
-  paused: "Darkr — paused everywhere",
-  unavailable: "Darkr — unavailable on this page",
-};
+const titleFor = (state: PageState): string =>
+  state === "on"
+    ? t("badgeOn", "Darkr — on for this site")
+    : state === "off-site"
+      ? t("badgeOffSite", "Darkr — off for this site")
+      : state === "paused"
+        ? t("badgePaused", "Darkr — paused everywhere")
+        : t("badgeUnavailable", "Darkr — unavailable on this page");
 
 async function showState(tabId: number, state: PageState): Promise<void> {
   const action = api?.action;
@@ -70,7 +73,7 @@ async function showState(tabId: number, state: PageState): Promise<void> {
   try {
     await action.setBadgeText({ tabId, text: badge });
     await action.setBadgeBackgroundColor?.({ tabId, color: "#5c5f62" });
-    await action.setTitle?.({ tabId, title: TITLES[state] });
+    await action.setTitle?.({ tabId, title: titleFor(state) });
   } catch {
     // The tab may have closed; nothing to show.
   }

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
-    <title>Welcome to Darkr</title>
+    <title data-i18n="welcomeWelcomeToDarkr">Welcome to Darkr</title>
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="welcome.css" />
   </head>
@@ -12,42 +12,42 @@
     <main class="welcome">
       <header class="hero">
         <img src="images/icon-128.png" width="56" height="56" alt="" aria-hidden="true" />
-        <h1>Welcome to Darkr</h1>
-        <p class="lede">Darkr restyles the pages you read into Dark, Sepia, Grayscale or Warm Light — entirely on your device.</p>
+        <h1 data-i18n="welcomeWelcomeToDarkr">Welcome to Darkr</h1>
+        <p class="lede" data-i18n="welcomeDarkrRestylesThePages">Darkr restyles the pages you read into Dark, Sepia, Grayscale or Warm Light — entirely on your device.</p>
       </header>
 
       <section class="card" aria-labelledby="try-heading">
-        <h2 id="try-heading">Try it</h2>
-        <div id="mode-picker" class="segmented" role="radiogroup" aria-label="Sample appearance" style="--segment-count: 4">
-          <button class="mode-button is-selected" type="button" role="radio" aria-checked="true" data-mode="dark"><span>Dark</span></button>
-          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="sepia"><span>Sepia</span></button>
-          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="grayscale"><span>Gray</span></button>
-          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="warm"><span>Warm</span></button>
+        <h2 id="try-heading" data-i18n="welcomeTryIt">Try it</h2>
+        <div id="mode-picker" class="segmented" role="radiogroup" aria-label="Sample appearance" style="--segment-count: 4" data-i18n-attrs="aria-label:welcomeSampleAppearance">
+          <button class="mode-button is-selected" type="button" role="radio" aria-checked="true" data-mode="dark"><span data-i18n="welcomeDark">Dark</span></button>
+          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="sepia"><span data-i18n="welcomeSepia">Sepia</span></button>
+          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="grayscale"><span data-i18n="welcomeGray">Gray</span></button>
+          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="warm"><span data-i18n="welcomeWarm">Warm</span></button>
         </div>
         <article id="sample" class="sample">
-          <h3>A calm reading surface</h3>
-          <p>Readability comes from predictable contrast and restrained colour. <a href="#sample">A sample link</a> and <span class="muted-line">some quieter supporting text</span>.</p>
+          <h3 data-i18n="welcomeACalmReadingSurface">A calm reading surface</h3>
+          <p>Readability comes from predictable contrast and restrained colour. <a href="#sample" data-i18n="welcomeASampleLink">A sample link</a> and <span class="muted-line" data-i18n="welcomeSomeQuieterSupportingText">some quieter supporting text</span>.</p>
         </article>
       </section>
 
       <section class="card" aria-labelledby="start-heading">
-        <h2 id="start-heading">Getting started</h2>
+        <h2 id="start-heading" data-i18n="welcomeGettingStarted">Getting started</h2>
         <ol class="steps">
-          <li><strong>Pin the icon.</strong> Open the puzzle-piece menu in your toolbar and pin Darkr so the switch is one click away.</li>
-          <li><strong>Reload open tabs.</strong> Pages that were open before you installed Darkr need a reload before they can be themed.</li>
-          <li><strong>Use the switch.</strong> The popup turns Darkr on or off for the site you're on, and changes appearance for this site or all sites.</li>
-          <li><strong>Shortcuts.</strong> <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> toggles the current site, <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> pauses everywhere. You can change them in your browser's extension shortcuts page.</li>
+          <li data-i18n-rich="welcomeStepPin"><strong>Pin the icon.</strong> Open the puzzle-piece menu in your toolbar and pin Darkr so the switch is one click away.</li>
+          <li data-i18n-rich="welcomeStepOpenTabs"><strong>Tabs already open.</strong> Darkr loads into open tabs when it is installed. If one still looks unchanged, reload it.</li>
+          <li data-i18n-rich="welcomeStepSwitch"><strong>Use the switch.</strong> The popup turns Darkr on or off for the site you're on, and changes appearance for this site or all sites.</li>
+          <li data-i18n-rich="welcomeStepShortcuts"><strong>Shortcuts.</strong> <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> toggles the current site, <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> pauses everywhere. You can change them in your browser's extension shortcuts page.</li>
         </ol>
       </section>
 
       <section class="card" aria-labelledby="privacy-heading">
-        <h2 id="privacy-heading">Private by design</h2>
-        <p>Darkr makes no network requests and collects nothing: no analytics, accounts, page text or browsing history. Your settings stay in local extension storage.</p>
+        <h2 id="privacy-heading" data-i18n="welcomePrivateByDesign">Private by design</h2>
+        <p data-i18n="welcomeDarkrMakesNoNetwork">Darkr makes no network requests and collects nothing: no analytics, accounts, page text or browsing history. Your settings stay in local extension storage.</p>
       </section>
 
       <footer class="actions">
-        <button id="open-settings" class="text-button" type="button">Open settings</button>
-        <button id="done" class="text-button text-button--solid" type="button">Got it</button>
+        <button id="open-settings" class="text-button" type="button" data-i18n="welcomeOpenSettings">Open settings</button>
+        <button id="done" class="text-button text-button--solid" type="button" data-i18n="welcomeGotIt">Got it</button>
       </footer>
     </main>
     <script type="module" src="welcome.js"></script>

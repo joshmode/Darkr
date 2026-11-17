@@ -14,6 +14,7 @@ import {
   setSitePolicy,
 } from "../shared/config";
 import { getBrowserApi } from "../shared/extension-api";
+import { localizeDocument, t } from "../shared/i18n";
 import {
   completeOnboarding,
   loadPreferences,
@@ -37,6 +38,7 @@ import {
 } from "../shared/types";
 import { PREFERENCES_STORAGE_KEY } from "../shared/preferences";
 
+localizeDocument();
 const browser = getBrowserApi();
 let preferences: DarkrPreferences | null = null;
 let saveTimer: number | null = null;
@@ -154,9 +156,13 @@ function renderDefaults(config: ThemeConfig): void {
   backgroundValue.textContent = darknessDescription(config.darkBackground);
   contrastValue.textContent = contrastDescription(config.darkContrast);
   sepiaValue.textContent =
-    config.sepiaIntensity < 35 ? "Subtle" : config.sepiaIntensity < 70 ? "Paper" : "Strong";
+    config.sepiaIntensity < 35
+      ? t("levelSubtle", "Subtle")
+      : config.sepiaIntensity < 70
+        ? t("levelPaper", "Paper")
+        : t("levelStrong", "Strong");
   grayscaleValue.textContent =
-    config.grayscaleIntensity >= 99 ? "Full" : `${config.grayscaleIntensity}%`;
+    config.grayscaleIntensity >= 99 ? t("levelFull", "Full") : `${config.grayscaleIntensity}%`;
   warmthValue.textContent = warmthDescription(config.warmth);
   for (const input of [background, contrast, sepia, grayscale, warmth]) {
     setSliderProgress(input);
@@ -170,16 +176,17 @@ function renderDefaults(config: ThemeConfig): void {
 
 function describeConfig(config: ThemeConfig): string {
   if (config.mode === "dark") {
-    return `Dark · ${darknessDescription(config.darkBackground)} · ${contrastDescription(config.darkContrast)} contrast`;
+    const level = contrastDescription(config.darkContrast);
+    return `${t("optModeDarkLabel", "Dark")} · ${darknessDescription(config.darkBackground)} · ${t("optContrastSuffix", `${level} contrast`, level)}`;
   }
   if (config.mode === "sepia") {
-    return `Sepia · ${config.sepiaIntensity}% intensity`;
+    return `${t("optModeSepiaLabel", "Sepia")} · ${t("optIntensity", `${config.sepiaIntensity}% intensity`, String(config.sepiaIntensity))}`;
   }
   if (config.mode === "grayscale") {
-    return `Grayscale · ${config.grayscaleIntensity >= 99 ? "Full" : `${config.grayscaleIntensity}%`}`;
+    return `${t("optModeGrayLabel", "Grayscale")} · ${config.grayscaleIntensity >= 99 ? t("levelFull", "Full") : `${config.grayscaleIntensity}%`}`;
   }
   if (config.mode === "warm") {
-    return `Warm Light · ${warmthDescription(config.warmth)}`;
+    return `${t("optModeWarmLabel", "Warm Light")} · ${warmthDescription(config.warmth)}`;
   }
   return MODE_LABELS[config.mode];
 }
@@ -196,7 +203,7 @@ function renderSites(): void {
   sitesList.replaceChildren();
   sitesEmpty.hidden = entries.length > 0;
   sitesEmpty.querySelector("p")!.textContent =
-    total === 0 ? "No site rules yet." : "No rules match.";
+    total === 0 ? t("optNoRules", "No site rules yet.") : t("optNoMatch", "No rules match.");
   clearSites.disabled = total === 0;
 
   for (const [host, rule] of entries) {
@@ -213,14 +220,14 @@ function renderSites(): void {
     detail.className = "site-row-detail";
     const base =
       rule.policy === "block"
-        ? "Never theme"
+        ? t("optNeverTheme", "Never theme")
         : rule.policy === "allow"
-          ? `Always · ${describeConfig(resolved.config)}`
-          : `${describeConfig(resolved.config)} · Automatic`;
+          ? `${t("optAlways", "Always")} · ${describeConfig(resolved.config)}`
+          : `${describeConfig(resolved.config)} · ${t("optAutomatic", "Automatic")}`;
     detail.textContent =
       rule.overrideNativeDark === undefined || rule.policy === "block"
         ? base
-        : `${base} · ${rule.overrideNativeDark ? "over native dark" : "native dark kept"}`;
+        : `${base} · ${rule.overrideNativeDark ? t("optOverNativeDark", "over native dark") : t("optNativeDarkKept", "native dark kept")}`;
     copy.append(hostname, detail);
 
     const actions = document.createElement("div");
@@ -228,11 +235,11 @@ function renderSites(): void {
 
     const policy = document.createElement("select");
     policy.className = "select site-row-policy";
-    policy.setAttribute("aria-label", `Policy for ${host}`);
+    policy.setAttribute("aria-label", t("optPolicyFor", `Policy for ${host}`, host));
     const policies: Array<[SitePolicy, string]> = [
-      ["auto", "Automatic"],
-      ["allow", "Always"],
-      ["block", "Never"],
+      ["auto", t("optAutomatic", "Automatic")],
+      ["allow", t("optAlways", "Always")],
+      ["block", t("optNever", "Never")],
     ];
     for (const [value, label] of policies) {
       const option = document.createElement("option");
@@ -252,8 +259,8 @@ function renderSites(): void {
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "text-button";
-    remove.textContent = "Remove";
-    remove.setAttribute("aria-label", `Remove site rule for ${host}`);
+    remove.textContent = t("optRemove", "Remove");
+    remove.setAttribute("aria-label", t("optRemoveRuleFor", `Remove site rule for ${host}`, host));
     remove.addEventListener("click", () => {
       if (!preferences) {
         return;
@@ -269,7 +276,10 @@ function renderSites(): void {
     subdomainsBox.checked = rule.includeSubdomains === true;
     subdomainsBox.disabled = !canIncludeSubdomains(host);
     if (subdomainsBox.disabled) {
-      subdomainsBox.title = "Not available for shared or top-level domains";
+      subdomainsBox.title = t(
+        "optSubdomainsUnavailable",
+        "Not available for shared or top-level domains",
+      );
     }
     subdomainsBox.addEventListener("change", () => {
       if (!preferences) {
@@ -278,7 +288,7 @@ function renderSites(): void {
       preferences = setSiteIncludeSubdomains(preferences, host, subdomainsBox.checked);
       void persistAndRender();
     });
-    subdomains.append(subdomainsBox, "Include subdomains");
+    subdomains.append(subdomainsBox, t("optIncludeSubdomains", "Include subdomains"));
 
     actions.append(subdomains, policy, remove);
     row.append(copy, actions);
@@ -297,8 +307,8 @@ function render(): void {
   extensionStatus.classList.toggle("is-off", !preferences.enabled);
   extensionStatus.setAttribute("aria-checked", String(preferences.enabled));
   extensionStatus.lastElementChild!.textContent = preferences.enabled
-    ? "Extension enabled"
-    : "Extension paused";
+    ? t("optExtensionEnabled", "Extension enabled")
+    : t("optExtensionPaused", "Extension paused");
 }
 
 async function persistAndRender(): Promise<void> {
@@ -311,7 +321,7 @@ async function persistAndRender(): Promise<void> {
     extensionStatus.removeAttribute("data-error");
   } catch {
     extensionStatus.setAttribute("data-error", "");
-    extensionStatus.lastElementChild!.textContent = "Couldn’t save settings";
+    extensionStatus.lastElementChild!.textContent = t("optSaveError", "Couldn’t save settings");
     return;
   }
   render();
@@ -376,7 +386,7 @@ restoreDefaults.addEventListener("click", () => {
   const previous = preferences;
   preferences = restoreDefaultValues(preferences);
   renderDefaults({ ...DEFAULT_THEME_CONFIG });
-  offerUndo("Default appearance restored.", previous);
+  offerUndo(t("optDefaultsRestored", "Default appearance restored."), previous);
   void persistAndRender();
 });
 
@@ -387,7 +397,12 @@ clearSites.addEventListener("click", () => {
   const count = Object.keys(preferences.sites).length;
   const previous = preferences;
   preferences = clearAllSiteAppearances(preferences);
-  offerUndo(`Removed ${count} site rule${count === 1 ? "" : "s"}.`, previous);
+  offerUndo(
+    count === 1
+      ? t("optRemovedOne", "Removed 1 site rule.")
+      : t("optRemovedMany", `Removed ${count} site rules.`, String(count)),
+    previous,
+  );
   void persistAndRender();
 });
 
@@ -418,15 +433,15 @@ siteForm.addEventListener("submit", (event) => {
     siteHostname.focus();
   };
   if (!host) {
-    fail("Enter a hostname such as example.com.");
+    fail(t("optEnterHost", "Enter a hostname such as example.com."));
     return;
   }
   const next = setSitePolicy(preferences, host, sitePolicy.value as SitePolicy);
   if (next === preferences) {
     fail(
       /:\d+$/.test(host)
-        ? "Rules match hostnames only; remove the port number."
-        : `“${host}” is not a valid hostname.`,
+        ? t("optNoPorts", "Rules match hostnames only; remove the port number.")
+        : t("optInvalidHost", `“${host}” is not a valid hostname.`, host),
     );
     return;
   }
@@ -440,13 +455,17 @@ siteForm.addEventListener("submit", (event) => {
 
 async function initialize(): Promise<void> {
   if (!browser) {
-    extensionStatus.lastElementChild!.textContent = "Extension unavailable";
+    extensionStatus.lastElementChild!.textContent = t(
+      "optExtensionUnavailable",
+      "Extension unavailable",
+    );
     return;
   }
   preferences = await loadPreferences(browser.storage.local);
   onboardingCard.hidden = !(await needsOnboarding(browser.storage.local));
   lastSerializedPreferences = JSON.stringify(preferences);
-  versionLine.textContent = `Darkr ${browser.runtime.getManifest().version} · Local settings`;
+  const version = browser.runtime.getManifest().version;
+  versionLine.textContent = t("optLocalSettings", `Darkr ${version} · Local settings`, version);
   aboutVersion.textContent = versionLine.textContent;
   render();
 
@@ -495,7 +514,7 @@ exportButton.addEventListener("click", () => {
   link.download = "darkr-settings.json";
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  dataMessage.textContent = "Settings exported.";
+  dataMessage.textContent = t("optExported", "Settings exported.");
 });
 
 importButton.addEventListener("click", () => importFile.click());
@@ -513,11 +532,17 @@ importFile.addEventListener("change", async () => {
     const previous = preferences;
     preferences = normalizePreferences(parsed);
     const count = Object.keys(preferences.sites).length;
-    dataMessage.textContent = `Imported settings with ${count} site rule${count === 1 ? "" : "s"}.`;
-    offerUndo("Settings imported.", previous);
+    dataMessage.textContent =
+      count === 1
+        ? t("optImportedOne", "Imported settings with 1 site rule.")
+        : t("optImportedMany", `Imported settings with ${count} site rules.`, String(count));
+    offerUndo(t("optImported", "Settings imported."), previous);
     await persistAndRender();
   } catch {
-    dataMessage.textContent = "That file is not a Darkr settings export. Nothing was changed.";
+    dataMessage.textContent = t(
+      "optBadFile",
+      "That file is not a Darkr settings export. Nothing was changed.",
+    );
   }
 });
 

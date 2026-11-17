@@ -1,8 +1,10 @@
 import { getBrowserApi } from "../shared/extension-api";
+import { localizeDocument } from "../shared/i18n";
 import { completeOnboarding } from "../shared/preferences";
 import { buildThemeTokens, themeVariables } from "../shared/theme";
 import { DEFAULT_THEME_CONFIG, type AppearanceMode } from "../shared/types";
 
+localizeDocument();
 const browser = getBrowserApi();
 const sample = document.getElementById("sample");
 const buttons = [...document.querySelectorAll<HTMLButtonElement>("[data-mode]")];

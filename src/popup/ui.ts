@@ -23,6 +23,7 @@ import {
   type StorageAreaLike,
   savePreferences as writePreferences,
 } from "../shared/preferences";
+import { localizeDocument, t } from "../shared/i18n";
 import {
   buildThemeTokens,
   contrastDescription,
@@ -47,6 +48,8 @@ function required<T extends Element>(id: string): T {
   }
   return element as unknown as T;
 }
+
+localizeDocument();
 
 const view = {
   siteToggle: required<HTMLButtonElement>("site-toggle"),
@@ -86,7 +89,7 @@ const view = {
   reload: required<HTMLButtonElement>("reload"),
 };
 
-const SAVE_ERROR = "Couldn’t save settings";
+const SAVE_ERROR = t("popupSaveError", "Couldn’t save settings");
 const browser = getBrowserApi();
 const app = {
   preferences: null as DarkrPreferences | null,
@@ -180,12 +183,14 @@ function describeSlider(key: SliderKey, config: ThemeConfig): string {
       return contrastDescription(config.darkContrast);
     case "sepiaIntensity":
       return config.sepiaIntensity < 35
-        ? "Subtle"
+        ? t("levelSubtle", "Subtle")
         : config.sepiaIntensity < 70
-          ? "Paper"
-          : "Strong";
+          ? t("levelPaper", "Paper")
+          : t("levelStrong", "Strong");
     case "grayscaleIntensity":
-      return config.grayscaleIntensity >= 99 ? "Full" : `${config.grayscaleIntensity}%`;
+      return config.grayscaleIntensity >= 99
+        ? t("levelFull", "Full")
+        : `${config.grayscaleIntensity}%`;
     case "warmth":
       return warmthDescription(config.warmth);
   }
@@ -214,7 +219,15 @@ function renderMode(config: ThemeConfig): void {
     input.value = String(config[key]);
     const description = describeSlider(key, config);
     view.values[key].textContent = description;
-    input.setAttribute("aria-valuetext", `${description}, ${config[key]} percent`);
+    input.setAttribute(
+      "aria-valuetext",
+      t(
+        "valueTextPercent",
+        `${description}, ${config[key]} percent`,
+        description,
+        String(config[key]),
+      ),
+    );
     updateSliderFill(input);
   }
   renderPreview(config);
@@ -229,25 +242,27 @@ function renderStatus(): void {
   const hostKnown = Boolean(app.hostname);
   const canChangePage = Boolean(app.tabId) && hostKnown && app.tabReachable;
 
-  view.hostname.textContent = app.hostname || "Unavailable on this page";
+  view.hostname.textContent = app.hostname || t("popupUnavailable", "Unavailable on this page");
   const nativeDarkSkipped = Boolean(app.pageStatus?.nativeDark) && !resolved.overrideNativeDark;
   view.hostStatus.textContent = !hostKnown
-    ? "Only available on standard webpages"
+    ? t("popupOnlyStandard", "Only available on standard webpages")
     : app.lastError
       ? app.lastError
       : resolved.policy === "block"
-        ? "Off for this site"
+        ? t("popupOffSite", "Off for this site")
         : !resolved.enabled
-          ? "Paused everywhere"
+          ? t("popupPausedEverywhere", "Paused everywhere")
           : nativeDarkSkipped
-            ? "Site already has a dark appearance"
-            : "On";
+            ? t("popupSiteAlreadyDark", "Site already has a dark appearance")
+            : t("popupOn", "On");
 
   view.siteToggle.setAttribute("aria-checked", String(resolved.enabled));
   view.siteToggle.classList.toggle("is-on", resolved.enabled);
   view.siteToggle.disabled = !canChangePage;
 
-  view.pause.textContent = preferences.enabled ? "Pause everywhere" : "Resume everywhere";
+  view.pause.textContent = preferences.enabled
+    ? t("popupPauseEverywhere", "Pause everywhere")
+    : t("popupResume", "Resume everywhere");
 
   // Collapse the appearance controls when they would do nothing.
   view.appearance.hidden = !canChangePage || !resolved.enabled;
@@ -263,10 +278,10 @@ function renderStatus(): void {
     button.disabled = customised && button.dataset.scope === "all";
   }
   view.scopeNote.textContent = customised
-    ? "Customised for this site."
+    ? t("popupCustomised", "Customised for this site.")
     : scope === "site"
-      ? "Changes apply to this site only."
-      : "Changes apply to every site.";
+      ? t("popupScopeSite", "Changes apply to this site only.")
+      : t("popupScopeAll", "Changes apply to every site.");
   view.reset.hidden = !customised;
 
   if (app.pageStatus?.nativeDark) {
@@ -277,10 +292,16 @@ function renderStatus(): void {
     view.nativeDarkToggle.classList.toggle("is-on", resolved.overrideNativeDark);
     view.nativeDarkToggle.disabled = !canChangePage;
     view.nativeDarkCopy.textContent = grayscale
-      ? "This site already has a dark appearance. Grayscale is the active effect."
+      ? t(
+          "popupNativeGrayscale",
+          "This site already has a dark appearance. Grayscale is the active effect.",
+        )
       : resolved.overrideNativeDark
-        ? "This site has its own dark appearance. Darkr is applied over it."
-        : "This site already has a dark appearance, so Darkr leaves it untouched.";
+        ? t("popupNativeOver", "This site has its own dark appearance. Darkr is applied over it.")
+        : t(
+            "popupNativeLeft",
+            "This site already has a dark appearance, so Darkr leaves it untouched.",
+          );
   } else {
     view.nativeDarkNotice.hidden = true;
   }
@@ -344,7 +365,7 @@ async function sendPreview(config: ThemeConfig): Promise<void> {
     app.lastError = "";
   } catch {
     app.tabReachable = false;
-    app.lastError = "Reload this page to apply changes";
+    app.lastError = t("popupReloadToApply", "Reload this page to apply changes");
   }
 }
 
@@ -477,7 +498,7 @@ view.reload.addEventListener("click", async () => {
     await browser.tabs.reload(app.tabId);
     window.close();
   } catch {
-    app.lastError = "Couldn’t reload the page";
+    app.lastError = t("popupReloadFailed", "Couldn’t reload the page");
     renderStatus();
   }
 });
@@ -489,7 +510,7 @@ view.settings.addEventListener("click", async () => {
   try {
     await browser.runtime.openOptionsPage();
   } catch {
-    app.lastError = "Settings unavailable";
+    app.lastError = t("popupSettingsUnavailable", "Settings unavailable");
     renderStatus();
   }
 });
@@ -509,7 +530,7 @@ for (const key of Object.keys(view.sliders) as SliderKey[]) {
 
 async function initialize(): Promise<void> {
   if (!browser) {
-    view.hostStatus.textContent = "Extension unavailable";
+    view.hostStatus.textContent = t("popupExtensionUnavailable", "Extension unavailable");
     return;
   }
 

@@ -5,26 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b0c0d" />
-    <title>Darkr Settings</title>
+    <title data-i18n="optionsDarkrSettings">Darkr Settings</title>
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
     <div class="options-shell">
       <header class="options-header">
-        <h1 class="sr-only">Darkr Settings</h1>
+        <h1 class="sr-only" data-i18n="optionsDarkrSettings">Darkr Settings</h1>
         <div class="brand">
           <div class="brand-lockup">
             <img class="brand-mark" src="images/icon-128.png" width="44" height="44" alt="" aria-hidden="true" />
             <div class="brand-copy">
               <img class="brand-logo" src="images/wordmark.png" alt="darkr" />
-              <p class="brand-subtitle">reading utility</p>
+              <p class="brand-subtitle" data-i18n="optionsReadingUtility">reading utility</p>
             </div>
           </div>
         </div>
-        <button id="extension-status" class="status-chip" type="button" role="switch" aria-checked="true" title="Pause or resume Darkr everywhere">
+        <button id="extension-status" class="status-chip" type="button" role="switch" aria-checked="true" title="Pause or resume Darkr everywhere" data-i18n-attrs="title:optionsPauseOrResumeDarkr">
           <span class="status-dot" aria-hidden="true"></span>
-          <span>Extension enabled</span>
+          <span data-i18n="optionsExtensionEnabled">Extension enabled</span>
         </button>
       </header>
 
@@ -33,19 +33,19 @@
           <section class="settings-card" aria-labelledby="defaults-heading">
             <div class="card-heading">
               <div>
-                <p class="eyebrow">Defaults</p>
-                <h2 id="defaults-heading">Default appearance</h2>
+                <p class="eyebrow" data-i18n="optionsDefaults">Defaults</p>
+                <h2 id="defaults-heading" data-i18n="optionsDefaultAppearance">Default appearance</h2>
               </div>
-              <button id="restore-defaults" class="text-button" type="button">Restore defaults</button>
+              <button id="restore-defaults" class="text-button" type="button" data-i18n="optionsRestoreDefaults">Restore defaults</button>
             </div>
 
             <div class="field-block">
-              <label class="field-label" for="native-dark-policy">Sites with their own dark mode</label>
+              <label class="field-label" for="native-dark-policy" data-i18n="optionsSitesWithTheirOwn">Sites with their own dark mode</label>
               <select id="native-dark-policy" class="select">
-                <option value="keep">Leave them as they are (recommended)</option>
-                <option value="override">Apply Darkr to them as well</option>
+                <option value="keep" data-i18n="optionsLeaveThemAsThey">Leave them as they are (recommended)</option>
+                <option value="override" data-i18n="optionsApplyDarkrToThem">Apply Darkr to them as well</option>
               </select>
-              <p class="help-copy">
+              <p class="help-copy" data-i18n="optionsDarkrNormallySkipsPages">
                 Darkr normally skips pages that are already dark. Choose “Apply Darkr” to
                 override their dark mode everywhere; you can still change this per site
                 from the toolbar popup.
@@ -53,65 +53,65 @@
             </div>
 
             <div class="field-block">
-              <label class="field-label" for="default-mode">Default mode</label>
+              <label class="field-label" for="default-mode" data-i18n="optionsDefaultMode">Default mode</label>
               <select id="default-mode" class="select">
-                <option value="dark">Dark</option>
-                <option value="sepia">Sepia</option>
-                <option value="grayscale">Grayscale</option>
-                <option value="warm">Warm Light</option>
+                <option value="dark" data-i18n="optionsDark">Dark</option>
+                <option value="sepia" data-i18n="optionsSepia">Sepia</option>
+                <option value="grayscale" data-i18n="optionsGrayscale">Grayscale</option>
+                <option value="warm" data-i18n="optionsWarmLight">Warm Light</option>
               </select>
             </div>
 
-            <div id="settings-preview" class="settings-preview" role="img" aria-label="Preview of the default appearance">
-              <span data-role="surface">Page<small>surface</small></span>
-              <span data-role="text">Text</span>
-              <span data-role="link">Link</span>
-              <span data-role="muted">Muted</span>
+            <div id="settings-preview" class="settings-preview" role="img" aria-label="Preview of the default appearance" data-i18n-attrs="aria-label:optionsPreviewOfTheDefault">
+              <span data-role="surface">Page<small data-i18n="optionsSurface">surface</small></span>
+              <span data-role="text" data-i18n="optionsText">Text</span>
+              <span data-role="link" data-i18n="optionsLink">Link</span>
+              <span data-role="muted" data-i18n="optionsMuted">Muted</span>
             </div>
 
             <div class="range-grid">
               <div class="range-row" data-mode-group="dark">
                 <div class="range-header">
-                  <label class="range-label" for="default-dark-background">Dark background</label>
-                  <output id="default-dark-background-value" class="range-value" for="default-dark-background">Charcoal</output>
+                  <label class="range-label" for="default-dark-background" data-i18n="optionsDarkBackground">Dark background</label>
+                  <output id="default-dark-background-value" class="range-value" for="default-dark-background" data-i18n="optionsCharcoal">Charcoal</output>
                 </div>
                 <input id="default-dark-background" type="range" min="0" max="100" value="20" />
-                <div class="range-footer"><span>Pitch Black</span><span>Light Grey</span></div>
+                <div class="range-footer"><span data-i18n="optionsPitchBlack">Pitch Black</span><span data-i18n="optionsLightGrey">Light Grey</span></div>
               </div>
               <div class="range-row" data-mode-group="dark">
                 <div class="range-header">
-                  <label class="range-label" for="default-dark-contrast">Contrast</label>
-                  <output id="default-dark-contrast-value" class="range-value" for="default-dark-contrast">Balanced</output>
+                  <label class="range-label" for="default-dark-contrast" data-i18n="optionsContrast">Contrast</label>
+                  <output id="default-dark-contrast-value" class="range-value" for="default-dark-contrast" data-i18n="optionsBalanced">Balanced</output>
                 </div>
                 <input id="default-dark-contrast" type="range" min="0" max="100" value="62" />
-                <div class="range-footer"><span>Lower</span><span>Higher</span></div>
+                <div class="range-footer"><span data-i18n="optionsLower">Lower</span><span data-i18n="optionsHigher">Higher</span></div>
               </div>
               <div class="range-row" data-mode-group="sepia">
                 <div class="range-header">
-                  <label class="range-label" for="default-sepia">Sepia intensity</label>
-                  <output id="default-sepia-value" class="range-value" for="default-sepia">Paper</output>
+                  <label class="range-label" for="default-sepia" data-i18n="optionsSepiaIntensity">Sepia intensity</label>
+                  <output id="default-sepia-value" class="range-value" for="default-sepia" data-i18n="optionsPaper">Paper</output>
                 </div>
                 <input id="default-sepia" type="range" min="0" max="100" value="58" />
-                <div class="range-footer"><span>Subtle</span><span>Strong</span></div>
+                <div class="range-footer"><span data-i18n="optionsSubtle">Subtle</span><span data-i18n="optionsStrong">Strong</span></div>
               </div>
               <div class="range-row" data-mode-group="grayscale">
                 <div class="range-header">
-                  <label class="range-label" for="default-grayscale">Grayscale</label>
-                  <output id="default-grayscale-value" class="range-value" for="default-grayscale">Full</output>
+                  <label class="range-label" for="default-grayscale" data-i18n="optionsGrayscale">Grayscale</label>
+                  <output id="default-grayscale-value" class="range-value" for="default-grayscale" data-i18n="optionsFull">Full</output>
                 </div>
                 <input id="default-grayscale" type="range" min="0" max="100" value="100" />
-                <div class="range-footer"><span>Off</span><span>Full</span></div>
+                <div class="range-footer"><span data-i18n="optionsOff">Off</span><span data-i18n="optionsFull">Full</span></div>
               </div>
               <div class="range-row range-row--wide" data-mode-group="warm">
                 <div class="range-header">
-                  <label class="range-label" for="default-warmth">Warm Light</label>
-                  <output id="default-warmth-value" class="range-value" for="default-warmth">Subtle</output>
+                  <label class="range-label" for="default-warmth" data-i18n="optionsWarmLight">Warm Light</label>
+                  <output id="default-warmth-value" class="range-value" for="default-warmth" data-i18n="optionsSubtle">Subtle</output>
                 </div>
                 <input id="default-warmth" type="range" min="0" max="100" value="35" />
-                <div class="range-footer"><span>Cool</span><span>Warm</span></div>
+                <div class="range-footer"><span data-i18n="optionsCool">Cool</span><span data-i18n="optionsWarm">Warm</span></div>
               </div>
             </div>
-            <p class="help-copy">
+            <p class="help-copy" data-i18n="optionsDefaultsApplyToSites">
               Defaults apply to sites without a saved site override. Values are
               percentages; Warmth is a visual adjustment, not a measured
               reduction in screen blue light.
@@ -121,64 +121,64 @@
           <section class="settings-card" aria-labelledby="sites-heading">
             <div class="card-heading">
               <div>
-                <p class="eyebrow">Per-site preferences</p>
-                <h2 id="sites-heading">Site rules</h2>
+                <p class="eyebrow" data-i18n="optionsPerSitePreferences">Per-site preferences</p>
+                <h2 id="sites-heading" data-i18n="optionsSiteRules">Site rules</h2>
               </div>
-            <button id="clear-sites" class="text-button" type="button">Clear all site rules</button>
+            <button id="clear-sites" class="text-button" type="button" data-i18n="optionsClearAllSiteRules">Clear all site rules</button>
             </div>
-            <p class="help-copy help-copy--top">
+            <p class="help-copy help-copy--top" data-i18n-rich="optionsDomainsMatched">
               Domains are matched exactly. A setting for <strong>example.com</strong>
               does not automatically apply to <strong>docs.example.com</strong>
               unless you tick <strong>Include subdomains</strong> on that rule.
               The <strong>www.</strong> alias is treated as the same site when it
               leaves a valid hostname.
             </p>
-            <p class="help-copy help-copy--top">
+            <p class="help-copy help-copy--top" data-i18n="optionsAlwaysThemesAListed">
               “Always” themes a listed site even while Darkr is paused.
               “Never” leaves it untouched. Sites without a rule are
               “Automatic”, which follows the setting below.
             </p>
             <div class="field-block field-block--inline">
-              <label class="field-label" for="auto-mode">Automatic sites follow</label>
+              <label class="field-label" for="auto-mode" data-i18n="optionsAutomaticSitesFollow">Automatic sites follow</label>
               <select id="auto-mode" class="select">
-                <option value="globals">Global on/off switch</option>
-                <option value="system">System appearance (themed only in dark mode)</option>
+                <option value="globals" data-i18n="optionsGlobalOnOffSwitch">Global on/off switch</option>
+                <option value="system" data-i18n="optionsSystemAppearanceThemedOnly">System appearance (themed only in dark mode)</option>
               </select>
             </div>
             <div class="field-block field-block--inline">
-              <label class="field-label" for="site-search">Search rules</label>
-              <input id="site-search" class="text-input" type="search" placeholder="Filter by hostname" autocomplete="off" />
+              <label class="field-label" for="site-search" data-i18n="optionsSearchRules">Search rules</label>
+              <input id="site-search" class="text-input" type="search" placeholder="Filter by hostname" autocomplete="off" data-i18n-attrs="placeholder:optionsFilterByHostname"/>
             </div>
             <div id="sites-empty" class="empty-state">
-              <p>No site rules yet.</p>
-              <span>Use the toolbar popup or add an exact hostname below.</span>
+              <p data-i18n="optionsNoSiteRulesYet">No site rules yet.</p>
+              <span data-i18n="optionsUseTheToolbarPopup">Use the toolbar popup or add an exact hostname below.</span>
             </div>
-            <ul id="sites-list" class="sites-list" aria-label="Saved site overrides"></ul>
+            <ul id="sites-list" class="sites-list" aria-label="Saved site overrides" data-i18n-attrs="aria-label:optionsSavedSiteOverrides"></ul>
             <form id="site-form" class="site-form" autocomplete="off">
-              <label class="sr-only" for="site-hostname">Website hostname</label>
-              <input id="site-hostname" class="text-input" type="text" inputmode="url" placeholder="example.com" />
-              <select id="site-policy" class="select select--compact" aria-label="Website policy">
-                <option value="block">Never theme</option>
-                <option value="allow">Always theme</option>
+              <label class="sr-only" for="site-hostname" data-i18n="optionsWebsiteHostname">Website hostname</label>
+              <input id="site-hostname" class="text-input" type="text" inputmode="url" placeholder="example.com" data-i18n-attrs="placeholder:optionsExampleCom"/>
+              <select id="site-policy" class="select select--compact" aria-label="Website policy" data-i18n-attrs="aria-label:optionsWebsitePolicy">
+                <option value="block" data-i18n="optionsNeverTheme">Never theme</option>
+                <option value="allow" data-i18n="optionsAlwaysTheme">Always theme</option>
               </select>
-              <button class="text-button text-button--solid" type="submit">Add site</button>
+              <button class="text-button text-button--solid" type="submit" data-i18n="optionsAddSite">Add site</button>
             </form>
             <p id="site-error" class="field-error" role="alert" hidden></p>
           </section>
           <section class="settings-card" aria-labelledby="data-heading">
             <div class="card-heading">
               <div>
-                <p class="eyebrow">Backup</p>
-                <h2 id="data-heading">Export and import</h2>
+                <p class="eyebrow" data-i18n="optionsBackup">Backup</p>
+                <h2 id="data-heading" data-i18n="optionsExportAndImport">Export and import</h2>
               </div>
             </div>
-            <p class="help-copy help-copy--top">
+            <p class="help-copy help-copy--top" data-i18n="optionsSaveYourSettingsAs">
               Save your settings as a file, or load one. Imported files are
               checked and anything unrecognised is ignored. Nothing leaves your device.
             </p>
             <div class="data-actions">
-              <button id="export-settings" class="text-button text-button--solid" type="button">Export settings</button>
-              <button id="import-settings" class="text-button" type="button">Import settings…</button>
+              <button id="export-settings" class="text-button text-button--solid" type="button" data-i18n="optionsExportSettings">Export settings</button>
+              <button id="import-settings" class="text-button" type="button" data-i18n="optionsImportSettings">Import settings…</button>
               <input id="import-file" type="file" accept="application/json,.json" hidden />
             </div>
             <p id="data-message" class="help-copy" role="status"></p>
@@ -186,22 +186,22 @@
           <section id="onboarding-card" class="settings-card onboarding-card" hidden>
             <div class="card-heading">
               <div>
-                <p class="eyebrow">First run</p>
-                <h2>Before you browse</h2>
+                <p class="eyebrow" data-i18n="optionsFirstRun">First run</p>
+                <h2 data-i18n="optionsBeforeYouBrowse">Before you browse</h2>
               </div>
-              <button id="onboarding-dismiss" class="text-button" type="button">Got it</button>
+              <button id="onboarding-dismiss" class="text-button" type="button" data-i18n="optionsGotIt">Got it</button>
             </div>
             <div class="onboarding-grid">
               <div>
-                <p class="field-label">Privacy</p>
-                <p class="help-copy">
+                <p class="field-label" data-i18n="optionsPrivacy">Privacy</p>
+                <p class="help-copy" data-i18n="optionsSettingsStayInLocal">
                   Settings stay in local extension storage. Darkr does not collect
                   page text, browsing history, analytics, or account data.
                 </p>
               </div>
               <div>
-                <p class="field-label">Website access</p>
-                <p class="help-copy">
+                <p class="field-label" data-i18n="optionsWebsiteAccess">Website access</p>
+                <p class="help-copy" data-i18n="optionsYourBrowserControlsWhich">
                   Your browser controls which sites Darkr can read and restyle.
                   If a page is unchanged, review Darkr’s site access.
                 </p>
@@ -212,44 +212,44 @@
 
       </main>
       <footer class="settings-footer">
-        <button id="about-button" class="text-button" type="button">About &amp; permissions</button>
-        <nav class="footer-links" aria-label="Project links">
-          <a href="https://github.com/joshmode/Darkr/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy policy</a>
-          <a href="https://github.com/joshmode/Darkr" target="_blank" rel="noopener noreferrer">Source</a>
-          <a href="https://github.com/joshmode/Darkr/issues" target="_blank" rel="noopener noreferrer">Report an issue</a>
+        <button id="about-button" class="text-button" type="button" data-i18n="optionsAboutPermissions">About &amp; permissions</button>
+        <nav class="footer-links" aria-label="Project links" data-i18n-attrs="aria-label:optionsProjectLinks">
+          <a href="https://github.com/joshmode/Darkr/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer" data-i18n="optionsPrivacyPolicy">Privacy policy</a>
+          <a href="https://github.com/joshmode/Darkr" target="_blank" rel="noopener noreferrer" data-i18n="optionsSource">Source</a>
+          <a href="https://github.com/joshmode/Darkr/issues" target="_blank" rel="noopener noreferrer" data-i18n="optionsReportAnIssue">Report an issue</a>
         </nav>
-        <span id="version-line" class="version-line">Darkr</span>
+        <span id="version-line" class="version-line" data-i18n="optionsDarkr">Darkr</span>
       </footer>
     </div>
     <div id="undo-bar" class="undo-bar" role="status" hidden>
       <span id="undo-message"></span>
-      <button id="undo-button" class="text-button text-button--solid" type="button">Undo</button>
+      <button id="undo-button" class="text-button text-button--solid" type="button" data-i18n="optionsUndo">Undo</button>
     </div>
     <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
       <div class="about-dialog-header">
         <div>
-          <p class="eyebrow">Darkr</p>
-          <h2 id="about-title">A quieter web.</h2>
+          <p class="eyebrow" data-i18n="optionsDarkr">Darkr</p>
+          <h2 id="about-title" data-i18n="optionsAQuieterWeb">A quieter web.</h2>
         </div>
-        <button id="about-close" class="icon-button" type="button" aria-label="Close about dialog">×</button>
+        <button id="about-close" class="icon-button" type="button" aria-label="Close about dialog" data-i18n-attrs="aria-label:optionsCloseAboutDialog">×</button>
       </div>
       <div class="about-dialog-body">
         <section>
-          <p class="field-label">Privacy</p>
-          <p class="help-copy">
+          <p class="field-label" data-i18n="optionsPrivacy">Privacy</p>
+          <p class="help-copy" data-i18n="optionsSettingsStayInLocal">
             Settings stay in local extension storage. Darkr does not collect page
             text, browsing history, analytics, or account data.
           </p>
         </section>
         <section>
-          <p class="field-label">Website access</p>
-          <p class="help-copy">
+          <p class="field-label" data-i18n="optionsWebsiteAccess">Website access</p>
+          <p class="help-copy" data-i18n="optionsYourBrowserControlsWhich2">
             Your browser controls which sites Darkr can read and restyle. If a
             page is unchanged, review Darkr’s site access in browser settings.
           </p>
         </section>
       </div>
-      <p id="about-version" class="version-line">Darkr</p>
+      <p id="about-version" class="version-line" data-i18n="optionsDarkr">Darkr</p>
     </dialog>
     <script type="module" src="options.js"></script>
   </body>
