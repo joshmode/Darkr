@@ -7,7 +7,7 @@ Reviewed at commit `15d2a9f` (17 Nov 2026). Scope: everything under `src/`, `tes
 - Severity: **P0** breaks the core promise on ordinary pages · **P1** visible breakage on common patterns, or data leaving the page altered · **P2** robustness, performance, UX friction · **P3** cleanup.
 - Evidence: **[repro]** means I loaded the built extension in headless Chromium against a small fixture page and measured the result. **[code]** means it follows from reading the source and was not run.
 
-**Status.** Fixed (commit on each entry): E-01…E-13, E-15, E-21, E-24. Still open: E-14, E-16…E-20, E-22, E-23, all U-* findings and the release items. The Phase 0 e2e suite has no expected-fail cases left.
+**Status.** Fixed (commit on each entry): E-01…E-15, E-17, E-19, E-21, E-24; partly fixed: E-16, E-22, E-23. Open: E-18, E-20, the palette-indexing rewrite (B2) and WeakMap storage, the `scripting` injection. UI/UX: U-01…U-03, U-05…U-15 addressed in `b0fd756`, `5a96c8f`, `e5a8106`, `4816e65` (U-04 via include-subdomains rules); the manual real-site matrix (D4) was not run. Release gaps: CI, lint, e2e coverage, minification and the locale scaffold are done; UI strings are not yet localised.
 
 Baseline: `npm run check` passes (typecheck, 87 unit tests, package, manifest checks). I did not run `npm run test:e2e` or `test:perf`. Nothing in the repo was changed apart from adding this file and `HANDBOOK.md`.
 
@@ -119,25 +119,25 @@ The result is cached at first apply ([:471-475](src/content/theme-engine.ts:471)
 
 ### P2
 
-**E-14 · Late-inspected elements sample Darkr's own colours [code, consistent with repro].**
+**E-14 · Late-inspected elements sample Darkr's own colours [code, consistent with repro].** **Fixed in `3b87e23`.**
 Everything after the first 700 elements is inspected with the theme already active, so `getComputedStyle` returns Darkr's forced body colour, input background and so on instead of the author's. On the long test page inherited text came out `rgb(224,222,217)` for late elements; early ones use a different contrast target. `readAuthorStyles` exists but is used only on the resample path.
 
 **E-15 · `SKIP_SUBTREES` skips neither subtrees nor SVG [repro for tag case].** **Fixed in `1753546` — (SVG mapped; subtree skipping still open, task B4).**
 The set is consulted only for the element itself, and the traversal still descends. `tagName` for inline SVG is lowercase `svg`, so `"SVG"` and `"MATH"` never match. Every `<path>` is inspected and counts against the cap. Separately, SVG `fill`/`stroke` colours are never mapped: a `#111` icon stayed `#111` on the dark page.
 
-**E-16 · Shadow DOM [code].**
+**E-16 · Shadow DOM [code].** **Partly fixed in `48ca10d`: `:host` background removed, single shadow walk, shadow rules gated for clean reads. Not fixed: shadow roots attached after the host was inspected.**
 - `:host { background-color: var(--darkr-bg) }` gives every web component the page background, which shows as a patch when the component sits on a card.
 - Shadow rules are not gated by the root class, so `readAuthorStyles` reads Darkr's colours inside shadow roots.
 - `collectElements` pushes every shadow descendant and then walks each one's children again, visiting nodes once per depth level.
 - Shadow roots attached after the host was inspected are never noticed.
 
-**E-17 · Read/write interleaving [code].**
+**E-17 · Read/write interleaving [code].** **Fixed in `3b87e23` (batched reads then writes, no per-element layout reads; the queue is iterated, not copied).**
 `styleInspectedElement` calls `getComputedStyle` twice per element between attribute and style writes, forcing a style recalculation per element. Slider drags re-run this for every tracked element every 28 ms. `processQueuedBatch` copies the whole queue each frame. A class toggle on `<body>` walks the entire DOM twice (`queueSubtree` then `markForResample`), contrary to the comment above it.
 
 **E-18 · The engine observes its own writes [code].**
 Each inline custom property it sets produces a `style` mutation record that is then processed and discarded.
 
-**E-19 · `text-shadow` and `box-shadow` are untouched [repro].**
+**E-19 · `text-shadow` and `box-shadow` are untouched [repro].** **Fixed in `48ca10d` for `text-shadow` (light halos dropped on dark themes); `box-shadow` left alone as planned.**
 `text-shadow: 0 1px 0 #fff` survives onto light text as a halo. Light box-shadows glow on dark surfaces.
 
 **E-20 · Pseudo-elements are out of reach [code].**
@@ -146,10 +146,10 @@ Each inline custom property it sets produces a `style` mutation record that is t
 **E-21 · Forced-colors mode [code].** **Fixed in `bfd3b24`.**
 Only the grayscale filter stands down under `forced-colors: active`; the semantic theme still applies over the user's high-contrast palette.
 
-**E-22 · Pre-paint hold applies to every frame of every page [code].**
+**E-22 · Pre-paint hold applies to every frame of every page [code].** **Partly fixed in `a62ec22`: no hold in subframes. The top document is still held up to 400 ms.**
 `html { visibility: hidden }` for up to 400 ms is installed before preferences are known ([content/index.ts:43-61](src/content/index.ts:43)), including on paused, Never and Original sites and in every ad iframe.
 
-**E-23 · No handling of extension reload/update [code].**
+**E-23 · No handling of extension reload/update [code].** **Partly fixed in `a62ec22`: orphaned scripts tear down. Injection into already-open tabs needs the `scripting` permission and awaits the owner's approval.**
 Old content scripts are orphaned (their storage calls throw) but keep observing. Already-open tabs get no script on install, so the popup says "reload this page" on the first thing a new user tries.
 
 **E-24 · Hostnames the pattern rejects are themed but uncontrollable [code].** **Fixed in `26fdf9b`.**
