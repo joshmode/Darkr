@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canIncludeSubdomains,
   hostnamePreferenceKey,
   normalizeHostname,
   normalizePreferences,
@@ -222,6 +223,20 @@ describe("hostnames with underscores", () => {
 });
 
 describe("include subdomains", () => {
+  it("refuses shared and public-suffix-like domains", () => {
+    for (const host of ["co.uk", "com.au", "github.io", "localhost", "10.0.0.1", "[::1]"]) {
+      expect(canIncludeSubdomains(host)).toBe(false);
+    }
+    expect(canIncludeSubdomains("example.com")).toBe(true);
+    expect(canIncludeSubdomains("example.co.uk")).toBe(true);
+    const preferences = setSiteIncludeSubdomains(
+      setSitePolicy(normalizePreferences({}), "co.uk", "block"),
+      "co.uk",
+      true,
+    );
+    expect(resolveAppearance(preferences, "shop.co.uk").policy).toBe("auto");
+  });
+
   const base = () => normalizePreferences({});
 
   it("applies a parent rule to subdomains only when opted in", () => {

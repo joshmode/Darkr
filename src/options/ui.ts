@@ -1,4 +1,5 @@
 import {
+  canIncludeSubdomains,
   clearAllSiteAppearances,
   removeSiteRule,
   normalizePreferences,
@@ -266,6 +267,10 @@ function renderSites(): void {
     const subdomainsBox = document.createElement("input");
     subdomainsBox.type = "checkbox";
     subdomainsBox.checked = rule.includeSubdomains === true;
+    subdomainsBox.disabled = !canIncludeSubdomains(host);
+    if (subdomainsBox.disabled) {
+      subdomainsBox.title = "Not available for shared or top-level domains";
+    }
     subdomainsBox.addEventListener("change", () => {
       if (!preferences) {
         return;

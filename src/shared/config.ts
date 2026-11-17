@@ -46,6 +46,59 @@ export function isSitePolicy(value: unknown): value is SitePolicy {
  * valid and must not resolve to Object.prototype members.
  */
 /**
+ * Registrable-domain guard for "include subdomains". Without a public suffix
+ * list, this rejects single labels, the common two-level country suffixes
+ * (co.uk, com.au, …) and well-known shared hosting suffixes, so a rule can
+ * never cover unrelated sites.
+ */
+const SECOND_LEVEL_LABELS = new Set([
+  "co",
+  "com",
+  "org",
+  "net",
+  "ac",
+  "gov",
+  "edu",
+  "ne",
+  "or",
+  "go",
+]);
+const SHARED_HOSTING_SUFFIXES = new Set([
+  "github.io",
+  "gitlab.io",
+  "herokuapp.com",
+  "vercel.app",
+  "netlify.app",
+  "pages.dev",
+  "workers.dev",
+  "blogspot.com",
+  "wordpress.com",
+  "web.app",
+  "firebaseapp.com",
+  "azurewebsites.net",
+  "cloudfront.net",
+  "s3.amazonaws.com",
+]);
+
+export function canIncludeSubdomains(host: string): boolean {
+  if (!host || host.startsWith("[") || /^[\d.]+$/.test(host)) {
+    return false;
+  }
+  const labels = host.split(".");
+  if (labels.length < 2) {
+    return false;
+  }
+  if (SHARED_HOSTING_SUFFIXES.has(host)) {
+    return false;
+  }
+  const [first, last] = [labels[0] ?? "", labels[labels.length - 1] ?? ""];
+  if (labels.length === 2 && last.length === 2 && SECOND_LEVEL_LABELS.has(first)) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * The rule that governs `host`: its own exact rule, otherwise the nearest
  * parent domain whose rule opted in with `includeSubdomains`. Hostnames that
  * are addresses (IPv4, IPv6) have no parents.
@@ -58,7 +111,7 @@ export function matchSiteRule(preferences: DarkrPreferences, host: string): Site
   const labels = host.split(".");
   for (let start = 1; start < labels.length - 1; start += 1) {
     const rule = getSiteRule(preferences, labels.slice(start).join("."));
-    if (rule?.includeSubdomains) {
+    if (rule?.includeSubdomains && canIncludeSubdomains(labels.slice(start).join("."))) {
       return rule;
     }
   }
@@ -73,7 +126,7 @@ export function setSiteIncludeSubdomains(
 ): DarkrPreferences {
   const host = hostnamePreferenceKey(hostname);
   const existing = host ? getSiteRule(preferences, host) : undefined;
-  if (!host || !existing) {
+  if (!host || !existing || (include && !canIncludeSubdomains(host))) {
     return preferences;
   }
   return withRule(preferences, host, {
