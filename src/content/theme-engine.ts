@@ -54,6 +54,8 @@ const RESAMPLE_ATTRIBUTES = new Set(["class", "aria-expanded", "aria-hidden", "d
 const ROOT_WATCHED_ATTRIBUTES = [ROOT_ATTRIBUTE, "class", "data-theme", "data-color-mode", "style"];
 const REDETECT_DELAY_MS = 150;
 const SHADOW_SWEEP_DELAY_MS = 800;
+/** jsdom cannot compute pseudo-element styles (it logs "not implemented"). */
+const SAMPLE_PSEUDO = typeof navigator === "undefined" || !/jsdom/i.test(navigator.userAgent);
 const ELEMENT_ATTRIBUTE = "data-darkr";
 const LINK_TOKEN = "l";
 const NO_SHADOW_TOKEN = "h";
@@ -130,6 +132,8 @@ interface InspectedElement {
   /** Painted colour per side (top, right, bottom, left); null when not painted. */
   borders: [Rgba | null, Rgba | null, Rgba | null, Rgba | null];
   hasDirectText: boolean;
+  /** Own colours of ::before / ::after when they generate content. */
+  pseudo: { before: PseudoSample | null; after: PseudoSample | null };
   /** The surface this element paints (own background or backdrop), if any. */
   surface: SurfaceInfo | null;
   /**
@@ -145,11 +149,18 @@ interface InspectedElement {
     text: string;
     paint: string;
     textShadow: string;
+    pseudo: string;
     borders: string;
     display: string;
     visibility: string;
     opacity: string;
   };
+}
+
+interface PseudoSample {
+  background: Rgba | null;
+  text: Rgba | null;
+  border: Rgba | null;
 }
 
 interface SurfaceInfo {
@@ -233,6 +244,7 @@ function sampleStyle(style: CSSStyleDeclaration): InspectedElement["samples"] {
     text: style.color,
     paint: `${style.fill}|${style.stroke}`,
     textShadow: style.textShadow,
+    pseudo: "",
     borders: BORDER_SIDES.map(
       (side) => `${style[`border${side.property}Color`]}/${style[`border${side.property}Style`]}`,
     ).join("|"),
@@ -268,6 +280,7 @@ function samplesEqual(
     left.text === right.text &&
     left.paint === right.paint &&
     left.textShadow === right.textShadow &&
+    left.pseudo === right.pseudo &&
     left.borders === right.borders &&
     left.display === right.display &&
     left.visibility === right.visibility &&
@@ -1082,6 +1095,32 @@ export class ThemeEngine {
   }
 
   /**
+   * ::before / ::after that generate content (custom checkboxes, dividers,
+   * overlays) are styled separately from their element. Only pseudo-elements
+   * that actually have content are sampled, and a text colour only when it
+   * differs from the element's own (otherwise it inherits the themed colour).
+   */
+  private readPseudo(element: Element, style: CSSStyleDeclaration): InspectedElement["pseudo"] {
+    if (!SAMPLE_PSEUDO) {
+      return { before: null, after: null };
+    }
+    const read = (which: "::before" | "::after"): PseudoSample | null => {
+      const pseudo = getComputedStyle(element, which);
+      if (pseudo.content === "none" || pseudo.content === "normal" || pseudo.display === "none") {
+        return null;
+      }
+      const background = opaqueColor(pseudo.backgroundColor);
+      const text = pseudo.color !== style.color ? inspectableColor(pseudo.color) : null;
+      const border =
+        hasBorderStyle(pseudo.borderTopStyle) && pseudo.borderTopWidth !== "0px"
+          ? inspectableColor(pseudo.borderTopColor)
+          : null;
+      return background || text || border ? { background, text, border } : null;
+    };
+    return { before: read("::before"), after: read("::after") };
+  }
+
+  /**
    * `contaminated` is true when Darkr's rules are active during the read.
    * Inherited properties (colour, SVG paint) of an element that merely
    * inherits then show Darkr's mapped value, so they are replaced by the
@@ -1096,6 +1135,8 @@ export class ThemeEngine {
     const textControl = element.matches(NON_TEXT_CONTROL_SELECTOR);
     const isSvg = element instanceof SVGElement;
     const samples = sampleStyle(style);
+    const pseudo = this.readPseudo(element, style);
+    samples.pseudo = JSON.stringify(pseudo);
     const parent = contaminated ? parentElementOf(element) : null;
     const parentStyle = parent ? getComputedStyle(parent) : null;
     const original = (
@@ -1124,6 +1165,7 @@ export class ThemeEngine {
           : null,
       ) as InspectedElement["borders"],
       hasDirectText: !textControl && hasDirectText(element),
+      pseudo,
       surface: null,
       backdrop: readBackdrop(samples),
       hostStyleSignature: inlineStyleSignature(element),
@@ -1304,6 +1346,8 @@ export class ThemeEngine {
       marks.push(NO_SHADOW_TOKEN);
     }
     this.borderMarks(inspection, surface.ref, marks);
+    this.pseudoMarks(inspection.pseudo.before, "q", surface.ref, marks);
+    this.pseudoMarks(inspection.pseudo.after, "r", surface.ref, marks);
     if (inspection.fill) {
       marks.push(palette.paint("f", inspection.fill, surface.ref).token);
     }
@@ -1339,6 +1383,29 @@ export class ThemeEngine {
       const color = parseColorOrNull(value);
       return color !== null && isPainted(color) && relativeLuminance(color) > textLuminance;
     });
+  }
+
+  private pseudoMarks(
+    sample: PseudoSample | null,
+    prefix: "q" | "r",
+    surface: SurfaceRef,
+    marks: string[],
+  ): void {
+    if (!sample) {
+      return;
+    }
+    let own = surface;
+    if (sample.background) {
+      const entry = this.palette.surface(sample.background, `${prefix}s` as "qs" | "rs");
+      marks.push(entry.token);
+      own = `e${entry.id}`;
+    }
+    if (sample.text) {
+      marks.push(this.palette.paint(`${prefix}t` as "qt" | "rt", sample.text, own).token);
+    }
+    if (sample.border) {
+      marks.push(this.palette.paint(`${prefix}b` as "qb" | "rb", sample.border, own).token);
+    }
   }
 
   /** Border tokens: one for all four sides when they share a colour, else one per painted side. */

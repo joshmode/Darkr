@@ -10,7 +10,23 @@ import { mapBorderColor, mapSurfaceColor, mapTextColor, parseColorOrNull } from 
  * configuration change recomputes the entries and rewrites the sheet; elements
  * are not touched.
  */
-export type PaletteRole = "s" | "t" | "ba" | "bt" | "br" | "bb" | "bl" | "f" | "k";
+export type PaletteRole =
+  | "s"
+  | "t"
+  | "ba"
+  | "bt"
+  | "br"
+  | "bb"
+  | "bl"
+  | "f"
+  | "k"
+  // Pseudo-elements: q = ::before, r = ::after; s surface, t text, b border.
+  | "qs"
+  | "qt"
+  | "qb"
+  | "rs"
+  | "rt"
+  | "rb";
 
 /** Where a surface colour comes from: the page token, a fixed colour, or an entry. */
 export type SurfaceRef = string;
@@ -42,6 +58,23 @@ const PROPERTY: Record<PaletteRole, string> = {
   bl: "border-left-color",
   f: "fill",
   k: "stroke",
+  qs: "background-color",
+  qt: "color",
+  qb: "border-color",
+  rs: "background-color",
+  rt: "color",
+  rb: "border-color",
+};
+
+const TEXT_ROLES = new Set<PaletteRole>(["t", "f", "k", "qt", "rt"]);
+
+const PSEUDO: Partial<Record<PaletteRole, string>> = {
+  qs: "::before",
+  qt: "::before",
+  qb: "::before",
+  rs: "::after",
+  rt: "::after",
+  rb: "::after",
 };
 
 const hex = (value: number): string => Math.round(value).toString(16).padStart(2, "0");
@@ -95,15 +128,15 @@ export class Palette {
     return this.entries[Number(ref.slice(1))]?.color ?? this.tokens.background;
   }
 
-  surface(original: Rgba): PaletteEntry {
-    return this.get("s", "surface", original, PAGE_SURFACE);
+  surface(original: Rgba, role: "s" | "qs" | "rs" = "s"): PaletteEntry {
+    return this.get(role, "surface", original, PAGE_SURFACE);
   }
 
   paint(
     role: Exclude<PaletteRole, "s">,
     original: Rgba,
     surface: SurfaceRef,
-    kind: "text" | "border" = role === "t" || role === "f" || role === "k" ? "text" : "border",
+    kind: "text" | "border" = TEXT_ROLES.has(role) ? "text" : "border",
   ): PaletteEntry {
     return this.get(role, kind, original, surface);
   }
@@ -177,5 +210,5 @@ export class Palette {
 }
 
 function rule(scope: string, entry: PaletteEntry): string {
-  return `${scope} [data-darkr~="${entry.token}"] { ${PROPERTY[entry.role]}: ${entry.value} !important; }`;
+  return `${scope} [data-darkr~="${entry.token}"]${PSEUDO[entry.role] ?? ""} { ${PROPERTY[entry.role]}: ${entry.value} !important; }`;
 }

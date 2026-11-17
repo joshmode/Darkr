@@ -444,3 +444,30 @@ test("[E-16] a shadow root attached after load is themed", async () => {
     },
   );
 });
+
+// ---------------------------------------------------------------- E-20
+test("[E-20] ::before / ::after backgrounds and borders are themed", async () => {
+  const page = await newPage("/e20-pseudo");
+  await settle(page);
+  const pseudo = (selector, which, property) =>
+    page.evaluate(
+      ({ selector, which, property }) =>
+        getComputedStyle(document.querySelector(selector), which)[property],
+      { selector, which, property },
+    );
+  await poll(
+    () => pseudo("#check", "::before", "backgroundColor"),
+    (v) => luminanceOf(v) < 0.2,
+    {
+      message: "checkbox box to be dark",
+    },
+  );
+  assert.notEqual(await pseudo("#check", "::before", "borderTopColor"), "rgb(136, 136, 136)");
+  await poll(
+    () => pseudo("#rule", "::after", "backgroundColor"),
+    (v) => luminanceOf(v) < 0.2,
+    {
+      message: "divider to be dark",
+    },
+  );
+});

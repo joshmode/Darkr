@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>E-20 pseudo-elements</title>
+<style>
+body{background:#fff;color:#111;font-family:system-ui;padding:16px}
+.check{position:relative;padding-left:28px;display:inline-block}
+.check::before{content:"";position:absolute;left:0;top:2px;width:16px;height:16px;background:#fff;border:2px solid #888}
+.rule{position:relative;padding-top:12px}
+.rule::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:#e5e5e5}
+</style></head>
+<body>
+<span class="check" id="check">Custom checkbox</span>
+<div class="rule" id="rule">Divider drawn by a pseudo-element</div>
+</body></html>
