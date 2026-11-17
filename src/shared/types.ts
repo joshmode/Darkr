@@ -29,6 +29,8 @@ export interface SiteRule {
    * Unset follows the global `overrideNativeDark` setting.
    */
   overrideNativeDark?: boolean;
+  /** Also apply this rule to subdomains that have no rule of their own. */
+  includeSubdomains?: boolean;
 }
 
 /**

@@ -10,6 +10,7 @@ import {
   setAutoMode,
   setGlobalNativeDarkOverride,
   setMasterEnabled,
+  setSiteIncludeSubdomains,
   setSiteNativeDarkOverride,
   setSitePolicy,
   themeConfigToOverrides,
@@ -217,5 +218,43 @@ describe("hostnames with underscores", () => {
   it("are keyable so the popup and content script agree", () => {
     expect(normalizeHostname("my_app.preview.example.com")).toBe("my_app.preview.example.com");
     expect(hostnamePreferenceKey("_dmarc.example.com")).toBe("_dmarc.example.com");
+  });
+});
+
+describe("include subdomains", () => {
+  const base = () => normalizePreferences({});
+
+  it("applies a parent rule to subdomains only when opted in", () => {
+    let preferences = setSitePolicy(base(), "example.com", "block");
+    expect(resolveAppearance(preferences, "docs.example.com").policy).toBe("auto");
+    preferences = setSiteIncludeSubdomains(preferences, "example.com", true);
+    expect(resolveAppearance(preferences, "docs.example.com").policy).toBe("block");
+    expect(resolveAppearance(preferences, "a.b.example.com").policy).toBe("block");
+    expect(resolveAppearance(preferences, "notexample.com").policy).toBe("auto");
+  });
+
+  it("lets a subdomain's own rule win and survives normalisation", () => {
+    let preferences = setSiteIncludeSubdomains(
+      setSitePolicy(base(), "example.com", "block"),
+      "example.com",
+      true,
+    );
+    preferences = setSitePolicy(preferences, "docs.example.com", "allow");
+    expect(resolveAppearance(preferences, "docs.example.com").policy).toBe("allow");
+    expect(
+      normalizePreferences(JSON.parse(JSON.stringify(preferences))).sites["example.com"],
+    ).toEqual({
+      policy: "block",
+      includeSubdomains: true,
+    });
+  });
+
+  it("does not treat addresses as having parents", () => {
+    const preferences = setSiteIncludeSubdomains(
+      setSitePolicy(base(), "0.0.1", "block"),
+      "0.0.1",
+      true,
+    );
+    expect(resolveAppearance(preferences, "10.0.0.1").policy).toBe("auto");
   });
 });

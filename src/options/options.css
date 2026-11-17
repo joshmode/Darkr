@@ -446,3 +446,80 @@ body {
   padding-bottom: 0;
   font-size: 10px;
 }
+
+/* ---- settings additions ---------------------------------------------- */
+button.status-chip {
+  border: 1px solid var(--ui-border);
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-preview {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  overflow: hidden;
+  margin: 4px 0 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+}
+
+.settings-preview span {
+  display: grid;
+  min-height: 48px;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 560;
+}
+
+.settings-preview small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.field-error {
+  margin: 8px 0 0;
+  color: var(--ui-danger);
+  font-size: 12px;
+}
+
+.data-actions,
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-links a {
+  color: var(--ui-text-secondary);
+  font-size: 13px;
+}
+
+.footer-links a:hover {
+  color: var(--ui-text);
+}
+
+.site-row-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.undo-bar {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 10px;
+  background: var(--ui-panel-raised);
+  box-shadow: var(--ui-shadow);
+  font-size: 13px;
+}

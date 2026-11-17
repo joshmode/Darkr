@@ -21,10 +21,10 @@
             </div>
           </div>
         </div>
-        <div id="extension-status" class="status-chip">
+        <button id="extension-status" class="status-chip" type="button" role="switch" aria-checked="true" title="Pause or resume Darkr everywhere">
           <span class="status-dot" aria-hidden="true"></span>
           <span>Extension enabled</span>
-        </div>
+        </button>
       </header>
 
       <main class="settings-grid">
@@ -33,7 +33,7 @@
             <div class="card-heading">
               <div>
                 <p class="eyebrow">Defaults</p>
-                <h2 id="defaults-heading">Appearance for new sites</h2>
+                <h2 id="defaults-heading">Default appearance</h2>
               </div>
               <button id="restore-defaults" class="text-button" type="button">Restore defaults</button>
             </div>
@@ -61,8 +61,15 @@
               </select>
             </div>
 
+            <div id="settings-preview" class="settings-preview" role="img" aria-label="Preview of the default appearance">
+              <span data-role="surface">Page<small>surface</small></span>
+              <span data-role="text">Text</span>
+              <span data-role="link">Link</span>
+              <span data-role="muted">Muted</span>
+            </div>
+
             <div class="range-grid">
-              <div class="range-row">
+              <div class="range-row" data-mode-group="dark">
                 <div class="range-header">
                   <label class="range-label" for="default-dark-background">Dark background</label>
                   <output id="default-dark-background-value" class="range-value" for="default-dark-background">Charcoal</output>
@@ -70,7 +77,7 @@
                 <input id="default-dark-background" type="range" min="0" max="100" value="20" />
                 <div class="range-footer"><span>Pitch Black</span><span>Light Grey</span></div>
               </div>
-              <div class="range-row">
+              <div class="range-row" data-mode-group="dark">
                 <div class="range-header">
                   <label class="range-label" for="default-dark-contrast">Contrast</label>
                   <output id="default-dark-contrast-value" class="range-value" for="default-dark-contrast">Balanced</output>
@@ -78,7 +85,7 @@
                 <input id="default-dark-contrast" type="range" min="0" max="100" value="62" />
                 <div class="range-footer"><span>Lower</span><span>Higher</span></div>
               </div>
-              <div class="range-row">
+              <div class="range-row" data-mode-group="sepia">
                 <div class="range-header">
                   <label class="range-label" for="default-sepia">Sepia intensity</label>
                   <output id="default-sepia-value" class="range-value" for="default-sepia">Paper</output>
@@ -86,7 +93,7 @@
                 <input id="default-sepia" type="range" min="0" max="100" value="58" />
                 <div class="range-footer"><span>Subtle</span><span>Strong</span></div>
               </div>
-              <div class="range-row">
+              <div class="range-row" data-mode-group="grayscale">
                 <div class="range-header">
                   <label class="range-label" for="default-grayscale">Grayscale</label>
                   <output id="default-grayscale-value" class="range-value" for="default-grayscale">Full</output>
@@ -94,7 +101,7 @@
                 <input id="default-grayscale" type="range" min="0" max="100" value="100" />
                 <div class="range-footer"><span>Off</span><span>Full</span></div>
               </div>
-              <div class="range-row range-row--wide">
+              <div class="range-row range-row--wide" data-mode-group="warm">
                 <div class="range-header">
                   <label class="range-label" for="default-warmth">Warm Light</label>
                   <output id="default-warmth-value" class="range-value" for="default-warmth">Subtle</output>
@@ -120,7 +127,8 @@
             </div>
             <p class="help-copy help-copy--top">
               Domains are matched exactly. A setting for <strong>example.com</strong>
-              does not automatically apply to <strong>docs.example.com</strong>.
+              does not automatically apply to <strong>docs.example.com</strong>
+              unless you tick <strong>Include subdomains</strong> on that rule.
               The <strong>www.</strong> alias is treated as the same site when it
               leaves a valid hostname.
             </p>
@@ -136,6 +144,10 @@
                 <option value="system">System appearance (themed only in dark mode)</option>
               </select>
             </div>
+            <div class="field-block field-block--inline">
+              <label class="field-label" for="site-search">Search rules</label>
+              <input id="site-search" class="text-input" type="search" placeholder="Filter by hostname" autocomplete="off" />
+            </div>
             <div id="sites-empty" class="empty-state">
               <p>No site rules yet.</p>
               <span>Use the toolbar popup or add an exact hostname below.</span>
@@ -150,6 +162,25 @@
               </select>
               <button class="text-button text-button--solid" type="submit">Add site</button>
             </form>
+            <p id="site-error" class="field-error" role="alert" hidden></p>
+          </section>
+          <section class="settings-card" aria-labelledby="data-heading">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Backup</p>
+                <h2 id="data-heading">Export and import</h2>
+              </div>
+            </div>
+            <p class="help-copy help-copy--top">
+              Save your settings as a file, or load one. Imported files are
+              checked and anything unrecognised is ignored. Nothing leaves your device.
+            </p>
+            <div class="data-actions">
+              <button id="export-settings" class="text-button text-button--solid" type="button">Export settings</button>
+              <button id="import-settings" class="text-button" type="button">Import settings…</button>
+              <input id="import-file" type="file" accept="application/json,.json" hidden />
+            </div>
+            <p id="data-message" class="help-copy" role="status"></p>
           </section>
           <section id="onboarding-card" class="settings-card onboarding-card" hidden>
             <div class="card-heading">
@@ -181,8 +212,17 @@
       </main>
       <footer class="settings-footer">
         <button id="about-button" class="text-button" type="button">About &amp; permissions</button>
-        <span id="version-line" class="version-line">Darkr 1.0</span>
+        <nav class="footer-links" aria-label="Project links">
+          <a href="https://github.com/joshmode/Darkr/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+          <a href="https://github.com/joshmode/Darkr" target="_blank" rel="noopener noreferrer">Source</a>
+          <a href="https://github.com/joshmode/Darkr/issues" target="_blank" rel="noopener noreferrer">Report an issue</a>
+        </nav>
+        <span id="version-line" class="version-line">Darkr</span>
       </footer>
+    </div>
+    <div id="undo-bar" class="undo-bar" role="status" hidden>
+      <span id="undo-message"></span>
+      <button id="undo-button" class="text-button text-button--solid" type="button">Undo</button>
     </div>
     <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
       <div class="about-dialog-header">
@@ -208,7 +248,7 @@
           </p>
         </section>
       </div>
-      <p id="about-version" class="version-line">Darkr 1.0</p>
+      <p id="about-version" class="version-line">Darkr</p>
     </dialog>
     <script type="module" src="options.js"></script>
   </body>

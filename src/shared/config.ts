@@ -45,6 +45,43 @@ export function isSitePolicy(value: unknown): value is SitePolicy {
  * Looks up a site rule by own key only. Hostnames such as "constructor" are
  * valid and must not resolve to Object.prototype members.
  */
+/**
+ * The rule that governs `host`: its own exact rule, otherwise the nearest
+ * parent domain whose rule opted in with `includeSubdomains`. Hostnames that
+ * are addresses (IPv4, IPv6) have no parents.
+ */
+export function matchSiteRule(preferences: DarkrPreferences, host: string): SiteRule | undefined {
+  const exact = getSiteRule(preferences, host);
+  if (exact || host.startsWith("[") || /^[\d.]+$/.test(host)) {
+    return exact;
+  }
+  const labels = host.split(".");
+  for (let start = 1; start < labels.length - 1; start += 1) {
+    const rule = getSiteRule(preferences, labels.slice(start).join("."));
+    if (rule?.includeSubdomains) {
+      return rule;
+    }
+  }
+  return undefined;
+}
+
+/** Sets or clears the "include subdomains" flag of an existing rule. */
+export function setSiteIncludeSubdomains(
+  preferences: DarkrPreferences,
+  hostname: string,
+  include: boolean,
+): DarkrPreferences {
+  const host = hostnamePreferenceKey(hostname);
+  const existing = host ? getSiteRule(preferences, host) : undefined;
+  if (!host || !existing) {
+    return preferences;
+  }
+  return withRule(preferences, host, {
+    ...existing,
+    includeSubdomains: include || undefined,
+  } as SiteRule);
+}
+
 export function getSiteRule(preferences: DarkrPreferences, host: string): SiteRule | undefined {
   return Object.prototype.hasOwnProperty.call(preferences.sites, host)
     ? preferences.sites[host]
@@ -59,6 +96,7 @@ function composeRule(
   policy: SitePolicy,
   overrides: DomainPreferences | undefined,
   overrideNativeDark: boolean | undefined,
+  includeSubdomains?: boolean,
 ): SiteRule | null {
   const hasOverrides = overrides !== undefined && Object.keys(overrides).length > 0;
   if (policy === "auto" && !hasOverrides && overrideNativeDark === undefined) {
@@ -66,6 +104,7 @@ function composeRule(
   }
   return {
     policy,
+    ...(includeSubdomains ? { includeSubdomains: true } : {}),
     ...(hasOverrides ? { overrides } : {}),
     ...(overrideNativeDark !== undefined ? { overrideNativeDark } : {}),
   };
@@ -229,6 +268,7 @@ export function normalizePreferences(input: unknown): DarkrPreferences {
         typeof rawConfig.overrideNativeDark === "boolean"
           ? rawConfig.overrideNativeDark
           : undefined,
+        rawConfig.includeSubdomains === true,
       );
       if (rule) {
         sites[host] = rule;
@@ -301,7 +341,7 @@ export function resolveAppearance(
   environment: AppearanceEnvironment = {},
 ): ResolvedAppearance {
   const host = hostnamePreferenceKey(hostname);
-  const rule = host ? getSiteRule(preferences, host) : undefined;
+  const rule = host ? matchSiteRule(preferences, host) : undefined;
   const policy = rule?.policy ?? "auto";
   const overrides = rule?.overrides ?? {};
   const hasOverrides = Object.keys(overrides).length > 0;
@@ -338,7 +378,12 @@ export function setSiteAppearance(
   return withRule(
     preferences,
     host,
-    composeRule(existing?.policy ?? "auto", overrides, existing?.overrideNativeDark),
+    composeRule(
+      existing?.policy ?? "auto",
+      overrides,
+      existing?.overrideNativeDark,
+      existing?.includeSubdomains,
+    ),
   );
 }
 
@@ -352,7 +397,11 @@ export function clearSiteAppearance(
   if (!host || !rule) {
     return preferences;
   }
-  return withRule(preferences, host, composeRule(rule.policy, undefined, rule.overrideNativeDark));
+  return withRule(
+    preferences,
+    host,
+    composeRule(rule.policy, undefined, rule.overrideNativeDark, rule.includeSubdomains),
+  );
 }
 
 export function removeSiteRule(preferences: DarkrPreferences, hostname: string): DarkrPreferences {
@@ -376,7 +425,12 @@ export function setSitePolicy(
   return withRule(
     preferences,
     host,
-    composeRule(policy, existing?.overrides, existing?.overrideNativeDark),
+    composeRule(
+      policy,
+      existing?.overrides,
+      existing?.overrideNativeDark,
+      existing?.includeSubdomains,
+    ),
   );
 }
 
@@ -417,7 +471,12 @@ export function setSiteNativeDarkOverride(
   return withRule(
     preferences,
     host,
-    composeRule(existing?.policy ?? "auto", existing?.overrides, stored),
+    composeRule(
+      existing?.policy ?? "auto",
+      existing?.overrides,
+      stored,
+      existing?.includeSubdomains,
+    ),
   );
 }
 

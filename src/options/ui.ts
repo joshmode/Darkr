@@ -8,6 +8,8 @@ import {
   setAutoMode,
   setDefaultAppearance,
   setGlobalNativeDarkOverride,
+  setMasterEnabled,
+  setSiteIncludeSubdomains,
   setSitePolicy,
 } from "../shared/config";
 import { getBrowserApi } from "../shared/extension-api";
@@ -17,7 +19,13 @@ import {
   needsOnboarding,
   savePreferences,
 } from "../shared/preferences";
-import { contrastDescription, darknessDescription, warmthDescription } from "../shared/theme";
+import {
+  buildThemeTokens,
+  contrastDescription,
+  darknessDescription,
+  themeVariables,
+  warmthDescription,
+} from "../shared/theme";
 import {
   DEFAULT_THEME_CONFIG,
   MODE_LABELS,
@@ -69,6 +77,63 @@ const aboutButton = byId<HTMLButtonElement>("about-button");
 const aboutDialog = byId<HTMLDialogElement>("about-dialog");
 const aboutClose = byId<HTMLButtonElement>("about-close");
 const aboutVersion = byId<HTMLElement>("about-version");
+const preview = byId<HTMLElement>("settings-preview");
+const siteSearch = byId<HTMLInputElement>("site-search");
+const siteError = byId<HTMLElement>("site-error");
+const exportButton = byId<HTMLButtonElement>("export-settings");
+const importButton = byId<HTMLButtonElement>("import-settings");
+const importFile = byId<HTMLInputElement>("import-file");
+const dataMessage = byId<HTMLElement>("data-message");
+const undoBar = byId<HTMLElement>("undo-bar");
+const undoMessage = byId<HTMLElement>("undo-message");
+const undoButton = byId<HTMLButtonElement>("undo-button");
+
+/** Offers to revert a destructive change instead of asking for confirmation first. */
+let undoSnapshot: DarkrPreferences | null = null;
+let undoTimer: number | null = null;
+function offerUndo(message: string, previous: DarkrPreferences): void {
+  undoSnapshot = previous;
+  undoMessage.textContent = message;
+  undoBar.hidden = false;
+  if (undoTimer !== null) {
+    window.clearTimeout(undoTimer);
+  }
+  undoTimer = window.setTimeout(hideUndo, 12000);
+}
+function hideUndo(): void {
+  undoSnapshot = null;
+  undoBar.hidden = true;
+  if (undoTimer !== null) {
+    window.clearTimeout(undoTimer);
+    undoTimer = null;
+  }
+}
+undoButton.addEventListener("click", () => {
+  if (undoSnapshot) {
+    preferences = undoSnapshot;
+    hideUndo();
+    void persistAndRender();
+  }
+});
+
+const PREVIEW_FALLBACK = { surface: "#f2f2f2", text: "#151515", link: "#3a3a3a", muted: "#555555" };
+function renderPreview(config: ThemeConfig): void {
+  const tokens = buildThemeTokens(config);
+  const variables = tokens && config.mode !== "grayscale" ? themeVariables(tokens) : null;
+  const palette = variables
+    ? {
+        surface: variables["--darkr-bg"] ?? PREVIEW_FALLBACK.surface,
+        text: variables["--darkr-text"] ?? PREVIEW_FALLBACK.text,
+        link: variables["--darkr-link"] ?? PREVIEW_FALLBACK.link,
+        muted: variables["--darkr-muted"] ?? PREVIEW_FALLBACK.muted,
+      }
+    : PREVIEW_FALLBACK;
+  for (const swatch of preview.querySelectorAll<HTMLElement>("[data-role]")) {
+    const role = swatch.dataset.role as keyof typeof palette;
+    swatch.style.background = palette.surface;
+    swatch.style.color = palette[role === "surface" ? "text" : role];
+  }
+}
 
 function setSliderProgress(input: HTMLInputElement): void {
   const minimum = Number(input.min || 0);
@@ -95,6 +160,11 @@ function renderDefaults(config: ThemeConfig): void {
   for (const input of [background, contrast, sepia, grayscale, warmth]) {
     setSliderProgress(input);
   }
+  // Only the active mode's sliders are shown.
+  for (const row of document.querySelectorAll<HTMLElement>("[data-mode-group]")) {
+    row.hidden = row.dataset.modeGroup !== config.mode;
+  }
+  renderPreview(config);
 }
 
 function describeConfig(config: ThemeConfig): string {
@@ -110,17 +180,23 @@ function describeConfig(config: ThemeConfig): string {
   if (config.mode === "warm") {
     return `Warm Light · ${warmthDescription(config.warmth)}`;
   }
-  return MODE_LABELS.original;
+  return MODE_LABELS[config.mode];
 }
 
 function renderSites(): void {
   if (!preferences) {
     return;
   }
-  const entries = Object.entries(preferences.sites).sort(([a], [b]) => a.localeCompare(b));
+  const total = Object.keys(preferences.sites).length;
+  const query = siteSearch.value.trim().toLowerCase();
+  const entries = Object.entries(preferences.sites)
+    .filter(([host]) => host.includes(query))
+    .sort(([a], [b]) => a.localeCompare(b));
   sitesList.replaceChildren();
   sitesEmpty.hidden = entries.length > 0;
-  clearSites.disabled = entries.length === 0;
+  sitesEmpty.querySelector("p")!.textContent =
+    total === 0 ? "No site rules yet." : "No rules match.";
+  clearSites.disabled = total === 0;
 
   for (const [host, rule] of entries) {
     const resolved = resolveAppearance(preferences, host);
@@ -185,7 +261,21 @@ function renderSites(): void {
       void persistAndRender();
     });
 
-    actions.append(policy, remove);
+    const subdomains = document.createElement("label");
+    subdomains.className = "site-row-sub";
+    const subdomainsBox = document.createElement("input");
+    subdomainsBox.type = "checkbox";
+    subdomainsBox.checked = rule.includeSubdomains === true;
+    subdomainsBox.addEventListener("change", () => {
+      if (!preferences) {
+        return;
+      }
+      preferences = setSiteIncludeSubdomains(preferences, host, subdomainsBox.checked);
+      void persistAndRender();
+    });
+    subdomains.append(subdomainsBox, "Include subdomains");
+
+    actions.append(subdomains, policy, remove);
     row.append(copy, actions);
     sitesList.append(row);
   }
@@ -200,6 +290,7 @@ function render(): void {
   nativeDarkPolicy.value = preferences.overrideNativeDark ? "override" : "keep";
   renderSites();
   extensionStatus.classList.toggle("is-off", !preferences.enabled);
+  extensionStatus.setAttribute("aria-checked", String(preferences.enabled));
   extensionStatus.lastElementChild!.textContent = preferences.enabled
     ? "Extension enabled"
     : "Extension paused";
@@ -277,8 +368,10 @@ restoreDefaults.addEventListener("click", () => {
   if (!preferences) {
     return;
   }
+  const previous = preferences;
   preferences = restoreDefaultValues(preferences);
   renderDefaults({ ...DEFAULT_THEME_CONFIG });
+  offerUndo("Default appearance restored.", previous);
   void persistAndRender();
 });
 
@@ -287,13 +380,9 @@ clearSites.addEventListener("click", () => {
     return;
   }
   const count = Object.keys(preferences.sites).length;
-  if (
-    count > 0 &&
-    !window.confirm(`Remove all ${count} saved site rule${count === 1 ? "" : "s"}?`)
-  ) {
-    return;
-  }
+  const previous = preferences;
   preferences = clearAllSiteAppearances(preferences);
+  offerUndo(`Removed ${count} site rule${count === 1 ? "" : "s"}.`, previous);
   void persistAndRender();
 });
 
@@ -317,17 +406,27 @@ siteForm.addEventListener("submit", (event) => {
     return;
   }
   const host = hostFromInput(siteHostname.value);
-  if (!host) {
+  const fail = (message: string): void => {
+    siteHostname.setAttribute("aria-invalid", "true");
+    siteError.textContent = message;
+    siteError.hidden = false;
     siteHostname.focus();
+  };
+  if (!host) {
+    fail("Enter a hostname such as example.com.");
     return;
   }
   const next = setSitePolicy(preferences, host, sitePolicy.value as SitePolicy);
   if (next === preferences) {
-    siteHostname.setAttribute("aria-invalid", "true");
-    siteHostname.focus();
+    fail(
+      /:\d+$/.test(host)
+        ? "Rules match hostnames only; remove the port number."
+        : `“${host}” is not a valid hostname.`,
+    );
     return;
   }
   siteHostname.removeAttribute("aria-invalid");
+  siteError.hidden = true;
   preferences = next;
   siteHostname.value = "";
   sitePolicy.value = "block";
@@ -367,6 +466,55 @@ async function initialize(): Promise<void> {
     render();
   });
 }
+
+extensionStatus.addEventListener("click", () => {
+  if (!preferences) {
+    return;
+  }
+  preferences = setMasterEnabled(preferences, !preferences.enabled);
+  void persistAndRender();
+});
+
+siteSearch.addEventListener("input", renderSites);
+
+exportButton.addEventListener("click", () => {
+  if (!preferences) {
+    return;
+  }
+  const blob = new Blob([`${JSON.stringify(preferences, null, 2)}\n`], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "darkr-settings.json";
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  dataMessage.textContent = "Settings exported.";
+});
+
+importButton.addEventListener("click", () => importFile.click());
+importFile.addEventListener("change", async () => {
+  const file = importFile.files?.[0];
+  importFile.value = "";
+  if (!file || !preferences) {
+    return;
+  }
+  try {
+    const parsed: unknown = JSON.parse(await file.text());
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      throw new Error("not an object");
+    }
+    const previous = preferences;
+    preferences = normalizePreferences(parsed);
+    const count = Object.keys(preferences.sites).length;
+    dataMessage.textContent = `Imported settings with ${count} site rule${count === 1 ? "" : "s"}.`;
+    offerUndo("Settings imported.", previous);
+    await persistAndRender();
+  } catch {
+    dataMessage.textContent = "That file is not a Darkr settings export. Nothing was changed.";
+  }
+});
 
 onboardingDismiss.addEventListener("click", async () => {
   if (!browser) {
