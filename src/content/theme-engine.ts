@@ -157,6 +157,24 @@ function hasDirectText(element: Element): boolean {
   return false;
 }
 
+const EDITABLE_SELECTOR = '[contenteditable]:not([contenteditable="false"]), [role="textbox"]';
+const DESIGN_MODE_ATTRIBUTE = "data-darkr-designmode";
+
+/**
+ * True for anything inside an editable region, except the region's own root.
+ * Darkr must not write attributes or inline styles there: webmail composers,
+ * CMS editors and note apps serialise that markup, and editors such as
+ * ProseMirror and Slate watch their own DOM. The stylesheet makes these
+ * subtrees inherit the themed colours instead.
+ */
+function isInsideEditable(element: Element): boolean {
+  if (element.ownerDocument.designMode === "on") {
+    return true;
+  }
+  const root = element.closest(EDITABLE_SELECTOR);
+  return root !== null && root !== element;
+}
+
 function isProtectedEditor(element: Element): boolean {
   return Boolean(element.closest(".monaco-editor, .CodeMirror, .cm-editor, .ace_editor"));
 }
@@ -303,6 +321,11 @@ function buildDocumentCss(tokens: ThemeTokens): string {
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} body {
   background-color: var(--darkr-bg) !important;
   color: var(--darkr-text) !important;
+}
+:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :is(${EDITABLE_SELECTOR}) :where(*),
+:root.${ROOT_CLASS}.${SEMANTIC_CLASS}[${DESIGN_MODE_ATTRIBUTE}] body :where(*) {
+  color: inherit !important;
+  background-color: transparent !important;
 }
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} a {
   color: var(--darkr-link) !important;
@@ -514,6 +537,7 @@ export class ThemeEngine {
 
     this.installStyle(tokens);
     root.classList.add(ROOT_CLASS);
+    root.toggleAttribute(DESIGN_MODE_ATTRIBUTE, this.doc.designMode === "on");
     root.classList.toggle(SEMANTIC_CLASS, isSemantic);
     root.classList.toggle(GRAYSCALE_CLASS, config.mode === "grayscale");
 
@@ -546,6 +570,7 @@ export class ThemeEngine {
 
     const root = this.doc.documentElement;
     root.classList.remove(ROOT_CLASS, SEMANTIC_CLASS, GRAYSCALE_CLASS);
+    root.removeAttribute(DESIGN_MODE_ATTRIBUTE);
     for (const name of ROOT_VARIABLES) {
       root.style.removeProperty(name);
     }
@@ -709,6 +734,13 @@ export class ThemeEngine {
     }
 
     let inspection = this.inspections.get(element);
+    if (isInsideEditable(element)) {
+      if (inspection) {
+        this.cleanupElement(element, inspection);
+        this.inspections.delete(element);
+      }
+      return;
+    }
     if (!inspection) {
       if (SKIP_SUBTREES.has(element.tagName)) {
         return;
@@ -879,6 +911,11 @@ export class ThemeEngine {
       return;
     }
 
+    if (isInsideEditable(element)) {
+      this.cleanupElement(element, inspection);
+      this.inspections.delete(element);
+      return;
+    }
     let surface = this.resolveParentSurface(element, tokens);
     const hostStyleChanged = inlineStyleSignature(element) !== inspection.hostStyleSignature;
     if (hostStyleChanged) {
@@ -980,7 +1017,7 @@ export class ThemeEngine {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "hidden", "open", "style"],
+      attributeFilter: ["class", "hidden", "open", "style", "contenteditable", "role"],
     });
     this.shadowObservers.set(root, observer);
   }
@@ -1008,7 +1045,7 @@ export class ThemeEngine {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "hidden", "open", "style"],
+      attributeFilter: ["class", "hidden", "open", "style", "contenteditable", "role"],
     });
   }
 
@@ -1039,7 +1076,10 @@ export class ThemeEngine {
         if (target.nodeType === Node.ELEMENT_NODE && target !== this.doc.documentElement) {
           // A class/hidden/open toggle on a large container (scroll locks,
           // theme classes) must not re-walk everything already inspected.
-          this.queueSubtree(target as Element, true);
+          this.queueSubtree(
+            target as Element,
+            record.attributeName !== "contenteditable" && record.attributeName !== "role",
+          );
           if (record.attributeName === "class") {
             this.markForResample(target as Element);
           }
