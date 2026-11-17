@@ -103,7 +103,7 @@ provides it, and otherwise by asking its background script, which reads the
 tab's URL. Nothing is sent anywhere outside the browser.
 
 To avoid a flash of the unthemed page, the top document is briefly held at
-`document_start` until your preferences have loaded (with a 400 ms safety
+`document_start` until your preferences have loaded (with a 250 ms safety
 timeout so a stalled storage call can never leave a page blank). Embedded
 frames are not held.
 

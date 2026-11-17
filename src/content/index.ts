@@ -63,13 +63,21 @@ if (!window.__DARKR_CONTENT__) {
   // first resolution, with a hard timeout so a stalled storage call can never
   // leave a page blank.
   const PREPAINT_ID = "darkr-prepaint";
-  const PREPAINT_TIMEOUT_MS = 400;
+  const PREPAINT_TIMEOUT_MS = 250;
   let prepaintStyle: HTMLStyleElement | null = null;
   let prepaintTimer: number | null = null;
   const holdPainting = (): void => {
     // Subframes (ads, embeds, viewers) are not held: only the top document
     // flashes visibly, and hiding every frame delays unrelated content.
-    if (!browser || !isTopFrame || !document.documentElement) {
+    // Nothing to flash on non-HTML documents (images, text, PDFs, SVG) or when
+    // the script was injected after the page had already loaded.
+    if (
+      !browser ||
+      !isTopFrame ||
+      !document.documentElement ||
+      document.contentType !== "text/html" ||
+      document.readyState === "complete"
+    ) {
       return;
     }
     prepaintStyle = document.createElement("style");
