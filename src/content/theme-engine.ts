@@ -7,7 +7,7 @@ import {
   opaqueColor,
   parseColorOrNull,
 } from "./color-map";
-import { contrastRatio, relativeLuminance, type Rgb, type Rgba } from "../shared/color";
+import { contrastRatio, isPainted, relativeLuminance, type Rgb, type Rgba } from "../shared/color";
 import { themeConfigsEqual } from "../shared/config";
 
 const STYLE_ID = "darkr-theme-styles";
@@ -21,10 +21,32 @@ const IGNORE_ATTRIBUTE = "data-darkr-ignore";
 const ELEMENT_SURFACE_VARIABLE = "--darkr-element-surface";
 const ELEMENT_TEXT_VARIABLE = "--darkr-element-text";
 const ELEMENT_BORDER_VARIABLE = "--darkr-element-border";
+/**
+ * `data-darkr-border` holds "a" when all four sides share one colour, or any of
+ * "t r b l" for the sides that are painted. Unlisted sides keep the author's
+ * colour (transparent sides must stay transparent: CSS triangles, ghost buttons).
+ */
+const BORDER_SIDES = [
+  { key: "t", property: "Top", variable: "--darkr-element-border-top", css: "border-top-color" },
+  {
+    key: "r",
+    property: "Right",
+    variable: "--darkr-element-border-right",
+    css: "border-right-color",
+  },
+  {
+    key: "b",
+    property: "Bottom",
+    variable: "--darkr-element-border-bottom",
+    css: "border-bottom-color",
+  },
+  { key: "l", property: "Left", variable: "--darkr-element-border-left", css: "border-left-color" },
+] as const;
 const ENGINE_STYLE_PROPERTIES = [
   ELEMENT_SURFACE_VARIABLE,
   ELEMENT_TEXT_VARIABLE,
   ELEMENT_BORDER_VARIABLE,
+  ...BORDER_SIDES.map((side) => side.variable),
 ] as const;
 const INITIAL_ELEMENT_BUDGET = 700;
 const BATCH_SIZE = 180;
@@ -87,7 +109,8 @@ const SKIP_TEXT_INSIDE =
 interface InspectedElement {
   background: Rgba | null;
   text: Rgba | null;
-  border: Rgba | null;
+  /** Painted colour per side (top, right, bottom, left); null when not painted. */
+  borders: [Rgba | null, Rgba | null, Rgba | null, Rgba | null];
   hasDirectText: boolean;
   mappedSurface: Rgb | null;
   /** Keep inline edits from the host page instead of overriding them forever. */
@@ -96,11 +119,10 @@ interface InspectedElement {
   samples: {
     background: string;
     text: string;
-    border: string;
+    borders: string;
     display: string;
     visibility: string;
     opacity: string;
-    borderStyle: string;
   };
 }
 
@@ -152,11 +174,12 @@ function sampleStyle(style: CSSStyleDeclaration): InspectedElement["samples"] {
   return {
     background: style.backgroundColor,
     text: style.color,
-    border: style.borderTopColor,
+    borders: BORDER_SIDES.map(
+      (side) => `${style[`border${side.property}Color`]}/${style[`border${side.property}Style`]}`,
+    ).join("|"),
     display: style.display,
     visibility: style.visibility,
     opacity: style.opacity,
-    borderStyle: style.borderTopStyle,
   };
 }
 
@@ -175,20 +198,17 @@ function samplesEqual(
   return (
     left.background === right.background &&
     left.text === right.text &&
-    left.border === right.border &&
+    left.borders === right.borders &&
     left.display === right.display &&
     left.visibility === right.visibility &&
-    left.opacity === right.opacity &&
-    left.borderStyle === right.borderStyle
+    left.opacity === right.opacity
   );
 }
 
 function stylePass(element: Element, style: CSSStyleDeclaration): InspectedElement["pass"] {
   if (
     style.backgroundColor !== "rgba(0, 0, 0, 0)" ||
-    (style.borderTopStyle !== "" &&
-      style.borderTopStyle !== "none" &&
-      style.borderTopStyle !== "hidden")
+    BORDER_SIDES.some((side) => hasBorderStyle(style[`border${side.property}Style`]))
   ) {
     return "surface";
   }
@@ -226,8 +246,14 @@ function tokenColorFromVariable(value: string, tokens: ThemeTokens): Rgba | null
   return resolved ? { ...resolved, a: 1 } : null;
 }
 
+function hasBorderStyle(value: string): boolean {
+  return value !== "none" && value !== "hidden";
+}
+
+/** A colour worth mapping: parseable and actually painted (alpha >= 0.05). */
 function inspectableColor(value: string, tokens: ThemeTokens | null): Rgba | null {
-  return parseColorOrNull(value) ?? (tokens ? tokenColorFromVariable(value, tokens) : null);
+  const color = parseColorOrNull(value) ?? (tokens ? tokenColorFromVariable(value, tokens) : null);
+  return color && isPainted(color) ? color : null;
 }
 
 function getOriginalSurface(doc: Document): Rgba {
@@ -342,9 +368,10 @@ function buildDocumentCss(tokens: ThemeTokens): string {
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${TEXT_ATTRIBUTE}] {
   color: var(${ELEMENT_TEXT_VARIABLE}) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${BORDER_ATTRIBUTE}] {
+:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${BORDER_ATTRIBUTE}~="a"] {
   border-color: var(${ELEMENT_BORDER_VARIABLE}) !important;
 }
+${BORDER_SIDES.map((side) => `:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${BORDER_ATTRIBUTE}~="${side.key}"] {\n  ${side.css}: var(${side.variable}) !important;\n}`).join("\n")}
 :root.${ROOT_CLASS}.${GRAYSCALE_CLASS} {
   filter: grayscale(var(--darkr-grayscale)) !important;
 }
@@ -375,7 +402,8 @@ function buildShadowCss(): string {
   background-color: var(${ELEMENT_SURFACE_VARIABLE}) !important;
 }
 :host [${TEXT_ATTRIBUTE}] { color: var(${ELEMENT_TEXT_VARIABLE}) !important; }
-:host [${BORDER_ATTRIBUTE}] { border-color: var(${ELEMENT_BORDER_VARIABLE}) !important; }
+:host [${BORDER_ATTRIBUTE}~="a"] { border-color: var(${ELEMENT_BORDER_VARIABLE}) !important; }
+${BORDER_SIDES.map((side) => `:host [${BORDER_ATTRIBUTE}~="${side.key}"] { ${side.css}: var(${side.variable}) !important; }`).join("\n")}
 `;
 }
 
@@ -717,7 +745,11 @@ export class ThemeEngine {
         opaqueColor(samples.background) ??
         (tokens ? tokenColorFromVariable(samples.background, tokens) : null),
       text: textControl ? null : inspectableColor(samples.text, tokens),
-      border: inspectableColor(samples.border, tokens),
+      borders: BORDER_SIDES.map((side) =>
+        hasBorderStyle(style[`border${side.property}Style`])
+          ? inspectableColor(style[`border${side.property}Color`], tokens)
+          : null,
+      ) as InspectedElement["borders"],
       hasDirectText: !textControl && hasDirectText(element),
       mappedSurface: null,
       hostStyleSignature: inlineStyleSignature(element),
@@ -883,25 +915,44 @@ export class ThemeEngine {
       (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
     }
 
-    const borderStyle = getComputedStyle(element).borderTopStyle;
-    if (
-      inspection.border &&
-      !hostStyleChanged &&
-      borderStyle !== "none" &&
-      borderStyle !== "hidden"
-    ) {
-      element.setAttribute(BORDER_ATTRIBUTE, "");
-      (element as HTMLElement).style.setProperty(
-        ELEMENT_BORDER_VARIABLE,
-        mapBorderColor(inspection.border, surface, tokens),
-      );
-    } else if (element.hasAttribute(BORDER_ATTRIBUTE)) {
-      element.removeAttribute(BORDER_ATTRIBUTE);
-      (element as HTMLElement).style.removeProperty(ELEMENT_BORDER_VARIABLE);
-    }
+    this.styleBorders(element, inspection, surface, tokens);
     if (hostStyleChanged) {
       inspection.hostStyleSignature = inlineStyleSignature(element);
     }
+  }
+
+  private styleBorders(
+    element: Element,
+    inspection: InspectedElement,
+    surface: Rgb,
+    tokens: ThemeTokens,
+  ): void {
+    const style = (element as HTMLElement).style;
+    const mapped = inspection.borders.map((color) =>
+      color ? mapBorderColor(color, surface, tokens) : null,
+    );
+    const painted = BORDER_SIDES.filter((_, index) => mapped[index] !== null);
+    for (const side of BORDER_SIDES) {
+      style.removeProperty(side.variable);
+    }
+    if (painted.length === 0) {
+      element.removeAttribute(BORDER_ATTRIBUTE);
+      style.removeProperty(ELEMENT_BORDER_VARIABLE);
+      return;
+    }
+    if (painted.length === 4 && mapped.every((value) => value === mapped[0])) {
+      element.setAttribute(BORDER_ATTRIBUTE, "a");
+      style.setProperty(ELEMENT_BORDER_VARIABLE, mapped[0] as string);
+      return;
+    }
+    style.removeProperty(ELEMENT_BORDER_VARIABLE);
+    BORDER_SIDES.forEach((side, index) => {
+      const value = mapped[index];
+      if (value) {
+        style.setProperty(side.variable, value);
+      }
+    });
+    element.setAttribute(BORDER_ATTRIBUTE, painted.map((side) => side.key).join(" "));
   }
 
   private attachShadowStyle(root: ShadowRoot): void {
@@ -1174,6 +1225,9 @@ export class ThemeEngine {
     htmlElement.style.removeProperty(ELEMENT_SURFACE_VARIABLE);
     htmlElement.style.removeProperty(ELEMENT_TEXT_VARIABLE);
     htmlElement.style.removeProperty(ELEMENT_BORDER_VARIABLE);
+    for (const side of BORDER_SIDES) {
+      htmlElement.style.removeProperty(side.variable);
+    }
   }
 
   private clearElements(): void {

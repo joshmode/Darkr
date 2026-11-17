@@ -24,6 +24,13 @@ export function rgbToHex(color: Rgb): string {
   return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
 }
 
+/** Below this alpha a colour is treated as "not painted" (transparent text, ghost borders). */
+export const PAINTED_ALPHA = 0.05;
+
+export function isPainted(color: Rgba): boolean {
+  return color.a >= PAINTED_ALPHA;
+}
+
 export function rgbToCss(color: Rgba | Rgb): string {
   if ("a" in color && color.a < 0.999) {
     const alpha = Math.max(0, Math.min(1, color.a));

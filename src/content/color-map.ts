@@ -4,6 +4,7 @@ import {
   contrastRatio,
   ensureContrast,
   hexToRgb,
+  isPainted,
   mixRgb,
   parseCssColor,
   preferredTextDirection,
@@ -136,7 +137,15 @@ function textContrastTarget(original: Rgb, tokens: ThemeTokens): number {
   return Math.max(4.5, base * (1 - 0.3 * Math.min(1, luminance / 0.18)));
 }
 
+/**
+ * Maps an author text colour for the themed surface. Alpha is carried through
+ * (the colour is mapped as if opaque, then painted with its original alpha);
+ * colours that are effectively transparent are never repainted.
+ */
 export function mapTextColor(original: Rgba, surface: Rgb, tokens: ThemeTokens): string {
+  if (!isPainted(original)) {
+    return "transparent";
+  }
   const direction = preferredTextDirection(surface);
   const target = textContrastTarget(original, tokens);
   const hsl = rgbToHsl(original);
@@ -149,14 +158,18 @@ export function mapTextColor(original: Rgba, surface: Rgb, tokens: ThemeTokens):
         })
       : original;
   const mapped = colorForContrast(saturated, surface, target, direction);
-  return rgbToCss(ensureContrast(mapped, surface, Math.max(4.5, target * 0.93), direction));
+  const final = ensureContrast(mapped, surface, Math.max(4.5, target * 0.93), direction);
+  return rgbToCss({ ...final, a: original.a });
 }
 
 export function mapBorderColor(original: Rgba, surface: Rgb, tokens: ThemeTokens): string {
+  if (!isPainted(original)) {
+    return "transparent";
+  }
   const originalLuminance = relativeLuminance(original);
   const base = originalLuminance > 0.5 ? tokens.border : mixRgb(tokens.border, original, 0.16);
   const blended = mixRgb(base, surface, 0.04);
-  return rgbToCss(blended);
+  return rgbToCss({ ...blended, a: original.a });
 }
 
 export function parseColorOrNull(value: string): Rgba | null {
