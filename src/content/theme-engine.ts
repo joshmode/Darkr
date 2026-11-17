@@ -1,4 +1,5 @@
 import { buildThemeTokens, themeVariables, type ThemeTokens } from "../shared/theme";
+import { ElementRecords } from "./records";
 import {
   PAGE_SURFACE,
   Palette,
@@ -440,7 +441,7 @@ function buildShadowCss(): string {
 export class ThemeEngine {
   private readonly doc: Document;
   private readonly win: IdleWindow;
-  private readonly inspections = new Map<Element, InspectedElement>();
+  private readonly inspections = new ElementRecords<InspectedElement>();
   private bodyAuthor: { text: Rgba | null; fill: Rgba | null; stroke: Rgba | null } | null = null;
   private readonly shadowStyles = new Map<ShadowRoot, HTMLStyleElement>();
   private readonly shadowObservers = new Map<ShadowRoot, MutationObserver>();
