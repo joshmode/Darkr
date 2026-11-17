@@ -1,9 +1,6 @@
 import {
-  clampChannel,
   colorForContrast,
-  contrastRatio,
   ensureContrast,
-  hexToRgb,
   isPainted,
   mixRgb,
   parseCssColor,

@@ -352,3 +352,24 @@ test("[E-19] light text-shadow halos are dropped on dark themes, dark ones kept"
   assert.equal(await colorOf(page, "#halo", "textShadow"), "none");
   assert.notEqual(await colorOf(page, "#dark", "textShadow"), "none");
 });
+
+// ---------------------------------------------------------------- E-14
+test("[E-14] late elements are mapped from the author's colours, like early ones", async () => {
+  const page = await newPage("/e01-surfaces");
+  await settle(page);
+  await page.evaluate(() => {
+    const clone = document.querySelector(".card").cloneNode(true);
+    for (const el of clone.querySelectorAll("[id]")) el.id = `late-${el.id}`;
+    document.body.append(clone);
+  });
+  await poll(
+    async () => [await colorOf(page, "#para"), await colorOf(page, "#late-para")],
+    ([early, late]) => early === late,
+    { message: "late paragraph colour to match the early one" },
+  );
+  await poll(
+    async () => [await colorOf(page, "#muted"), await colorOf(page, "#late-muted")],
+    ([early, late]) => early === late,
+    { message: "late muted colour to match the early one" },
+  );
+});

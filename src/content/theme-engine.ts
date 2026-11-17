@@ -78,6 +78,7 @@ const BORDER_SIDES = [
 ] as const;
 const INITIAL_ELEMENT_BUDGET = 700;
 const BATCH_SIZE = 180;
+const IDLE_SLICE_SIZE = 400;
 const NATIVE_DARK_THRESHOLD = 0.18;
 /**
  * A class toggle on a container with more inspected descendants than this is
@@ -150,7 +151,6 @@ interface InspectedElement {
   backdrop: Backdrop | null;
   /** Keep inline edits from the host page instead of overriding them forever. */
   hostStyleSignature: string;
-  pass: "light" | "text" | "surface";
   samples: {
     background: string;
     backgroundImage: string;
@@ -283,46 +283,19 @@ function samplesEqual(
   );
 }
 
-function stylePass(element: Element, style: CSSStyleDeclaration): InspectedElement["pass"] {
-  if (
-    style.backgroundColor !== "rgba(0, 0, 0, 0)" ||
-    style.backgroundImage.includes("gradient(") ||
-    BORDER_SIDES.some((side) => hasBorderStyle(style[`border${side.property}Style`]))
-  ) {
-    return "surface";
-  }
-  if (
-    element.matches(
-      "p, span, a, strong, em, b, i, small, time, cite, label, legend, dt, dd, li, td, th, blockquote, figcaption, h1, h2, h3, h4, h5, h6",
-    )
-  ) {
-    return "text";
-  }
-  return "light";
+/** Number of ancestors, crossing shadow boundaries. */
+function parentElementOf(element: Element): Element | null {
+  return element.parentElement ?? (element.getRootNode() as ShadowRoot).host ?? null;
 }
 
-function tokenColorFromVariable(value: string, tokens: ThemeTokens): Rgba | null {
-  const variable = value.trim().match(/^var\(\s*(--darkr-[\w-]+)/)?.[1];
-  if (!variable) {
-    return null;
+function nodeDepth(element: Element): number {
+  let depth = 0;
+  let node: Node | null = element.parentNode;
+  while (node) {
+    depth += 1;
+    node = node.parentNode ?? (node as ShadowRoot).host ?? null;
   }
-  const mapping: Record<string, Rgb> = {
-    "--darkr-bg": tokens.background,
-    "--darkr-raised": tokens.raised,
-    "--darkr-sunken": tokens.sunken,
-    "--darkr-text": tokens.text,
-    "--darkr-muted": tokens.muted,
-    "--darkr-border": tokens.border,
-    "--darkr-link": tokens.link,
-    "--darkr-visited": tokens.visited,
-    "--darkr-input-bg": tokens.inputBackground,
-    "--darkr-input-text": tokens.inputText,
-    "--darkr-code-bg": tokens.codeBackground,
-    "--darkr-code-text": tokens.codeText,
-    "--darkr-selection": tokens.selection,
-  };
-  const resolved = mapping[variable];
-  return resolved ? { ...resolved, a: 1 } : null;
+  return depth;
 }
 
 /** Tag names compare case-insensitively: SVG and MathML report lowercase. */
@@ -363,8 +336,8 @@ function readBackdrop(samples: InspectedElement["samples"]): Backdrop | null {
   return null;
 }
 
-function inspectableColor(value: string, tokens: ThemeTokens | null): Rgba | null {
-  const color = parseColorOrNull(value) ?? (tokens ? tokenColorFromVariable(value, tokens) : null);
+function inspectableColor(value: string): Rgba | null {
+  const color = parseColorOrNull(value);
   return color && isPainted(color) ? color : null;
 }
 
@@ -505,6 +478,7 @@ export class ThemeEngine {
   private readonly doc: Document;
   private readonly win: IdleWindow;
   private readonly inspections = new Map<Element, InspectedElement>();
+  private bodyAuthor: { text: Rgba | null; fill: Rgba | null; stroke: Rgba | null } | null = null;
   private readonly shadowStyles = new Map<ShadowRoot, HTMLStyleElement>();
   private readonly shadowObservers = new Map<ShadowRoot, MutationObserver>();
   private readonly queuedElements = new Set<Element>();
@@ -625,6 +599,7 @@ export class ThemeEngine {
   }
 
   clear(): void {
+    this.bodyAuthor = null;
     this.stopRootObserver();
     this.teardownPageRendering();
     this.state = {
@@ -817,7 +792,6 @@ export class ThemeEngine {
     this.cancelScheduledWork();
     const queued = [...this.queuedElements];
     this.queuedElements.clear();
-    this.resampleFlagged(queued);
     this.processElements(queued);
   }
 
@@ -852,21 +826,15 @@ export class ThemeEngine {
     if (!this.state.tokens) {
       return;
     }
-    let processed = 0;
+    const initial: Element[] = [];
     const stack: Element[] = [this.doc.documentElement];
     while (stack.length > 0) {
       const element = stack.pop();
       if (!element || element.hasAttribute(IGNORE_ATTRIBUTE) || isSkippedElement(element)) {
         continue;
       }
-      if (processed < INITIAL_ELEMENT_BUDGET) {
-        const pass = stylePass(element, getComputedStyle(element));
-        if (pass === "light") {
-          this.queuedElements.add(element);
-        } else {
-          this.inspectAndStyle(element);
-        }
-        processed += 1;
+      if (initial.length < INITIAL_ELEMENT_BUDGET) {
+        initial.push(element);
       } else {
         // Bounded: on documents with hundreds of thousands of nodes the queue
         // itself would otherwise pin every element in memory.
@@ -888,6 +856,8 @@ export class ThemeEngine {
         stack.push(child);
       }
     }
+    // One batched read/write for everything above the fold, document order.
+    this.processElements(initial);
     if (this.queuedElements.size > 0) {
       this.scheduleIdleWork();
     }
@@ -919,68 +889,152 @@ export class ThemeEngine {
     return elements;
   }
 
+  /**
+   * Inspects and styles a batch in three phases so layout is never forced
+   * between writes: (1) with Darkr's rules switched off, read every computed
+   * value the batch needs (this also keeps late elements from sampling
+   * Darkr's own colours); (2) the rules go back on; (3) compute and write,
+   * parents before children.
+   */
   private processElements(elements: Iterable<Element>): void {
+    if (!this.state.tokens) {
+      return;
+    }
+    const batch: Element[] = [];
     for (const element of elements) {
-      this.inspectAndStyle(element);
+      if (this.prepareElement(element)) {
+        batch.push(element);
+      }
+    }
+    if (batch.length === 0) {
+      return;
+    }
+
+    // Flagged elements (class swaps) need the page's own colours, so those
+    // batches read with Darkr's rules off. Every other batch reads with the
+    // rules on and corrects inherited values from the records instead: a
+    // document-wide switch costs two full style recalculations per batch.
+    const needsCleanRead = batch.some((element) => this.resampleQueue.has(element));
+    const read = () => {
+      const fresh = new Map<Element, InspectedElement>();
+      const resampled = new Map<Element, InspectedElement>();
+      for (const element of batch) {
+        const flagged = this.resampleQueue.delete(element);
+        const known = this.inspections.has(element);
+        if (!known || flagged) {
+          const inspection = this.buildInspection(
+            element,
+            getComputedStyle(element),
+            !needsCleanRead,
+          );
+          (known ? resampled : fresh).set(element, inspection);
+        }
+      }
+      return { fresh, resampled };
+    };
+    const reads = needsCleanRead ? this.readAuthorStyles(read) : read();
+
+    for (const [element, next] of reads.resampled) {
+      const previous = this.inspections.get(element);
+      if (
+        previous &&
+        (!samplesEqual(previous.samples, next.samples) ||
+          previous.hasDirectText !== next.hasDirectText)
+      ) {
+        next.mappedSurface = previous.mappedSurface;
+        this.inspections.set(element, next);
+      }
+    }
+    for (const [element, inspection] of reads.fresh) {
+      this.inspections.set(element, inspection);
+    }
+
+    // Parents first, so a child resolves its surface from an up-to-date record.
+    const ordered = batch
+      .map((element) => ({ element, depth: nodeDepth(element) }))
+      .sort((left, right) => left.depth - right.depth);
+    for (const { element } of ordered) {
+      const inspection = this.inspections.get(element);
+      if (inspection) {
+        this.styleInspectedElement(element, inspection);
+        if (element.shadowRoot) {
+          this.attachShadowStyle(element.shadowRoot);
+        }
+      }
     }
   }
 
+  /** Single-element convenience for mutation handlers. */
   private inspectAndStyle(element: Element): void {
+    this.processElements([element]);
+  }
+
+  /** Filters elements the engine never touches; cleans up newly editable ones. */
+  private prepareElement(element: Element): boolean {
     if (
       !element.isConnected ||
       element.hasAttribute(IGNORE_ATTRIBUTE) ||
       element.tagName === "HTML" ||
       element.tagName === "BODY"
     ) {
-      return;
+      return false;
     }
-
-    let inspection = this.inspections.get(element);
     if (isInsideEditable(element)) {
-      if (inspection) {
+      if (this.inspections.has(element)) {
         this.cleanupElement(element);
         this.inspections.delete(element);
       }
-      return;
+      return false;
     }
-    if (!inspection) {
-      if (isSkippedElement(element)) {
-        return;
-      }
-      // Hidden elements are inspected too: menus and panels revealed by CSS
-      // alone (:hover, aria-expanded) must already be themed when they appear.
-      inspection = this.buildInspection(element, getComputedStyle(element));
-      this.inspections.set(element, inspection);
-    }
-
-    this.styleInspectedElement(element, inspection);
-    if (element.shadowRoot) {
-      this.attachShadowStyle(element.shadowRoot);
-    }
+    return this.inspections.has(element) || !isSkippedElement(element);
   }
 
-  private buildInspection(element: Element, style: CSSStyleDeclaration): InspectedElement {
+  /**
+   * `contaminated` is true when Darkr's rules are active during the read.
+   * Inherited properties (colour, SVG paint) of an element that merely
+   * inherits then show Darkr's mapped value, so they are replaced by the
+   * author's original taken from the parent's record. Properties an element
+   * declares itself are unaffected.
+   */
+  private buildInspection(
+    element: Element,
+    style: CSSStyleDeclaration,
+    contaminated = false,
+  ): InspectedElement {
     const textControl = element.matches(NON_TEXT_CONTROL_SELECTOR);
     const isSvg = element instanceof SVGElement;
-    const tokens = this.state.tokens;
     const samples = sampleStyle(style);
+    const parent = contaminated ? parentElementOf(element) : null;
+    const parentStyle = parent ? getComputedStyle(parent) : null;
+    const original = (
+      key: "text" | "fill" | "stroke",
+      own: string,
+      inherited: string | undefined,
+    ) =>
+      parent && parentStyle && inherited === own ? this.authorInherited(parent, key) : undefined;
+    const text = textControl
+      ? null
+      : (original("text", samples.text, parentStyle?.color) ?? inspectableColor(samples.text));
+    const fill = isSvg
+      ? (original("fill", style.fill, parentStyle?.fill) ?? inspectableColor(style.fill))
+      : null;
+    const stroke = isSvg
+      ? (original("stroke", style.stroke, parentStyle?.stroke) ?? inspectableColor(style.stroke))
+      : null;
     return {
-      background:
-        opaqueColor(samples.background) ??
-        (tokens ? tokenColorFromVariable(samples.background, tokens) : null),
-      text: textControl ? null : inspectableColor(samples.text, tokens),
-      fill: isSvg ? inspectableColor(style.fill, tokens) : null,
-      stroke: isSvg ? inspectableColor(style.stroke, tokens) : null,
+      background: opaqueColor(samples.background),
+      text,
+      fill,
+      stroke,
       borders: BORDER_SIDES.map((side) =>
         hasBorderStyle(style[`border${side.property}Style`])
-          ? inspectableColor(style[`border${side.property}Color`], tokens)
+          ? inspectableColor(style[`border${side.property}Color`])
           : null,
       ) as InspectedElement["borders"],
       hasDirectText: !textControl && hasDirectText(element),
       mappedSurface: null,
       backdrop: readBackdrop(samples),
       hostStyleSignature: inlineStyleSignature(element),
-      pass: stylePass(element, style),
       samples,
     };
   }
@@ -989,6 +1043,34 @@ export class ThemeEngine {
    * Runs `read` with Darkr's semantic rules switched off so computed styles
    * are the page's own. The switch is synchronous, so nothing paints between.
    */
+  /** The author's value of an inherited property for `node`'s subtree. */
+  private authorInherited(node: Element, key: "text" | "fill" | "stroke"): Rgba | null | undefined {
+    for (let element: Element | null = node; element; element = parentElementOf(element)) {
+      const inspection = this.inspections.get(element);
+      if (inspection) {
+        return inspection[key];
+      }
+      if (element === this.doc.body || element === this.doc.documentElement) {
+        return this.getBodyAuthor()[key];
+      }
+    }
+    return undefined;
+  }
+
+  private getBodyAuthor(): { text: Rgba | null; fill: Rgba | null; stroke: Rgba | null } {
+    if (!this.bodyAuthor) {
+      this.bodyAuthor = this.readAuthorStyles(() => {
+        const style = getComputedStyle(this.doc.body ?? this.doc.documentElement);
+        return {
+          text: inspectableColor(style.color),
+          fill: inspectableColor(style.fill),
+          stroke: inspectableColor(style.stroke),
+        };
+      });
+    }
+    return this.bodyAuthor;
+  }
+
   private setShadowSheetsDisabled(disabled: boolean): void {
     for (const style of this.shadowStyles.values()) {
       if (style.sheet) {
@@ -1012,46 +1094,6 @@ export class ThemeEngine {
         this.setShadowSheetsDisabled(false);
         root.setAttribute(ROOT_ATTRIBUTE, SEMANTIC_VALUE);
       }
-    }
-  }
-
-  /** Re-reads flagged elements after the page swapped classes under them. */
-  private resampleFlagged(elements: readonly Element[]): void {
-    const flagged = elements.filter((element) => this.resampleQueue.delete(element));
-    if (flagged.length === 0 || !this.state.tokens) {
-      return;
-    }
-    const fresh = this.readAuthorStyles(() =>
-      flagged.map((element) => {
-        if (!element.isConnected || !this.inspections.has(element)) {
-          return null;
-        }
-        const style = getComputedStyle(element);
-        return [element, this.buildInspection(element, style)] as const;
-      }),
-    );
-    for (const entry of fresh) {
-      if (!entry) {
-        continue;
-      }
-      const [element, next] = entry;
-      const previous = this.inspections.get(element);
-      if (!previous) {
-        continue;
-      }
-      if (!next) {
-        this.cleanupElement(element);
-        this.inspections.delete(element);
-        continue;
-      }
-      if (
-        samplesEqual(previous.samples, next.samples) &&
-        previous.hasDirectText === next.hasDirectText
-      ) {
-        continue;
-      }
-      next.mappedSurface = previous.mappedSurface;
-      this.inspections.set(element, next);
     }
   }
 
@@ -1366,6 +1408,9 @@ export class ThemeEngine {
       }
       if (record.type === "attributes") {
         const target = record.target;
+        if (target === this.doc.body) {
+          this.bodyAuthor = null;
+        }
         if (target.nodeType === Node.ELEMENT_NODE && target !== this.doc.documentElement) {
           // A class/hidden/open toggle on a large container (scroll locks,
           // theme classes) must not re-walk everything already inspected.
@@ -1484,10 +1529,7 @@ export class ThemeEngine {
     for (const element of batch) {
       this.queuedElements.delete(element);
     }
-    this.resampleFlagged(batch);
-    for (const element of batch) {
-      this.inspectAndStyle(element);
-    }
+    this.processElements(batch);
     if (this.queuedElements.size > 0) {
       this.scheduleBatchWork();
     }
@@ -1506,13 +1548,17 @@ export class ThemeEngine {
         Date.now() - start < max &&
         (!deadline || deadline.timeRemaining() > 1)
       ) {
-        const next = this.queuedElements.values().next().value as Element | undefined;
-        if (!next) {
-          break;
+        const slice: Element[] = [];
+        for (const element of this.queuedElements) {
+          if (slice.length >= IDLE_SLICE_SIZE) {
+            break;
+          }
+          slice.push(element);
         }
-        this.queuedElements.delete(next);
-        this.resampleFlagged([next]);
-        this.inspectAndStyle(next);
+        for (const element of slice) {
+          this.queuedElements.delete(element);
+        }
+        this.processElements(slice);
       }
       if (this.queuedElements.size > 0) {
         this.scheduleIdleWork();
@@ -1576,7 +1622,7 @@ export class ThemeEngine {
   }
 
   private clearElements(): void {
-    for (const [element, inspection] of this.inspections) {
+    for (const element of this.inspections.keys()) {
       this.cleanupElement(element);
     }
     this.inspections.clear();
