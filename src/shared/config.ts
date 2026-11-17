@@ -137,14 +137,45 @@ export function normalizeThemeConfig(
 }
 
 /** Current stored schema. Bump together with a new entry in MIGRATIONS. */
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 /**
  * Upgrades stored data one version at a time. `MIGRATIONS[n]` turns a version-n
  * payload into version n+1. Empty while version 1 is the only schema; stored
  * payloads without a version are treated as version 1.
  */
-const MIGRATIONS: Record<number, (stored: Record<string, unknown>) => Record<string, unknown>> = {};
+const MIGRATIONS: Record<number, (stored: Record<string, unknown>) => Record<string, unknown>> = {
+  // v1 -> v2: "Original" stops being a mode. A global default of Original
+  // becomes the master switch off; a site whose mode was Original becomes Never.
+  1: (stored) => {
+    const next: Record<string, unknown> = { ...stored, schemaVersion: 2 };
+    if (isRecord(stored.defaults) && stored.defaults.mode === "original") {
+      next.enabled = false;
+      next.defaults = { ...stored.defaults, mode: DEFAULT_THEME_CONFIG.mode };
+    }
+    if (isRecord(stored.sites)) {
+      const sites: Record<string, unknown> = {};
+      for (const [host, rule] of Object.entries(stored.sites)) {
+        if (!isRecord(rule)) {
+          sites[host] = rule;
+          continue;
+        }
+        const nested = isRecord(rule.overrides) ? rule.overrides : null;
+        const source = nested ?? rule;
+        if (source.mode !== "original") {
+          sites[host] = rule;
+          continue;
+        }
+        const { mode: _dropped, ...rest } = source;
+        sites[host] = nested
+          ? { ...rule, policy: "block", overrides: rest }
+          : { ...rest, policy: "block" };
+      }
+      next.sites = sites;
+    }
+    return next;
+  },
+};
 
 function migratePreferences(stored: Record<string, unknown>): Record<string, unknown> {
   let version = typeof stored.schemaVersion === "number" ? stored.schemaVersion : 1;
@@ -206,7 +237,7 @@ export function normalizePreferences(input: unknown): DarkrPreferences {
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     enabled: typeof value.enabled === "boolean" ? value.enabled : true,
     autoMode: isAutoMode(value.autoMode) ? value.autoMode : "globals",
     overrideNativeDark: value.overrideNativeDark === true,

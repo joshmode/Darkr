@@ -95,3 +95,36 @@ describe("schema versions", () => {
     expect(normalizePreferences({ ...v1, schemaVersion: undefined }).enabled).toBe(false);
   });
 });
+
+describe("v1 to v2 migration (Original mode removed)", () => {
+  it("turns a global Original default into a paused Darkr", async () => {
+    const { normalizePreferences } = await import("../src/shared/config");
+    const loaded = normalizePreferences({
+      schemaVersion: 1,
+      enabled: true,
+      defaults: { mode: "original", darkBackground: 30 },
+      sites: {},
+    });
+    expect(loaded.enabled).toBe(false);
+    expect(loaded.defaults.mode).toBe("dark");
+    expect(loaded.defaults.darkBackground).toBe(30);
+    expect(loaded.schemaVersion).toBe(2);
+  });
+
+  it("turns a site's Original mode into Never, nested or legacy flat", async () => {
+    const { normalizePreferences } = await import("../src/shared/config");
+    const loaded = normalizePreferences({
+      schemaVersion: 1,
+      sites: {
+        "a.example": { policy: "auto", overrides: { mode: "original" } },
+        "b.example": { mode: "original" },
+        "c.example": { policy: "allow", overrides: { mode: "sepia" } },
+      },
+    });
+    expect(loaded.sites["a.example"]?.policy).toBe("block");
+    expect(loaded.sites["a.example"]?.overrides).toBeUndefined();
+    expect(loaded.sites["b.example"]?.policy).toBe("block");
+    expect(loaded.sites["c.example"]?.policy).toBe("allow");
+    expect(loaded.sites["c.example"]?.overrides?.mode).toBe("sepia");
+  });
+});

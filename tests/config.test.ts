@@ -65,7 +65,7 @@ describe("configuration validation", () => {
   it("rejects unknown modes and non-object storage", () => {
     expect(normalizeThemeConfig({ mode: "neon" }).mode).toBe(DEFAULT_THEME_CONFIG.mode);
     expect(normalizePreferences("broken")).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       enabled: true,
       autoMode: "globals",
       overrideNativeDark: false,

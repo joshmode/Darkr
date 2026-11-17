@@ -39,7 +39,7 @@ export interface SiteRule {
 export type AutoMode = "globals" | "system";
 
 export interface DarkrPreferences {
-  schemaVersion: 1;
+  schemaVersion: 2;
   /** Master switch. "Always" sites are themed even while this is off. */
   enabled: boolean;
   autoMode: AutoMode;
@@ -76,7 +76,7 @@ export const DEFAULT_THEME_CONFIG: Readonly<ThemeConfig> = Object.freeze({
 });
 
 export const DEFAULT_PREFERENCES: Readonly<DarkrPreferences> = Object.freeze({
-  schemaVersion: 1,
+  schemaVersion: 2,
   enabled: true,
   autoMode: "globals",
   overrideNativeDark: false,
