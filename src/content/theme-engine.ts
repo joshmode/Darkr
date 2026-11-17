@@ -10,6 +10,7 @@ import {
 import {
   contrastRatio,
   isPainted,
+  mixRgb,
   relativeLuminance,
   rgbToCss,
   type Rgb,
@@ -39,6 +40,19 @@ const ELEMENT_BORDER_VARIABLE = "--darkr-element-border";
  * "t r b l" for the sides that are painted. Unlisted sides keep the author's
  * colour (transparent sides must stay transparent: CSS triangles, ghost buttons).
  */
+/** Attributes whose change can reveal, hide or recolour content. */
+const OBSERVED_ATTRIBUTES = [
+  "class",
+  "hidden",
+  "open",
+  "style",
+  "contenteditable",
+  "role",
+  "aria-expanded",
+  "aria-hidden",
+  "data-state",
+];
+const RESAMPLE_ATTRIBUTES = new Set(["class", "aria-expanded", "aria-hidden", "data-state"]);
 const ROOT_WATCHED_ATTRIBUTES = [ROOT_ATTRIBUTE, "class", "data-theme", "data-color-mode", "style"];
 const REDETECT_DELAY_MS = 150;
 const BORDER_SIDES = [
@@ -123,11 +137,17 @@ interface InspectedElement {
   borders: [Rgba | null, Rgba | null, Rgba | null, Rgba | null];
   hasDirectText: boolean;
   mappedSurface: Rgb | null;
+  /**
+   * A gradient or translucent background Darkr does not remap. Text on it is
+   * mapped against what is really painted, not against the page surface.
+   */
+  backdrop: Backdrop | null;
   /** Keep inline edits from the host page instead of overriding them forever. */
   hostStyleSignature: string;
   pass: "light" | "text" | "surface";
   samples: {
     background: string;
+    backgroundImage: string;
     text: string;
     borders: string;
     display: string;
@@ -135,6 +155,10 @@ interface InspectedElement {
     opacity: string;
   };
 }
+
+type Backdrop =
+  | { kind: "gradient"; color: Rgb }
+  | { kind: "translucent"; color: Rgb; alpha: number };
 
 export interface ApplyOptions {
   /** Theme the page even when it already has its own dark appearance. */
@@ -202,18 +226,10 @@ function isProtectedEditor(element: Element): boolean {
   return Boolean(element.closest(".monaco-editor, .CodeMirror, .cm-editor, .ace_editor"));
 }
 
-function isVisible(style: CSSStyleDeclaration): boolean {
-  return (
-    style.display !== "none" &&
-    style.visibility !== "hidden" &&
-    style.visibility !== "collapse" &&
-    style.opacity !== "0"
-  );
-}
-
 function sampleStyle(style: CSSStyleDeclaration): InspectedElement["samples"] {
   return {
     background: style.backgroundColor,
+    backgroundImage: style.backgroundImage,
     text: style.color,
     borders: BORDER_SIDES.map(
       (side) => `${style[`border${side.property}Color`]}/${style[`border${side.property}Style`]}`,
@@ -246,6 +262,7 @@ function samplesEqual(
 ): boolean {
   return (
     left.background === right.background &&
+    left.backgroundImage === right.backgroundImage &&
     left.text === right.text &&
     left.borders === right.borders &&
     left.display === right.display &&
@@ -257,6 +274,7 @@ function samplesEqual(
 function stylePass(element: Element, style: CSSStyleDeclaration): InspectedElement["pass"] {
   if (
     style.backgroundColor !== "rgba(0, 0, 0, 0)" ||
+    style.backgroundImage.includes("gradient(") ||
     BORDER_SIDES.some((side) => hasBorderStyle(style[`border${side.property}Style`]))
   ) {
     return "surface";
@@ -300,6 +318,34 @@ function hasBorderStyle(value: string): boolean {
 }
 
 /** A colour worth mapping: parseable and actually painted (alpha >= 0.05). */
+/** Mean of the colour stops in a computed gradient `background-image`. */
+function gradientColor(value: string): Rgb | null {
+  if (!value.includes("gradient(")) {
+    return null;
+  }
+  const stops = (value.match(/rgba?\([^)]*\)/g) ?? [])
+    .map((stop) => parseColorOrNull(stop))
+    .filter((color): color is Rgba => color !== null && color.a > 0);
+  if (stops.length === 0) {
+    return null;
+  }
+  const mean = (channel: "r" | "g" | "b") =>
+    stops.reduce((sum, color) => sum + color[channel], 0) / stops.length;
+  return { r: mean("r"), g: mean("g"), b: mean("b") };
+}
+
+function readBackdrop(samples: InspectedElement["samples"]): Backdrop | null {
+  const gradient = gradientColor(samples.backgroundImage);
+  if (gradient) {
+    return { kind: "gradient", color: gradient };
+  }
+  const background = parseColorOrNull(samples.background);
+  if (background && isPainted(background) && background.a < 0.82) {
+    return { kind: "translucent", color: background, alpha: background.a };
+  }
+  return null;
+}
+
 function inspectableColor(value: string, tokens: ThemeTokens | null): Rgba | null {
   const color = parseColorOrNull(value) ?? (tokens ? tokenColorFromVariable(value, tokens) : null);
   return color && isPainted(color) ? color : null;
@@ -873,11 +919,9 @@ export class ThemeEngine {
           return;
         }
       }
-      const style = getComputedStyle(element);
-      if (!isVisible(style)) {
-        return;
-      }
-      inspection = this.buildInspection(element, style);
+      // Hidden elements are inspected too: menus and panels revealed by CSS
+      // alone (:hover, aria-expanded) must already be themed when they appear.
+      inspection = this.buildInspection(element, getComputedStyle(element));
       this.inspections.set(element, inspection);
     }
 
@@ -903,6 +947,7 @@ export class ThemeEngine {
       ) as InspectedElement["borders"],
       hasDirectText: !textControl && hasDirectText(element),
       mappedSurface: null,
+      backdrop: readBackdrop(samples),
       hostStyleSignature: inlineStyleSignature(element),
       pass: stylePass(element, style),
       samples,
@@ -940,7 +985,7 @@ export class ThemeEngine {
           return null;
         }
         const style = getComputedStyle(element);
-        return [element, isVisible(style) ? this.buildInspection(element, style) : null] as const;
+        return [element, this.buildInspection(element, style)] as const;
       }),
     );
     for (const entry of fresh) {
@@ -1049,10 +1094,23 @@ export class ThemeEngine {
       (element as HTMLElement).style.setProperty(ELEMENT_SURFACE_VARIABLE, mapped);
       surface = parseColorOrNull(mapped) ?? tokens.background;
       inspection.mappedSurface = surface;
-    } else if (inspection.mappedSurface) {
-      element.removeAttribute(SURFACE_ATTRIBUTE);
-      (element as HTMLElement).style.removeProperty(ELEMENT_SURFACE_VARIABLE);
-      inspection.mappedSurface = null;
+    } else {
+      if (element.hasAttribute(SURFACE_ATTRIBUTE)) {
+        element.removeAttribute(SURFACE_ATTRIBUTE);
+        (element as HTMLElement).style.removeProperty(ELEMENT_SURFACE_VARIABLE);
+      }
+      // Unmapped gradient/translucent backgrounds stay as authored, so what
+      // sits on them is judged against the colour actually painted.
+      const backdrop = inspection.backdrop;
+      if (backdrop) {
+        surface =
+          backdrop.kind === "gradient"
+            ? backdrop.color
+            : mixRgb(surface, backdrop.color, backdrop.alpha);
+        inspection.mappedSurface = surface;
+      } else {
+        inspection.mappedSurface = null;
+      }
     }
 
     if (inspection.text && inspection.hasDirectText && !isProtectedEditor(element)) {
@@ -1149,7 +1207,7 @@ export class ThemeEngine {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "hidden", "open", "style", "contenteditable", "role"],
+      attributeFilter: OBSERVED_ATTRIBUTES,
     });
     this.shadowObservers.set(root, observer);
   }
@@ -1177,7 +1235,7 @@ export class ThemeEngine {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "hidden", "open", "style", "contenteditable", "role"],
+      attributeFilter: OBSERVED_ATTRIBUTES,
     });
   }
 
@@ -1215,7 +1273,7 @@ export class ThemeEngine {
             target as Element,
             record.attributeName !== "contenteditable" && record.attributeName !== "role",
           );
-          if (record.attributeName === "class") {
+          if (record.attributeName && RESAMPLE_ATTRIBUTES.has(record.attributeName)) {
             this.markForResample(target as Element);
           }
         }

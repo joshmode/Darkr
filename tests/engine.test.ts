@@ -298,14 +298,14 @@ describe("ThemeEngine", () => {
     expect(internals.inspections.has(inner)).toBe(false);
     expect(internals.shadowStyles.has(root)).toBe(false);
   });
-  it("themes an element revealed later through an inline style", async () => {
+  it("themes hidden elements up front so a later reveal is already themed", async () => {
     loadFixture("article");
     const host = document.getElementById("dynamic")!;
     host.innerHTML = '<div id="late" style="display:none;background:#fff;color:#111">Late</div>';
     engine.apply(config({ mode: "dark" }));
     engine.flush();
     const late = document.getElementById("late")!;
-    expect(late.hasAttribute("data-darkr-surface")).toBe(false);
+    expect(late.hasAttribute("data-darkr-surface")).toBe(true);
     late.style.display = "block";
     await new Promise((resolve) => setTimeout(resolve, 80));
     engine.flush();
