@@ -9,13 +9,7 @@ import {
   fixedSurface,
 } from "./palette";
 import type { ThemeConfig } from "../shared/types";
-import {
-  mapBorderColor,
-  mapSurfaceColor,
-  mapTextColor,
-  opaqueColor,
-  parseColorOrNull,
-} from "./color-map";
+import { opaqueColor, parseColorOrNull } from "./color-map";
 import {
   contrastRatio,
   isPainted,

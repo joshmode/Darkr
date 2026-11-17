@@ -63,7 +63,7 @@ export interface BrowserApi {
           message: RuntimeMessage,
           sender: unknown,
           sendResponse: (response: unknown) => void,
-        ) => boolean | void,
+        ) => boolean | undefined,
       ): void;
     };
   };

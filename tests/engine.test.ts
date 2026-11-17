@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildThemeTokens } from "../src/shared/theme";
-import { ThemeEngine, themeEngineTestUtilities } from "../src/content/theme-engine";
+import { ThemeEngine } from "../src/content/theme-engine";
 import { parseCssColor } from "../src/shared/color";
 import { DEFAULT_THEME_CONFIG, type ThemeConfig } from "../src/shared/types";
 

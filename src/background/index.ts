@@ -19,7 +19,7 @@ interface BackgroundApi {
           message: { type?: string; state?: PageState },
           sender: { tab?: { id?: number; url?: string } },
           sendResponse: (response: unknown) => void,
-        ) => boolean | void,
+        ) => boolean | undefined,
       ): void;
     };
     openOptionsPage(): Promise<void>;

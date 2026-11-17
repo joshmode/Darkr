@@ -51,7 +51,6 @@ const DARK_BACKGROUND_ANCHORS: ReadonlyArray<{
 
 const OFF_WHITE = rgb(247, 244, 237);
 const WARM_BLACK = rgb(34, 27, 21);
-const COOL_BLACK = rgb(25, 27, 30);
 
 function backgroundForDarkness(value: number): Rgb {
   const position = clamp(value);

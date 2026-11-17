@@ -2,17 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import process from "node:process";
-import {
-  assert,
-  env,
-  isThemed,
-  newPage,
-  poll,
-  settle,
-  setPreferences,
-  test,
-  waitThemed,
-} from "./harness.mjs";
+import { assert, env, newPage, poll, settle, test, waitThemed } from "./harness.mjs";
 
 const HOST = "127.0.0.1";
 const storedPreferences = () =>

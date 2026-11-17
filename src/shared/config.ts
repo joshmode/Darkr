@@ -136,9 +136,7 @@ export function setSiteIncludeSubdomains(
 }
 
 export function getSiteRule(preferences: DarkrPreferences, host: string): SiteRule | undefined {
-  return Object.prototype.hasOwnProperty.call(preferences.sites, host)
-    ? preferences.sites[host]
-    : undefined;
+  return Object.hasOwn(preferences.sites, host) ? preferences.sites[host] : undefined;
 }
 
 /**
