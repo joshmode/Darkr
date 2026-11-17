@@ -38,6 +38,7 @@ export interface BrowserApi {
     };
   };
   tabs: {
+    reload(tabId: number): Promise<void>;
     query(query: {
       active: boolean;
       currentWindow: boolean;

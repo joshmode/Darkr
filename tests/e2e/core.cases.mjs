@@ -70,7 +70,7 @@ test("popup renders its controls", async () => {
   await popup.goto(`chrome-extension://${env.extensionId}/popup.html`);
   await poll(
     () => popup.locator("body").innerText(),
-    (t) => t.includes("Darkr") && t.includes("Reading mode"),
+    (t) => t.includes("Darkr on this site") && t.includes("Appearance"),
     {
       message: "popup content",
     },

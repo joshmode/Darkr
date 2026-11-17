@@ -96,7 +96,7 @@ function audit() {
   }
   // The selected option must stand out from its container (WCAG 1.4.11, 3:1).
   for (const element of document.querySelectorAll(
-    ".mode-button.is-selected, .policy-control button.is-selected",
+    ".mode-button.is-selected, .scope-control button.is-selected",
   )) {
     const pill = backgroundOf(element);
     const container = backgroundOf(element.parentElement);
@@ -123,7 +123,7 @@ function hoveredSelectedContrast() {
     return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
   };
   return [
-    ...document.querySelectorAll(".mode-button.is-selected, .policy-control button.is-selected"),
+    ...document.querySelectorAll(".mode-button.is-selected, .scope-control button.is-selected"),
   ].map((element) => {
     const style = getComputedStyle(element);
     return {
@@ -137,11 +137,11 @@ const browser = await chromium.launch({ channel: "chromium" });
 const failures = [];
 let combinations = 0;
 for (const [statusName, status] of Object.entries(statuses)) {
-  for (const mode of ["original", "dark", "sepia", "warm", "grayscale"]) {
+  for (const mode of ["dark", "sepia", "warm", "grayscale"]) {
     for (const darkBackground of [0, 40, 100]) {
       for (const withRule of [false, true]) {
         const preferences = {
-          schemaVersion: 1,
+          schemaVersion: 2,
           enabled: true,
           autoMode: "globals",
           overrideNativeDark: false,
@@ -149,7 +149,7 @@ for (const [statusName, status] of Object.entries(statuses)) {
           sites: withRule
             ? {
                 "example.com": {
-                  policy: "allow",
+                  policy: "auto",
                   overrideNativeDark: true,
                   overrides: { darkBackground },
                 },
@@ -191,7 +191,7 @@ for (const [statusName, status] of Object.entries(statuses)) {
           );
         }
         for (const target of await page.$$(
-          ".mode-button.is-selected, .policy-control button.is-selected",
+          ".mode-button.is-selected, .scope-control button.is-selected",
         )) {
           await target.hover();
           await page.waitForTimeout(220);

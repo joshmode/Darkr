@@ -14,43 +14,34 @@
       <header class="topbar">
         <div class="brand">
           <img class="brand-mark" src="images/icon-96.png" width="28" height="28" alt="" aria-hidden="true" />
-          <div class="wordmark-copy">
-            <img class="wordmark" src="images/wordmark.png" width="58" height="20" alt="darkr" />
-            <span id="status-text" role="status" aria-live="polite">Loading…</span>
-          </div>
+          <h1 id="app-title" class="sr-only">Darkr</h1>
+          <img class="wordmark" src="images/wordmark.png" width="58" height="20" alt="darkr" />
         </div>
-        <button
-          id="master-toggle"
-          class="switch is-on"
-          type="button"
-          role="switch"
-          aria-checked="true"
-          aria-label="Enable Darkr"
-        ></button>
+        <button id="settings" class="icon-button" type="button" aria-label="Open settings" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19 13.6v-3.2l-2-.5a7 7 0 0 0-.7-1.7l1.1-1.8-2.3-2.3-1.8 1.1a7 7 0 0 0-1.7-.7l-.5-2H8.9l-.5 2a7 7 0 0 0-1.7.7L4.9 4.1 2.6 6.4l1.1 1.8a7 7 0 0 0-.7 1.7l-2 .5v3.2l2 .5a7 7 0 0 0 .7 1.7l-1.1 1.8 2.3 2.3 1.8-1.1a7 7 0 0 0 1.7.7l.5 2h3.2l.5-2a7 7 0 0 0 1.7-.7l1.8 1.1 2.3-2.3-1.1-1.8a7 7 0 0 0 .7-1.7l2-.5Z" />
+          </svg>
+        </button>
       </header>
 
-      <div class="popup-scroll">
-      <section class="site-block" aria-labelledby="site-heading">
-        <div class="site-head">
-          <div class="site-copy">
-            <p id="site-heading" class="eyebrow">Current website</p>
-            <p id="hostname" class="hostname">Loading…</p>
-            <p id="host-status" class="host-status">Using your global defaults</p>
-          </div>
-          <span id="site-badge" class="pill site-badge" hidden></span>
+      <section class="site-card" aria-labelledby="site-title">
+        <div class="site-copy">
+          <p id="site-title" class="site-title">Darkr on this site</p>
+          <p id="hostname" class="hostname">Loading…</p>
+          <p id="host-status" class="host-status" role="status"></p>
         </div>
-
-        <div class="site-policy" role="group" aria-label="Website behavior">
-          <span class="policy-label">On this site</span>
-          <div class="policy-control" role="radiogroup" aria-label="Site policy">
-            <button type="button" role="radio" data-policy="auto" aria-checked="true">Automatic</button>
-            <button type="button" role="radio" data-policy="allow" aria-checked="false">Always</button>
-            <button type="button" role="radio" data-policy="block" aria-checked="false">Never</button>
-          </div>
-        </div>
+        <button
+          id="site-toggle"
+          class="switch"
+          type="button"
+          role="switch"
+          aria-checked="false"
+          aria-labelledby="site-title"
+        ></button>
       </section>
 
-      <div id="native-dark-notice" class="notice notice--action" hidden>
+      <div id="native-dark-notice" class="notice" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
           <path d="M19.1 15.2A7.5 7.5 0 0 1 8.8 4.9 8 8 0 1 0 19.1 15.2Z" />
         </svg>
@@ -70,10 +61,43 @@
         </div>
       </div>
 
-      <section class="appearance" aria-labelledby="appearance-heading">
-        <div class="section-heading">
-          <h2 id="appearance-heading">Reading mode</h2>
-          <span class="section-note">Live</span>
+      <div id="permission-notice" class="notice" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.4" />
+          <path d="M12 8.2v4.6M12 16.1h.01" />
+        </svg>
+        <div class="notice-body">
+          <span>Darkr can't reach this page yet. If it was just installed or updated, reload the page. Browser pages and the web store are never themed.</span>
+          <div class="notice-action">
+            <button id="reload" class="text-button text-button--solid" type="button">Reload page</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="appearance" class="appearance" aria-labelledby="appearance-heading">
+        <h2 id="appearance-heading" class="eyebrow">Appearance</h2>
+
+        <div id="preview" class="preview" role="img" aria-label="Preview of how pages will look">
+          <span class="swatch" data-role="surface">Page<small>surface</small></span>
+          <span class="swatch" data-role="text">Text</span>
+          <span class="swatch" data-role="link">Link</span>
+          <span class="swatch" data-role="muted">Muted</span>
+        </div>
+
+        <div class="scope-row">
+          <div
+            id="scope-control"
+            class="segmented scope-control"
+            role="radiogroup"
+            aria-label="Apply changes to"
+          >
+            <button type="button" role="radio" aria-checked="false" data-scope="site">This site</button>
+            <button type="button" role="radio" aria-checked="true" data-scope="all">All sites</button>
+          </div>
+          <p class="scope-note">
+            <span id="scope-note-text">Changes apply to every site.</span>
+            <button id="reset" class="link-button" type="button" hidden>Reset</button>
+          </p>
         </div>
 
         <div
@@ -82,20 +106,6 @@
           role="radiogroup"
           aria-label="Appearance mode"
         >
-          <button
-            class="mode-button"
-            type="button"
-            role="radio"
-            aria-checked="false"
-            aria-label="Original appearance"
-            data-mode="original"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" aria-hidden="true">
-              <rect x="4" y="4" width="16" height="16" rx="3" />
-              <path d="M8 9h8M8 13h5" />
-            </svg>
-            <span>Original</span>
-          </button>
           <button
             class="mode-button is-selected"
             type="button"
@@ -153,134 +163,68 @@
             <span>Warm</span>
           </button>
         </div>
+
+        <section id="controls" class="controls">
+          <div id="dark-controls" class="control-group">
+            <div class="range-row">
+              <div class="range-header">
+                <label class="range-label" for="dark-background">Background</label>
+                <output id="dark-background-value" class="range-value" for="dark-background">Charcoal</output>
+              </div>
+              <input id="dark-background" type="range" min="0" max="100" step="1" value="20" aria-describedby="dark-background-hint" />
+              <div id="dark-background-hint" class="range-footer"><span>Pitch Black</span><span>Light Grey</span></div>
+            </div>
+            <div class="range-row">
+              <div class="range-header">
+                <label class="range-label" for="dark-contrast">Contrast</label>
+                <output id="dark-contrast-value" class="range-value" for="dark-contrast">Balanced</output>
+              </div>
+              <input id="dark-contrast" type="range" min="0" max="100" step="1" value="62" aria-describedby="dark-contrast-hint" />
+              <div id="dark-contrast-hint" class="range-footer"><span>Lower</span><span>Higher</span></div>
+            </div>
+          </div>
+
+          <div id="sepia-controls" class="control-group" hidden>
+            <div class="range-row">
+              <div class="range-header">
+                <label class="range-label" for="sepia-intensity">Sepia intensity</label>
+                <output id="sepia-value" class="range-value" for="sepia-intensity">Paper</output>
+              </div>
+              <input id="sepia-intensity" type="range" min="0" max="100" step="1" value="58" aria-describedby="sepia-hint" />
+              <div id="sepia-hint" class="range-footer"><span>Subtle</span><span>Paper</span></div>
+            </div>
+          </div>
+
+          <div id="grayscale-controls" class="control-group" hidden>
+            <div class="range-row">
+              <div class="range-header">
+                <label class="range-label" for="grayscale-intensity">Desaturation</label>
+                <output id="grayscale-value" class="range-value" for="grayscale-intensity">Full</output>
+              </div>
+              <input id="grayscale-intensity" type="range" min="0" max="100" step="1" value="100" aria-describedby="grayscale-hint" />
+              <div id="grayscale-hint" class="range-footer"><span>Off</span><span>Full</span></div>
+            </div>
+          </div>
+
+          <div id="warm-controls" class="control-group" hidden>
+            <div class="range-row">
+              <div class="range-header">
+                <label class="range-label" for="warmth">Warmth</label>
+                <output id="warmth-value" class="range-value" for="warmth">Subtle</output>
+              </div>
+              <input id="warmth" type="range" min="0" max="100" step="1" value="35" aria-describedby="warm-hint" />
+              <div id="warm-hint" class="range-footer"><span>Cool</span><span>Warm</span></div>
+            </div>
+            <p class="mode-footnote">
+              A visual reading adjustment. It does not guarantee a specific
+              reduction in screen blue light.
+            </p>
+          </div>
+        </section>
       </section>
 
-      <section id="controls" class="controls" aria-live="polite">
-        <div id="dark-controls" class="control-group">
-          <div class="range-row">
-            <div class="range-header">
-              <label class="range-label" for="dark-background">Background</label>
-              <output id="dark-background-value" class="range-value" for="dark-background">Charcoal</output>
-            </div>
-            <input
-              id="dark-background"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value="20"
-              aria-describedby="dark-background-hint"
-            />
-            <div id="dark-background-hint" class="range-footer">
-              <span>Pitch Black</span><span>Light Grey</span>
-            </div>
-          </div>
-          <div class="range-row">
-            <div class="range-header">
-              <label class="range-label" for="dark-contrast">Contrast</label>
-              <output id="dark-contrast-value" class="range-value" for="dark-contrast">Balanced</output>
-            </div>
-            <input
-              id="dark-contrast"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value="62"
-              aria-describedby="dark-contrast-hint"
-            />
-            <div id="dark-contrast-hint" class="range-footer">
-              <span>Lower</span><span>Higher</span>
-            </div>
-          </div>
-        </div>
-
-        <div id="sepia-controls" class="control-group" hidden>
-          <div class="range-row">
-            <div class="range-header">
-              <label class="range-label" for="sepia-intensity">Sepia intensity</label>
-              <output id="sepia-value" class="range-value" for="sepia-intensity">Paper</output>
-            </div>
-            <input
-              id="sepia-intensity"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value="58"
-              aria-describedby="sepia-hint"
-            />
-            <div id="sepia-hint" class="range-footer">
-              <span>Subtle</span><span>Paper</span>
-            </div>
-          </div>
-        </div>
-
-        <div id="grayscale-controls" class="control-group" hidden>
-          <div class="range-row">
-            <div class="range-header">
-              <label class="range-label" for="grayscale-intensity">Desaturation</label>
-              <output id="grayscale-value" class="range-value" for="grayscale-intensity">Full</output>
-            </div>
-            <input
-              id="grayscale-intensity"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value="100"
-              aria-describedby="grayscale-hint"
-            />
-            <div id="grayscale-hint" class="range-footer">
-              <span>Off</span><span>Full</span>
-            </div>
-          </div>
-        </div>
-
-        <div id="warm-controls" class="control-group" hidden>
-          <div class="range-row">
-            <div class="range-header">
-              <label class="range-label" for="warmth">Warmth</label>
-              <output id="warmth-value" class="range-value" for="warmth">Subtle</output>
-            </div>
-            <input
-              id="warmth"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value="35"
-              aria-describedby="warm-hint"
-            />
-            <div id="warm-hint" class="range-footer">
-              <span>Cool</span><span>Warm</span>
-            </div>
-          </div>
-          <p class="mode-footnote">
-            A visual reading adjustment. It does not guarantee a specific
-            reduction in screen blue light.
-          </p>
-        </div>
-      </section>
-
-      <div id="permission-notice" class="notice" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-          <circle cx="12" cy="12" r="8.4" />
-          <path d="M12 8.2v4.6M12 16.1h.01" />
-        </svg>
-        <span>Darkr cannot access this page. Open a standard webpage and allow Darkr access in your browser’s extension settings. If it was just installed, reload the page.</span>
-      </div>
-
-      </div>
-
-      <footer class="popup-footer">
-        <button id="reset" class="text-button" type="button">Reset site rule</button>
-        <button id="settings" class="icon-button" type="button" aria-label="Open settings" title="Settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19 13.6v-3.2l-2-.5a7 7 0 0 0-.7-1.7l1.1-1.8-2.3-2.3-1.8 1.1a7 7 0 0 0-1.7-.7l-.5-2H8.9l-.5 2a7 7 0 0 0-1.7.7L4.9 4.1 2.6 6.4l1.1 1.8a7 7 0 0 0-.7 1.7l-2 .5v3.2l2 .5a7 7 0 0 0 .7 1.7l-1.1 1.8 2.3 2.3 1.8-1.1a7 7 0 0 0 1.7.7l.5 2h3.2l.5-2a7 7 0 0 0 1.7-.7l1.8 1.1 2.3-2.3-1.1-1.8a7 7 0 0 0 .7-1.7l2-.5Z" />
-          </svg>
-        </button>
+      <footer class="footer">
+        <button id="pause" class="text-button" type="button">Pause everywhere</button>
       </footer>
     </main>
     <script type="module" src="popup.js"></script>
