@@ -333,7 +333,7 @@ function buildDocumentCss(tokens: ThemeTokens): string {
     .map(([name, value]) => `${name}: ${value};`)
     .join("\n");
 
-  return `
+  return `@media screen {
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} {
   ${variables}
   background-color: var(--darkr-bg) !important;
@@ -390,16 +390,12 @@ ${BORDER_SIDES.map((side) => `:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${BORDER_AT
 :root.${ROOT_CLASS}.${GRAYSCALE_CLASS} {
   filter: grayscale(var(--darkr-grayscale)) !important;
 }
-@media (forced-colors: active) {
-  :root.${ROOT_CLASS} {
-    filter: none !important;
-  }
 }
 `;
 }
 
 function buildShadowCss(): string {
-  return `
+  return `@media screen {
 :host {
   background-color: var(--darkr-bg, #17181b);
   color: var(--darkr-text, #f4f1ea);
@@ -419,6 +415,7 @@ function buildShadowCss(): string {
 :host [${TEXT_ATTRIBUTE}] { color: var(${ELEMENT_TEXT_VARIABLE}) !important; }
 :host [${BORDER_ATTRIBUTE}~="a"] { border-color: var(${ELEMENT_BORDER_VARIABLE}) !important; }
 ${BORDER_SIDES.map((side) => `:host [${BORDER_ATTRIBUTE}~="${side.key}"] { ${side.css}: var(${side.variable}) !important; }`).join("\n")}
+}
 `;
 }
 

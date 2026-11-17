@@ -28,7 +28,6 @@ const KNOWN = {
   "E-06": "tracking stops at 9,000 elements, leaving later cards light with light text (task B3)",
   "E-09": "gradient and translucent backgrounds are ignored but their text is lightened (task A9)",
   "E-10": "CSS-revealed content is inspected only once visible (task A9)",
-  "E-11": "the dark theme is applied under print media (task A7)",
   "E-12": "root class or stylesheet removal by page code is never repaired (task A8)",
   "E-15": "SVG fill colours are never mapped (task B4)",
 };
@@ -329,4 +328,15 @@ defect("E-15", "inline SVG fills are lightened on a dark page", async () => {
   const a = luminanceOf(fill);
   const b = luminanceOf(bg);
   assert.ok(a > b && (a + 0.05) / (b + 0.05) >= 3, `path ${fill} on ${bg}`);
+});
+
+// ---------------------------------------------------------------- E-21
+test("[E-21] nothing is applied under forced colors", async () => {
+  const page = await newPage("/e01-surfaces");
+  await settle(page);
+  await page.emulateMedia({ forcedColors: "active" });
+  await waitThemed(page, false);
+  assert.equal(await page.evaluate(() => !!document.querySelector("#darkr-theme-styles")), false);
+  await page.emulateMedia({ forcedColors: "none" });
+  await waitThemed(page, true);
 });

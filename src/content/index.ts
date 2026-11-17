@@ -87,6 +87,10 @@ if (!window.__DARKR_CONTENT__) {
     typeof window.matchMedia === "function"
       ? window.matchMedia("(prefers-color-scheme: dark)")
       : null;
+  // Under forced colors the user's own high-contrast palette must win, so
+  // Darkr applies nothing. Browsers without the media feature report no match.
+  const forcedColorsQuery =
+    typeof window.matchMedia === "function" ? window.matchMedia("(forced-colors: active)") : null;
   const isSystemDark = (): boolean => systemDarkQuery?.matches ?? true;
   let latestPreferences: DarkrPreferences | null = null;
 
@@ -127,8 +131,9 @@ if (!window.__DARKR_CONTENT__) {
     const resolved = resolveAppearance(preferences, topHostname, {
       systemDark: isSystemDark(),
     });
-    themingAllowed = resolved.enabled;
-    if (resolved.enabled) {
+    const enabled = resolved.enabled && !forcedColorsQuery?.matches;
+    themingAllowed = enabled;
+    if (enabled) {
       applyConfig(resolved.config, resolved.overrideNativeDark);
     } else {
       engine.clear();
@@ -141,6 +146,12 @@ if (!window.__DARKR_CONTENT__) {
   const initialLoad = applyResolvedPreferences()
     .catch(() => undefined)
     .finally(releasePainting);
+
+  forcedColorsQuery?.addEventListener("change", () => {
+    if (latestPreferences) {
+      syncToPreferences(latestPreferences);
+    }
+  });
 
   // "Automatic" sites can follow the operating system's appearance.
   systemDarkQuery?.addEventListener("change", () => {
