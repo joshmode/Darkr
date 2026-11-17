@@ -147,7 +147,7 @@ defect("E-06", "cards beyond the element cap are themed", async () => {
       (i) => {
         const parse = (v) => (v.match(/[\d.]+/g) ?? []).map(Number);
         const lum = ([r, g, b]) => {
-          const c = (x) => ((x /= 255) <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4);
+          const c = (v) => { const x = v / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
           return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
         };
         const p = document.querySelector(`#c${i} p`);
@@ -201,7 +201,7 @@ defect("E-09", "text over gradients and translucent bars stays readable", async 
   const ratios = await page.evaluate(() => {
     const parse = (v) => (v.match(/[\d.]+/g) ?? []).map(Number);
     const lum = ([r, g, b]) => {
-      const c = (x) => ((x /= 255) <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4);
+      const c = (v) => { const x = v / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
       return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
     };
     const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
