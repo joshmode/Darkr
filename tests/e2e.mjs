@@ -21,3 +21,4 @@ afterEach(async () => {
 
 await import("./e2e/core.cases.mjs");
 await import("./e2e/defects.cases.mjs");
+await import("./e2e/ui.cases.mjs");
