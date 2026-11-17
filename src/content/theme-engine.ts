@@ -7,7 +7,14 @@ import {
   opaqueColor,
   parseColorOrNull,
 } from "./color-map";
-import { contrastRatio, isPainted, relativeLuminance, type Rgb, type Rgba } from "../shared/color";
+import {
+  contrastRatio,
+  isPainted,
+  relativeLuminance,
+  rgbToCss,
+  type Rgb,
+  type Rgba,
+} from "../shared/color";
 import { themeConfigsEqual } from "../shared/config";
 
 const STYLE_ID = "darkr-theme-styles";
@@ -93,12 +100,13 @@ const SKIP_SUBTREES = new Set([
   "MATH",
 ]);
 
-const TEXT_CONTROL_SELECTOR = "input, textarea, select, option, optgroup, progress, meter";
+/** Controls whose text colour is not a text colour at all. */
+const NON_TEXT_CONTROL_SELECTOR = "progress, meter";
+/** Form controls have no text node of their own but still show text. */
+const FORM_TEXT_CONTROL_SELECTOR = "input, textarea, select, option, optgroup";
 const SKIP_TEXT_INSIDE =
-  "a, button, input, textarea, select, option, code, pre, kbd, samp, " +
   "[contenteditable='true'], [role='textbox'], " +
-  ".monaco-editor, .CodeMirror, .cm-editor, .ace_editor, " +
-  "[data-darkr-surface] > code";
+  ".monaco-editor, .CodeMirror, .cm-editor, .ace_editor";
 
 interface InspectedElement {
   background: Rgba | null;
@@ -143,6 +151,9 @@ type IdleWindow = Window &
   };
 
 function hasDirectText(element: Element): boolean {
+  if (element.matches(FORM_TEXT_CONTROL_SELECTOR)) {
+    return true;
+  }
   for (const node of element.childNodes) {
     if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
       return true;
@@ -150,6 +161,16 @@ function hasDirectText(element: Element): boolean {
   }
   return false;
 }
+
+/**
+ * Computed colours of unstyled links (light and dark colour schemes). Only these
+ * get the theme's link colours; an author-chosen link colour is mapped like any
+ * other text colour.
+ */
+const UA_LINK_COLORS = new Set(["0,0,238", "158,158,255"]);
+const UA_VISITED_COLORS = new Set(["85,26,139", "208,173,240"]);
+const LINK_ATTRIBUTE = "data-darkr-link";
+const rgbKey = (color: Rgba): string => `${color.r},${color.g},${color.b}`;
 
 const EDITABLE_SELECTOR = '[contenteditable]:not([contenteditable="false"]), [role="textbox"]';
 const DESIGN_MODE_ATTRIBUTE = "data-darkr-designmode";
@@ -329,56 +350,25 @@ function buildDocumentCss(tokens: ThemeTokens): string {
   color: inherit !important;
   background-color: transparent !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} a {
+/* Links the author left unstyled. Author-coloured links are sampled like any
+   other text. */
+:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${LINK_ATTRIBUTE}] {
   color: var(--darkr-link) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} a:visited {
+:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${LINK_ATTRIBUTE}]:visited {
   color: var(--darkr-visited) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input, textarea, select, option) {
-  background-color: var(--darkr-input-bg) !important;
-  color: var(--darkr-input-text) !important;
-  border-color: var(--darkr-border) !important;
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(fieldset, legend) {
-  border-color: var(--darkr-border) !important;
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(select, option):not([multiple]) {
-  background-color: var(--darkr-raised) !important;
-}
+/* Things sampling cannot reach. */
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input[type="checkbox"], input[type="radio"], input[type="range"], input[type="color"]) {
-  background-color: transparent !important;
   accent-color: var(--darkr-link);
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input[type="button"], input[type="submit"], input[type="reset"]) {
-  background-color: var(--darkr-raised) !important;
 }
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input, textarea)::placeholder {
   color: var(--darkr-muted) !important;
   opacity: 1 !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input, textarea) {
-  -webkit-text-fill-color: var(--darkr-input-text);
-}
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input, textarea):-webkit-autofill {
   -webkit-text-fill-color: var(--darkr-input-text) !important;
   box-shadow: 0 0 0 1000px var(--darkr-input-bg) inset !important;
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(button, [role="button"], input[type="button"], input[type="submit"]) {
-  color: var(--darkr-text) !important;
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(code, pre, kbd, samp) {
-  background-color: var(--darkr-code-bg) !important;
-  color: var(--darkr-code-text) !important;
-  border-color: var(--darkr-border) !important;
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(hr, table, thead, tbody, tfoot, tr, td, th) {
-  border-color: var(--darkr-border) !important;
-}
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(dialog, [role="dialog"], [role="menu"], [role="tooltip"]) {
-  background-color: var(--darkr-raised) !important;
-  color: var(--darkr-text) !important;
-  border-color: var(--darkr-border) !important;
 }
 :root.${ROOT_CLASS}.${SEMANTIC_CLASS} dialog::backdrop {
   background: rgb(0 0 0 / 62%) !important;
@@ -771,7 +761,7 @@ export class ThemeEngine {
   }
 
   private buildInspection(element: Element, style: CSSStyleDeclaration): InspectedElement {
-    const textControl = element.matches(TEXT_CONTROL_SELECTOR);
+    const textControl = element.matches(NON_TEXT_CONTROL_SELECTOR);
     const tokens = this.state.tokens;
     const samples = sampleStyle(style);
     return {
@@ -940,16 +930,29 @@ export class ThemeEngine {
 
     if (inspection.text && inspection.hasDirectText && !isProtectedEditor(element)) {
       if (!element.matches(SKIP_TEXT_INSIDE)) {
-        element.setAttribute(TEXT_ATTRIBUTE, "");
-        (element as HTMLElement).style.setProperty(
-          ELEMENT_TEXT_VARIABLE,
-          mapTextColor(inspection.text, surface, tokens),
-        );
+        const key = rgbKey(inspection.text);
+        const isUaLink = UA_LINK_COLORS.has(key) || UA_VISITED_COLORS.has(key);
+        if (isUaLink && element.matches("a:any-link, a[href]")) {
+          // Unstyled link: let the stylesheet apply link/visited colours.
+          element.setAttribute(LINK_ATTRIBUTE, "");
+          element.removeAttribute(TEXT_ATTRIBUTE);
+          (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
+        } else {
+          element.removeAttribute(LINK_ATTRIBUTE);
+          element.setAttribute(TEXT_ATTRIBUTE, "");
+          (element as HTMLElement).style.setProperty(
+            ELEMENT_TEXT_VARIABLE,
+            isUaLink
+              ? rgbToCss(UA_VISITED_COLORS.has(key) ? tokens.visited : tokens.link)
+              : mapTextColor(inspection.text, surface, tokens),
+          );
+        }
       } else {
         element.removeAttribute(TEXT_ATTRIBUTE);
         (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
       }
-    } else if (element.hasAttribute(TEXT_ATTRIBUTE)) {
+    } else if (element.hasAttribute(TEXT_ATTRIBUTE) || element.hasAttribute(LINK_ATTRIBUTE)) {
+      element.removeAttribute(LINK_ATTRIBUTE);
       element.removeAttribute(TEXT_ATTRIBUTE);
       (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
     }
@@ -1265,6 +1268,7 @@ export class ThemeEngine {
   private cleanupElement(element: Element, _inspection: InspectedElement): void {
     element.removeAttribute(SURFACE_ATTRIBUTE);
     element.removeAttribute(TEXT_ATTRIBUTE);
+    element.removeAttribute(LINK_ATTRIBUTE);
     element.removeAttribute(BORDER_ATTRIBUTE);
     const htmlElement = element as HTMLElement;
     htmlElement.style.removeProperty(ELEMENT_SURFACE_VARIABLE);

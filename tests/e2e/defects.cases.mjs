@@ -26,7 +26,6 @@ const HOST = "127.0.0.1";
 
 const KNOWN = {
   "E-06": "tracking stops at 9,000 elements, leaving later cards light with light text (task B3)",
-  "E-07": "blanket !important rules for links, dialogs and inputs (task A6)",
   "E-09": "gradient and translucent backgrounds are ignored but their text is lightened (task A9)",
   "E-10": "CSS-revealed content is inspected only once visible (task A9)",
   "E-11": "the dark theme is applied under print media (task A7)",
