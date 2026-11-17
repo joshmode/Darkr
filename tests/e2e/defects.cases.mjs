@@ -344,3 +344,11 @@ test("[E-13] a site switching its own dark theme later is re-detected", async ()
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
   await waitThemed(page, true);
 });
+
+// ---------------------------------------------------------------- E-19
+test("[E-19] light text-shadow halos are dropped on dark themes, dark ones kept", async () => {
+  const page = await newPage("/b05-shadow");
+  await settle(page);
+  assert.equal(await colorOf(page, "#halo", "textShadow"), "none");
+  assert.notEqual(await colorOf(page, "#dark", "textShadow"), "none");
+});

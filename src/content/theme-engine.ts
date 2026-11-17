@@ -32,6 +32,7 @@ const SURFACE_ATTRIBUTE = "data-darkr-surface";
 const TEXT_ATTRIBUTE = "data-darkr-text";
 const BORDER_ATTRIBUTE = "data-darkr-border";
 const IGNORE_ATTRIBUTE = "data-darkr-ignore";
+const NO_SHADOW_ATTRIBUTE = "data-darkr-noshadow";
 const FILL_ATTRIBUTE = "data-darkr-fill";
 const STROKE_ATTRIBUTE = "data-darkr-stroke";
 const ELEMENT_FILL_VARIABLE = "--darkr-element-fill";
@@ -155,6 +156,7 @@ interface InspectedElement {
     backgroundImage: string;
     text: string;
     paint: string;
+    textShadow: string;
     borders: string;
     display: string;
     visibility: string;
@@ -238,6 +240,7 @@ function sampleStyle(style: CSSStyleDeclaration): InspectedElement["samples"] {
     backgroundImage: style.backgroundImage,
     text: style.color,
     paint: `${style.fill}|${style.stroke}`,
+    textShadow: style.textShadow,
     borders: BORDER_SIDES.map(
       (side) => `${style[`border${side.property}Color`]}/${style[`border${side.property}Style`]}`,
     ).join("|"),
@@ -272,6 +275,7 @@ function samplesEqual(
     left.backgroundImage === right.backgroundImage &&
     left.text === right.text &&
     left.paint === right.paint &&
+    left.textShadow === right.textShadow &&
     left.borders === right.borders &&
     left.display === right.display &&
     left.visibility === right.visibility &&
@@ -319,6 +323,11 @@ function tokenColorFromVariable(value: string, tokens: ThemeTokens): Rgba | null
   };
   const resolved = mapping[variable];
   return resolved ? { ...resolved, a: 1 } : null;
+}
+
+/** Tag names compare case-insensitively: SVG and MathML report lowercase. */
+function isSkippedElement(element: Element): boolean {
+  return SKIP_SUBTREES.has(element.localName.toUpperCase());
 }
 
 function hasBorderStyle(value: string): boolean {
@@ -449,6 +458,9 @@ ${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="a"] {
   border-color: var(${ELEMENT_BORDER_VARIABLE}) !important;
 }
 ${BORDER_SIDES.map((side) => `${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="${side.key}"] {\n  ${side.css}: var(${side.variable}) !important;\n}`).join("\n")}
+${SEMANTIC_ROOT} [${NO_SHADOW_ATTRIBUTE}] {
+  text-shadow: none !important;
+}
 ${SEMANTIC_ROOT} [${FILL_ATTRIBUTE}] {
   fill: var(${ELEMENT_FILL_VARIABLE}) !important;
 }
@@ -465,7 +477,6 @@ ${GRAYSCALE_ROOT} {
 function buildShadowCss(): string {
   return `@media screen {
 :host {
-  background-color: var(--darkr-bg, #17181b);
   color: var(--darkr-text, #f4f1ea);
 }
 :host :where(h1, h2, h3, h4, h5, h6, p, li, dt, dd, blockquote, figcaption, td, th, label, legend, caption, summary) {
@@ -481,6 +492,7 @@ function buildShadowCss(): string {
   background-color: var(${ELEMENT_SURFACE_VARIABLE}) !important;
 }
 :host [${TEXT_ATTRIBUTE}] { color: var(${ELEMENT_TEXT_VARIABLE}) !important; }
+:host [${NO_SHADOW_ATTRIBUTE}] { text-shadow: none !important; }
 :host [${FILL_ATTRIBUTE}] { fill: var(${ELEMENT_FILL_VARIABLE}) !important; }
 :host [${STROKE_ATTRIBUTE}] { stroke: var(${ELEMENT_STROKE_VARIABLE}) !important; }
 :host [${BORDER_ATTRIBUTE}~="a"] { border-color: var(${ELEMENT_BORDER_VARIABLE}) !important; }
@@ -844,7 +856,7 @@ export class ThemeEngine {
     const stack: Element[] = [this.doc.documentElement];
     while (stack.length > 0) {
       const element = stack.pop();
-      if (!element || element.hasAttribute(IGNORE_ATTRIBUTE)) {
+      if (!element || element.hasAttribute(IGNORE_ATTRIBUTE) || isSkippedElement(element)) {
         continue;
       }
       if (processed < INITIAL_ELEMENT_BUDGET) {
@@ -862,8 +874,14 @@ export class ThemeEngine {
       }
       if (element.shadowRoot) {
         this.attachShadowStyle(element.shadowRoot);
-        for (const shadowChild of element.shadowRoot.querySelectorAll("*")) {
-          this.queuedElements.add(shadowChild);
+        // Top-level shadow children only; nested content is reached by the
+        // walk itself, so no node is visited twice.
+        for (
+          let child = element.shadowRoot.lastElementChild;
+          child;
+          child = child.previousElementSibling
+        ) {
+          stack.push(child);
         }
       }
       for (let child = element.lastElementChild; child; child = child.previousElementSibling) {
@@ -880,14 +898,17 @@ export class ThemeEngine {
     const stack: Element[] = [root];
     while (stack.length > 0) {
       const element = stack.pop();
-      if (!element || element.hasAttribute(IGNORE_ATTRIBUTE)) {
+      if (!element || element.hasAttribute(IGNORE_ATTRIBUTE) || isSkippedElement(element)) {
         continue;
       }
       elements.push(element);
       if (element.shadowRoot) {
         this.attachShadowStyle(element.shadowRoot);
-        const shadowRoot = element.shadowRoot;
-        for (const child of shadowRoot.querySelectorAll("*")) {
+        for (
+          let child = element.shadowRoot.lastElementChild;
+          child;
+          child = child.previousElementSibling
+        ) {
           stack.push(child);
         }
       }
@@ -923,7 +944,7 @@ export class ThemeEngine {
       return;
     }
     if (!inspection) {
-      if (SKIP_SUBTREES.has(element.tagName)) {
+      if (isSkippedElement(element)) {
         return;
       }
       // Hidden elements are inspected too: menus and panels revealed by CSS
@@ -968,16 +989,27 @@ export class ThemeEngine {
    * Runs `read` with Darkr's semantic rules switched off so computed styles
    * are the page's own. The switch is synchronous, so nothing paints between.
    */
+  private setShadowSheetsDisabled(disabled: boolean): void {
+    for (const style of this.shadowStyles.values()) {
+      if (style.sheet) {
+        style.sheet.disabled = disabled;
+      }
+    }
+  }
+
   private readAuthorStyles<T>(read: () => T): T {
     const root = this.doc.documentElement;
     const wasSemantic = root.getAttribute(ROOT_ATTRIBUTE) === SEMANTIC_VALUE;
     if (wasSemantic) {
       root.removeAttribute(ROOT_ATTRIBUTE);
+      // Shadow rules cannot see the root attribute, so switch their sheets off.
+      this.setShadowSheetsDisabled(true);
     }
     try {
       return read();
     } finally {
       if (wasSemantic) {
+        this.setShadowSheetsDisabled(false);
         root.setAttribute(ROOT_ATTRIBUTE, SEMANTIC_VALUE);
       }
     }
@@ -1122,6 +1154,7 @@ export class ThemeEngine {
       }
     }
 
+    let mappedText: Rgba | null = null;
     if (inspection.text && inspection.hasDirectText && !isProtectedEditor(element)) {
       if (!element.matches(SKIP_TEXT_INSIDE)) {
         const key = rgbKey(inspection.text);
@@ -1134,12 +1167,11 @@ export class ThemeEngine {
         } else {
           element.removeAttribute(LINK_ATTRIBUTE);
           element.setAttribute(TEXT_ATTRIBUTE, "");
-          (element as HTMLElement).style.setProperty(
-            ELEMENT_TEXT_VARIABLE,
-            isUaLink
-              ? rgbToCss(UA_VISITED_COLORS.has(key) ? tokens.visited : tokens.link)
-              : mapTextColor(inspection.text, surface, tokens),
-          );
+          const mapped = isUaLink
+            ? rgbToCss(UA_VISITED_COLORS.has(key) ? tokens.visited : tokens.link)
+            : mapTextColor(inspection.text, surface, tokens);
+          mappedText = parseColorOrNull(mapped);
+          (element as HTMLElement).style.setProperty(ELEMENT_TEXT_VARIABLE, mapped);
         }
       } else {
         element.removeAttribute(TEXT_ATTRIBUTE);
@@ -1151,6 +1183,7 @@ export class ThemeEngine {
       (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
     }
 
+    this.styleTextShadow(element, inspection, mappedText, tokens);
     this.styleBorders(element, inspection, surface, tokens);
     this.stylePaint(
       element,
@@ -1168,6 +1201,32 @@ export class ThemeEngine {
       surface,
       tokens,
     );
+  }
+
+  /**
+   * Light halos (`text-shadow: 0 1px 0 #fff`) designed for dark text turn into
+   * a glow once the text is light, so they are dropped on dark schemes.
+   */
+  private styleTextShadow(
+    element: Element,
+    inspection: InspectedElement,
+    mappedText: Rgba | null,
+    tokens: ThemeTokens,
+  ): void {
+    const shadow = inspection.samples.textShadow;
+    let drop = false;
+    if (tokens.scheme === "dark" && mappedText && shadow && shadow !== "none") {
+      const textLuminance = relativeLuminance(mappedText);
+      drop = (shadow.match(/rgba?\([^)]*\)/g) ?? []).some((value) => {
+        const color = parseColorOrNull(value);
+        return color !== null && isPainted(color) && relativeLuminance(color) > textLuminance;
+      });
+    }
+    if (drop) {
+      element.setAttribute(NO_SHADOW_ATTRIBUTE, "");
+    } else if (element.hasAttribute(NO_SHADOW_ATTRIBUTE)) {
+      element.removeAttribute(NO_SHADOW_ATTRIBUTE);
+    }
   }
 
   /** Maps SVG fill/stroke colours the way text colours are mapped. */
@@ -1504,6 +1563,7 @@ export class ThemeEngine {
     element.removeAttribute(BORDER_ATTRIBUTE);
     element.removeAttribute(FILL_ATTRIBUTE);
     element.removeAttribute(STROKE_ATTRIBUTE);
+    element.removeAttribute(NO_SHADOW_ATTRIBUTE);
     const htmlElement = element as HTMLElement;
     htmlElement.style.removeProperty(ELEMENT_SURFACE_VARIABLE);
     htmlElement.style.removeProperty(ELEMENT_TEXT_VARIABLE);
