@@ -20,13 +20,19 @@ This runs:
 
 `npm run test:perf` measures startup application time and long-page scan cost.
 
+The Chromium suite lives in `tests/e2e/` (`core.cases.mjs` for product
+behaviour, `defects.cases.mjs` for regression cases named after the findings).
+Run it with `npm run test:e2e`; it starts a local server and a Chromium with the
+built extension. In a sandbox that blocks local port binding it fails with
+`listen EPERM`. Cases are isolated: storage is cleared before each one.
+
 ## Manual Chrome matrix
 
 Load `dist/chrome-extension` unpacked and check:
 
 | Page type | Check |
 | --- | --- |
-| News article | Dark, Sepia, Warm, Original, sliders |
+| News article | Dark, Sepia, Gray, Warm, sliders, This site / All sites scope |
 | Blog | Dynamic content, images, links, code |
 | Documentation | Sticky header, code blocks, tables, search |
 | E-commerce | Product cards, dropdowns, dialogs, images |
@@ -34,15 +40,19 @@ Load `dist/chrome-extension` unpacked and check:
 | Web application | Text inputs, modals, custom controls |
 | Image-heavy site | Images retain color in semantic modes |
 | Native dark site | Page is left untouched |
-| Restricted page | Popup explains access limitation |
+| Restricted page | Popup explains access limitation and offers Reload |
+| PDF.js viewer in an iframe | No doubled text; the site's Never rule reaches the frame |
+| Webmail composer / CMS editor | Sent or saved HTML contains no `data-darkr` or `--darkr` |
+| Print preview | Page prints with the author's colours |
+| Site with a dark-mode toggle | Darkr stands down / returns within a second of the toggle |
 
 Also verify:
 
 - Site access can be limited through Chrome's site access controls.
 - The popup reflects the active page after navigation.
 - Settings persist across browser restarts.
-- Per-domain overrides do not leak to subdomains.
-- Original mode removes Darkr classes, attributes, styles, and observers.
+- Per-domain overrides do not leak to subdomains unless Include subdomains is ticked.
+- Turning Darkr off for a site removes Darkr attributes, styles, and observers.
 - A blocked site or paused extension is never themed, even while moving
   popup sliders.
 - Reduced Motion does not introduce animation problems.
