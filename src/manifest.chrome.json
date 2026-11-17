@@ -61,7 +61,8 @@
     "open_in_tab": true
   },
   "permissions": [
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "http://*/*",

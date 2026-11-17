@@ -27,6 +27,7 @@ http/https pages is used only to read computed colours and apply a visual theme.
 
 **Permission justifications**
 - `storage`: save your preferences locally.
+- `scripting`: load Darkr into tabs that were already open when the extension is installed or updated, so they are themed without a reload.
 - Host access (`http://*/*`, `https://*/*`): read computed colours and apply the theme on pages you visit.
 
 **Images needed (not in this repository):** 1280×800 screenshots of the popup,

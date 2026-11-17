@@ -90,3 +90,42 @@ describe("keyboard commands", () => {
     });
   });
 });
+
+describe("injection into open tabs", () => {
+  afterEach(() => {
+    vi.resetModules();
+    Reflect.deleteProperty(globalThis, "chrome");
+  });
+
+  it("injects the content script into http(s) tabs on install and update", async () => {
+    let onInstalled: ((details: { reason: string }) => void) | undefined;
+    const executeScript = vi.fn(async ({ target }: { target: { tabId: number } }) => {
+      if (target.tabId === 2) {
+        throw new Error("restricted page");
+      }
+    });
+    (globalThis as Record<string, unknown>).chrome = {
+      runtime: {
+        onInstalled: { addListener: (fn: typeof onInstalled) => (onInstalled = fn) },
+        onMessage: { addListener: () => undefined },
+        openOptionsPage: async () => undefined,
+        getURL: (path: string) => `chrome-extension://id/${path}`,
+      },
+      storage: {
+        local: { get: async () => ({ "darkr.onboarding.v1": true }), set: async () => undefined },
+      },
+      tabs: { query: async () => [{ id: 1 }, { id: 2 }, { id: 3 }], create: async () => undefined },
+      scripting: { executeScript },
+    };
+    await import("../src/background/index");
+    onInstalled?.({ reason: "update" });
+    await vi.waitFor(() => expect(executeScript).toHaveBeenCalledTimes(3));
+    expect(executeScript).toHaveBeenCalledWith({
+      target: { tabId: 1, allFrames: true },
+      files: ["content.js"],
+    });
+    executeScript.mockClear();
+    onInstalled?.({ reason: "browser_update" });
+    expect(executeScript).not.toHaveBeenCalled();
+  });
+});

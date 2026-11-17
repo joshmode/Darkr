@@ -64,6 +64,8 @@ install notes.
 ## Permissions
 
 - `storage` persists global and per-domain settings locally.
+- `scripting` injects Darkr into tabs that were already open when it was
+  installed or updated, so they work without a reload. It is used for nothing else.
 - Host access to `http://` and `https://` pages lets Darkr read computed colors
   and apply a visual theme. Page text, history, and form contents are never read
   or transmitted.
@@ -136,7 +138,6 @@ explicitly selected grayscale effect.
   own copy of Darkr, following the top-level site's rule.
 - Hover and pseudo-element (`::before`/`::after`) colours, gradients and
   images are not remapped; text over them is kept readable instead.
-- Pages that were open before Darkr was installed or updated need a reload.
 - Closed shadow roots cannot be styled. Open shadow roots receive a style sheet.
 - Some sites use inline styles or third-party widgets that do not expose stable
   semantic colors; Darkr preserves author inline edits rather than repeatedly

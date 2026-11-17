@@ -75,6 +75,9 @@ Darkr requests only the permissions needed to provide its single purpose:
 - **Access to HTTP and HTTPS pages** lets Darkr inspect rendered colors and
   apply a visual theme automatically. This access also allows Darkr to run in
   frames that make up part of a webpage.
+- **Scripting** lets Darkr load itself into tabs that were already open when
+  it was installed or updated, so they are themed without a reload. It is not
+  used to read or change anything else.
 
 You can restrict Darkr's site access through your browser's extension
 settings. Restricting access may prevent Darkr from theming some or all pages.

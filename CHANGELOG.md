@@ -36,6 +36,7 @@
 - The pre-paint hold applies to the top document only.
 
 ### Added
+- Darkr is injected into tabs that were open at install/update (new `scripting` permission).
 - Welcome page on install; keyboard shortcuts (Alt+Shift+D, Alt+Shift+P);
   toolbar "off" badge; Reload button on the unreachable-page notice.
 - Biome lint, GitHub Actions CI and a named, isolated Chromium test suite.

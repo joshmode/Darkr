@@ -14,7 +14,7 @@ needs checking there. "Fallback" says what the code does when the API is absent.
 | `tabs.reload` | `src/popup/ui.ts` ("Reload page") | The call is wrapped in `try/catch`; on failure the popup shows "Couldn't reload the page". |
 | `matchMedia("(forced-colors: active)")` | `src/content/index.ts` | Yes. Browsers without the feature report no match, so theming proceeds. |
 | `@media screen` around the generated sheet | `src/content/theme-engine.ts` | Universal. |
-| `chrome.scripting` | **Not used.** Injecting into already-open tabs after install/update (B6) needs the `scripting` permission, which was left for the owner to approve. |
+| `chrome.scripting.executeScript` | `src/background/index.ts` (`injectIntoOpenTabs`, on install and update) | Yes. Skipped when `api.scripting` is absent, and each tab's failure is swallowed. Requires the `scripting` permission in the manifest (added to the Chrome manifest; the Safari manifest must add it or lose the feature). |
 | `adoptedStyleSheets` from a content script | **Not used** (palette indexing, B2, not done); the engine keeps `<style>` elements. |
 | `runtime.id` becoming undefined after an update | `src/content/index.ts` (`teardownIfOrphaned`) | Yes. If `runtime.id` stays defined, the check is a no-op. |
 | `HTMLStyleElement.sheet.disabled` | `src/content/theme-engine.ts` (shadow sheets during clean reads) | Guarded by `if (style.sheet)`. |

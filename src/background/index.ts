@@ -25,9 +25,20 @@ interface BackgroundApi {
     getURL(path: string): string;
   };
   storage: { local: StorageAreaLike };
+  /** Needs the `scripting` permission; absent in some browsers. */
+  scripting?: {
+    executeScript(injection: {
+      target: { tabId: number; allFrames?: boolean };
+      files: string[];
+    }): Promise<unknown>;
+  };
   tabs?: {
     create?(properties: { url: string }): Promise<unknown>;
-    query(query: { active: boolean; currentWindow: boolean }): Promise<Array<{ url?: string }>>;
+    query(query: {
+      active?: boolean;
+      currentWindow?: boolean;
+      url?: string[];
+    }): Promise<Array<{ id?: number; url?: string }>>;
   };
   /** Not available in every browser (Safari has no keyboard commands). */
   commands?: {
@@ -63,6 +74,34 @@ async function showState(tabId: number, state: PageState): Promise<void> {
   } catch {
     // The tab may have closed; nothing to show.
   }
+}
+
+/**
+ * Tabs opened before the extension was installed or updated have no content
+ * script (or an orphaned one). Inject into them so the first thing a new user
+ * tries works without a reload. Skipped where `scripting` is unavailable.
+ */
+async function injectIntoOpenTabs(): Promise<void> {
+  const scripting = api?.scripting;
+  const tabs = await api?.tabs?.query({ url: ["http://*/*", "https://*/*"] });
+  if (!scripting || !tabs) {
+    return;
+  }
+  await Promise.all(
+    tabs.map(async (tab) => {
+      if (tab.id === undefined) {
+        return;
+      }
+      try {
+        await scripting.executeScript({
+          target: { tabId: tab.id, allFrames: true },
+          files: ["content.js"],
+        });
+      } catch {
+        // Restricted pages (the web store, error pages) cannot be scripted.
+      }
+    }),
+  );
 }
 
 async function runCommand(command: string): Promise<void> {
@@ -107,6 +146,9 @@ if (api) {
   });
 
   api.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "install" || details.reason === "update") {
+      void injectIntoOpenTabs();
+    }
     if (details.reason !== "install") {
       return;
     }
