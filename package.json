@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node tests/e2e.mjs",
+    "test:e2e": "node --test --test-concurrency=1 tests/e2e.mjs",
     "test:perf": "node tests/performance.mjs",
     "check": "npm run typecheck && npm test && npm run package && node scripts/check-extension.mjs && node scripts/check-manifest-version.mjs",
     "check:all": "npm run check && npm run test:contrast && npm run test:e2e",

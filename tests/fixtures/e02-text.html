@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>E-02 transparent text</title>
+<style>
+body{background:#fff;color:#111;font-family:system-ui;margin:0;padding:16px}
+.page{position:relative;width:400px;height:60px}
+.page canvas{position:absolute;inset:0;width:400px;height:60px}
+.textLayer span{position:absolute;left:8px;top:8px;color:transparent;font-size:20px}
+h1.grad{background:linear-gradient(90deg,#c00,#00c);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:32px;margin:12px 0}
+#partial{color:rgba(0,0,0,.4)}
+</style></head>
+<body>
+<div class="page"><canvas width="400" height="60"></canvas><div class="textLayer"><span id="pdf-span">Selectable PDF line</span></div></div>
+<h1 class="grad" id="grad">Gradient heading</h1>
+<p id="partial">Semi-transparent paragraph</p>
+</body></html>

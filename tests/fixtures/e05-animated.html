@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>E-05 animated</title>
+<style>body{background:#fff;color:#111;font-family:system-ui;padding:16px}.anim{background:#fff;width:100px;height:40px}</style></head>
+<body>
+<div class="anim" id="anim">Moving</div>
+<script>
+  let n = 0;
+  (function tick(){ document.getElementById("anim").style.transform = "translateX(" + (n++ % 50) + "px)"; requestAnimationFrame(tick); })();
+</script>
+</body></html>
