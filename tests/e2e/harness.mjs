@@ -195,7 +195,7 @@ export async function newPage(path, { origin = env.origin, waitUntil = "load" } 
 }
 
 export const isThemed = (frameOrPage) =>
-  frameOrPage.evaluate(() => document.documentElement.classList.contains("darkr-active"));
+  frameOrPage.evaluate(() => document.documentElement.hasAttribute("data-darkr"));
 
 export const waitThemed = (frameOrPage, themed = true, timeout = 5000) =>
   poll(

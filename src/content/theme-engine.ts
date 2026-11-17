@@ -18,9 +18,15 @@ import {
 import { themeConfigsEqual } from "../shared/config";
 
 const STYLE_ID = "darkr-theme-styles";
-const ROOT_CLASS = "darkr-active";
-const SEMANTIC_CLASS = "darkr-semantic";
-const GRAYSCALE_CLASS = "darkr-grayscale";
+/**
+ * Active state lives in one attribute on <html>: "semantic" or "grayscale".
+ * Page scripts routinely reset `className`, which used to wipe the theme.
+ */
+const ROOT_ATTRIBUTE = "data-darkr";
+const SEMANTIC_VALUE = "semantic";
+const GRAYSCALE_VALUE = "grayscale";
+const SEMANTIC_ROOT = `:root[${ROOT_ATTRIBUTE}="${SEMANTIC_VALUE}"]`;
+const GRAYSCALE_ROOT = `:root[${ROOT_ATTRIBUTE}="${GRAYSCALE_VALUE}"]`;
 const SURFACE_ATTRIBUTE = "data-darkr-surface";
 const TEXT_ATTRIBUTE = "data-darkr-text";
 const BORDER_ATTRIBUTE = "data-darkr-border";
@@ -33,6 +39,8 @@ const ELEMENT_BORDER_VARIABLE = "--darkr-element-border";
  * "t r b l" for the sides that are painted. Unlisted sides keep the author's
  * colour (transparent sides must stay transparent: CSS triangles, ghost buttons).
  */
+const ROOT_WATCHED_ATTRIBUTES = [ROOT_ATTRIBUTE, "class", "data-theme", "data-color-mode", "style"];
+const REDETECT_DELAY_MS = 150;
 const BORDER_SIDES = [
   { key: "t", property: "Top", variable: "--darkr-element-border-top", css: "border-top-color" },
   {
@@ -334,60 +342,60 @@ function buildDocumentCss(tokens: ThemeTokens): string {
     .join("\n");
 
   return `@media screen {
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} {
+${SEMANTIC_ROOT} {
   ${variables}
   background-color: var(--darkr-bg) !important;
   color-scheme: var(--darkr-scheme) !important;
   accent-color: var(--darkr-link);
   scrollbar-color: var(--darkr-border) var(--darkr-bg);
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} body {
+${SEMANTIC_ROOT} body {
   background-color: var(--darkr-bg) !important;
   color: var(--darkr-text) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :is(${EDITABLE_SELECTOR}) :where(*),
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS}[${DESIGN_MODE_ATTRIBUTE}] body :where(*) {
+${SEMANTIC_ROOT} :is(${EDITABLE_SELECTOR}) :where(*),
+${SEMANTIC_ROOT}[${DESIGN_MODE_ATTRIBUTE}] body :where(*) {
   color: inherit !important;
   background-color: transparent !important;
 }
 /* Links the author left unstyled. Author-coloured links are sampled like any
    other text. */
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${LINK_ATTRIBUTE}] {
+${SEMANTIC_ROOT} [${LINK_ATTRIBUTE}] {
   color: var(--darkr-link) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${LINK_ATTRIBUTE}]:visited {
+${SEMANTIC_ROOT} [${LINK_ATTRIBUTE}]:visited {
   color: var(--darkr-visited) !important;
 }
 /* Things sampling cannot reach. */
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input[type="checkbox"], input[type="radio"], input[type="range"], input[type="color"]) {
+${SEMANTIC_ROOT} :where(input[type="checkbox"], input[type="radio"], input[type="range"], input[type="color"]) {
   accent-color: var(--darkr-link);
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input, textarea)::placeholder {
+${SEMANTIC_ROOT} :where(input, textarea)::placeholder {
   color: var(--darkr-muted) !important;
   opacity: 1 !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} :where(input, textarea):-webkit-autofill {
+${SEMANTIC_ROOT} :where(input, textarea):-webkit-autofill {
   -webkit-text-fill-color: var(--darkr-input-text) !important;
   box-shadow: 0 0 0 1000px var(--darkr-input-bg) inset !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} dialog::backdrop {
+${SEMANTIC_ROOT} dialog::backdrop {
   background: rgb(0 0 0 / 62%) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} ::selection {
+${SEMANTIC_ROOT} ::selection {
   background: var(--darkr-selection) !important;
   color: var(--darkr-text) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${SURFACE_ATTRIBUTE}] {
+${SEMANTIC_ROOT} [${SURFACE_ATTRIBUTE}] {
   background-color: var(${ELEMENT_SURFACE_VARIABLE}) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${TEXT_ATTRIBUTE}] {
+${SEMANTIC_ROOT} [${TEXT_ATTRIBUTE}] {
   color: var(${ELEMENT_TEXT_VARIABLE}) !important;
 }
-:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${BORDER_ATTRIBUTE}~="a"] {
+${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="a"] {
   border-color: var(${ELEMENT_BORDER_VARIABLE}) !important;
 }
-${BORDER_SIDES.map((side) => `:root.${ROOT_CLASS}.${SEMANTIC_CLASS} [${BORDER_ATTRIBUTE}~="${side.key}"] {\n  ${side.css}: var(${side.variable}) !important;\n}`).join("\n")}
-:root.${ROOT_CLASS}.${GRAYSCALE_CLASS} {
+${BORDER_SIDES.map((side) => `${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="${side.key}"] {\n  ${side.css}: var(${side.variable}) !important;\n}`).join("\n")}
+${GRAYSCALE_ROOT} {
   filter: grayscale(var(--darkr-grayscale)) !important;
 }
 }
@@ -427,6 +435,9 @@ export class ThemeEngine {
   private readonly shadowObservers = new Map<ShadowRoot, MutationObserver>();
   private readonly queuedElements = new Set<Element>();
   private observer: MutationObserver | null = null;
+  private rootObserver: MutationObserver | null = null;
+  private desiredRootValue: string | null = null;
+  private redetectTimer: number | null = null;
   private style: HTMLStyleElement | null = null;
   private batchHandle: number | null = null;
   private idleHandle: number | null = null;
@@ -454,8 +465,8 @@ export class ThemeEngine {
     mode: ThemeConfig["mode"];
   } {
     return {
-      active: this.doc.documentElement.classList.contains(ROOT_CLASS) && this.state.config !== null,
-      semanticActive: this.doc.documentElement.classList.contains(SEMANTIC_CLASS),
+      active: this.doc.documentElement.hasAttribute(ROOT_ATTRIBUTE) && this.state.config !== null,
+      semanticActive: this.doc.documentElement.getAttribute(ROOT_ATTRIBUTE) === SEMANTIC_VALUE,
       nativeDark: this.state.nativeDark,
       mode: this.state.config?.mode ?? "original",
     };
@@ -495,6 +506,7 @@ export class ThemeEngine {
         nativeDark,
         hasApplied: true,
       };
+      this.ensureRootObserver();
       return;
     }
 
@@ -525,10 +537,10 @@ export class ThemeEngine {
     }
 
     this.installStyle(tokens);
-    root.classList.add(ROOT_CLASS);
+    this.desiredRootValue = isSemantic ? SEMANTIC_VALUE : GRAYSCALE_VALUE;
+    root.setAttribute(ROOT_ATTRIBUTE, this.desiredRootValue);
     root.toggleAttribute(DESIGN_MODE_ATTRIBUTE, this.doc.designMode === "on");
-    root.classList.toggle(SEMANTIC_CLASS, isSemantic);
-    root.classList.toggle(GRAYSCALE_CLASS, config.mode === "grayscale");
+    this.ensureRootObserver();
 
     if (isSemantic) {
       this.ensureObserver();
@@ -539,6 +551,7 @@ export class ThemeEngine {
   }
 
   clear(): void {
+    this.stopRootObserver();
     this.teardownPageRendering();
     this.state = {
       config: null,
@@ -547,6 +560,121 @@ export class ThemeEngine {
       nativeDark: false,
       hasApplied: false,
     };
+  }
+
+  /**
+   * Watches the root and body for page code that undoes or invalidates the
+   * theme: attribute resets, removal of Darkr's stylesheet, and the page
+   * switching its own light/dark theme after load.
+   */
+  private ensureRootObserver(): void {
+    if (!this.rootObserver) {
+      this.rootObserver = new MutationObserver((records) => {
+        let heal = false;
+        let redetect = false;
+        for (const record of records) {
+          if (record.type === "childList") {
+            heal = true;
+            if (record.target === this.doc.documentElement) {
+              this.observeBody();
+            }
+          } else if (record.attributeName === ROOT_ATTRIBUTE) {
+            heal = true;
+          } else {
+            redetect = true;
+          }
+        }
+        if (heal) {
+          this.healRoot();
+        }
+        if (redetect) {
+          this.scheduleRedetect();
+        }
+      });
+    }
+    const options = { attributes: true, attributeFilter: ROOT_WATCHED_ATTRIBUTES };
+    this.rootObserver.observe(this.doc.documentElement, { ...options, childList: true });
+    if (this.doc.head) {
+      this.rootObserver.observe(this.doc.head, { childList: true });
+    }
+    this.observeBody();
+  }
+
+  private observeBody(): void {
+    if (this.rootObserver && this.doc.body) {
+      this.rootObserver.observe(this.doc.body, {
+        attributes: true,
+        attributeFilter: ROOT_WATCHED_ATTRIBUTES,
+      });
+    }
+  }
+
+  private stopRootObserver(): void {
+    this.rootObserver?.disconnect();
+    this.rootObserver = null;
+    if (this.redetectTimer !== null) {
+      this.win.clearTimeout(this.redetectTimer);
+      this.redetectTimer = null;
+    }
+  }
+
+  /** Puts back the root attribute or stylesheet when page code removed them. */
+  private healRoot(): void {
+    const tokens = this.state.tokens;
+    if (!tokens || this.desiredRootValue === null) {
+      return;
+    }
+    const root = this.doc.documentElement;
+    if (root.getAttribute(ROOT_ATTRIBUTE) !== this.desiredRootValue) {
+      root.setAttribute(ROOT_ATTRIBUTE, this.desiredRootValue);
+    }
+    if (!this.style?.isConnected) {
+      this.style = null;
+      this.installStyle(tokens);
+    }
+  }
+
+  private scheduleRedetect(): void {
+    if (this.redetectTimer !== null) {
+      return;
+    }
+    this.redetectTimer = this.win.setTimeout(() => {
+      this.redetectTimer = null;
+      this.redetectNativeDark();
+    }, REDETECT_DELAY_MS);
+  }
+
+  /**
+   * Native-dark detection normally runs once. A page that applies or toggles
+   * its own dark theme later changes root/body attributes; re-run detection
+   * with Darkr's rules off and switch between theming and standing down.
+   */
+  private redetectNativeDark(): void {
+    const config = this.state.config;
+    if (
+      !config ||
+      !this.state.tokens ||
+      config.mode === "grayscale" ||
+      this.state.overrideNativeDark
+    ) {
+      return;
+    }
+    const root = this.doc.documentElement;
+    const value = root.getAttribute(ROOT_ATTRIBUTE);
+    if (value !== null) {
+      root.removeAttribute(ROOT_ATTRIBUTE);
+    }
+    let nativeDark: boolean;
+    try {
+      nativeDark = detectNativeDark(this.doc);
+    } finally {
+      if (value !== null) {
+        root.setAttribute(ROOT_ATTRIBUTE, value);
+      }
+    }
+    if (nativeDark !== this.state.nativeDark) {
+      this.refresh();
+    }
   }
 
   private teardownPageRendering(): void {
@@ -558,7 +686,8 @@ export class ThemeEngine {
     this.style = null;
 
     const root = this.doc.documentElement;
-    root.classList.remove(ROOT_CLASS, SEMANTIC_CLASS, GRAYSCALE_CLASS);
+    root.removeAttribute(ROOT_ATTRIBUTE);
+    this.desiredRootValue = null;
     root.removeAttribute(DESIGN_MODE_ATTRIBUTE);
     for (const name of ROOT_VARIABLES) {
       root.style.removeProperty(name);
@@ -572,6 +701,7 @@ export class ThemeEngine {
   /** Stop observers during navigation teardown; data is restored on next load. */
   suspend(): void {
     this.stopObserver();
+    this.stopRootObserver();
     for (const observer of this.shadowObservers.values()) {
       observer.disconnect();
     }
@@ -785,15 +915,15 @@ export class ThemeEngine {
    */
   private readAuthorStyles<T>(read: () => T): T {
     const root = this.doc.documentElement;
-    const wasSemantic = root.classList.contains(SEMANTIC_CLASS);
+    const wasSemantic = root.getAttribute(ROOT_ATTRIBUTE) === SEMANTIC_VALUE;
     if (wasSemantic) {
-      root.classList.remove(SEMANTIC_CLASS);
+      root.removeAttribute(ROOT_ATTRIBUTE);
     }
     try {
       return read();
     } finally {
       if (wasSemantic) {
-        root.classList.add(SEMANTIC_CLASS);
+        root.setAttribute(ROOT_ATTRIBUTE, SEMANTIC_VALUE);
       }
     }
   }
@@ -1307,7 +1437,5 @@ export const themeEngineTestUtilities = {
   buildDocumentCss,
   buildShadowCss,
   STYLE_ID,
-  ROOT_CLASS,
-  SEMANTIC_CLASS,
-  GRAYSCALE_CLASS,
+  ROOT_ATTRIBUTE,
 };

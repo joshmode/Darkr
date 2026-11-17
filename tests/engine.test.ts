@@ -4,8 +4,6 @@ import { ThemeEngine, themeEngineTestUtilities } from "../src/content/theme-engi
 import { parseCssColor } from "../src/shared/color";
 import { DEFAULT_THEME_CONFIG, type ThemeConfig } from "../src/shared/types";
 
-const { ROOT_CLASS, SEMANTIC_CLASS, GRAYSCALE_CLASS } = themeEngineTestUtilities;
-
 function config(overrides: Partial<ThemeConfig> = {}): ThemeConfig {
   return { ...DEFAULT_THEME_CONFIG, ...overrides };
 }
@@ -54,8 +52,8 @@ describe("ThemeEngine", () => {
     loadFixture("article");
     engine.apply(config({ mode: "dark", darkBackground: 20 }));
     engine.flush();
-    expect(document.documentElement.classList.contains(ROOT_CLASS)).toBe(true);
-    expect(document.documentElement.classList.contains(SEMANTIC_CLASS)).toBe(true);
+    expect(document.documentElement.hasAttribute("data-darkr")).toBe(true);
+    expect(document.documentElement.getAttribute("data-darkr") === "semantic").toBe(true);
     const text = getComputedStyle(document.getElementById("text")!);
     expect(text.color).not.toBe("rgb(34, 34, 34)");
     expect(document.getElementById("text")!.hasAttribute("data-darkr-text")).toBe(true);
@@ -76,7 +74,7 @@ describe("ThemeEngine", () => {
     expect(document.querySelectorAll("[data-darkr-text]").length).toBe(0);
     expect(document.querySelectorAll("[data-darkr-border]").length).toBe(0);
     expect(document.querySelectorAll("[data-darkr-element-surface]").length).toBe(0);
-    expect(document.documentElement.classList.contains(ROOT_CLASS)).toBe(false);
+    expect(document.documentElement.hasAttribute("data-darkr")).toBe(false);
   });
 
   it("supports live theme changes without layering styles", () => {
@@ -121,8 +119,8 @@ describe("ThemeEngine", () => {
     engine.flush();
     engine.apply(config({ mode: "grayscale", grayscaleIntensity: 100 }));
     engine.flush();
-    expect(document.documentElement.classList.contains(GRAYSCALE_CLASS)).toBe(true);
-    expect(document.documentElement.classList.contains(SEMANTIC_CLASS)).toBe(false);
+    expect(document.documentElement.getAttribute("data-darkr") === "grayscale").toBe(true);
+    expect(document.documentElement.getAttribute("data-darkr") === "semantic").toBe(false);
     expect(document.querySelectorAll("[data-darkr-surface]")).toHaveLength(0);
     expect(document.querySelector("#darkr-theme-styles")?.textContent).toContain("grayscale");
   });
@@ -131,10 +129,10 @@ describe("ThemeEngine", () => {
     loadFixture("dark");
     engine.apply(config({ mode: "dark" }));
     engine.flush();
-    expect(document.documentElement.classList.contains(ROOT_CLASS)).toBe(false);
+    expect(document.documentElement.hasAttribute("data-darkr")).toBe(false);
     expect(engine.status.nativeDark).toBe(true);
     engine.apply(config({ mode: "grayscale", grayscaleIntensity: 100 }));
-    expect(document.documentElement.classList.contains(GRAYSCALE_CLASS)).toBe(true);
+    expect(document.documentElement.getAttribute("data-darkr") === "grayscale").toBe(true);
   });
 
   it("themes elements inserted after initial load in a batched pass", async () => {
@@ -193,7 +191,7 @@ describe("ThemeEngine", () => {
   it("does nothing in Original mode", () => {
     loadFixture("article");
     engine.apply(config({ mode: "original" }));
-    expect(document.documentElement.classList.contains(ROOT_CLASS)).toBe(false);
+    expect(document.documentElement.hasAttribute("data-darkr")).toBe(false);
     expect(document.getElementById("darkr-theme-styles")).toBeNull();
   });
 
@@ -227,7 +225,7 @@ describe("ThemeEngine", () => {
     expect(document.querySelector("#darkr-theme-styles")).not.toBeNull();
     engine.resume();
     engine.flush();
-    expect(document.documentElement.classList.contains(SEMANTIC_CLASS)).toBe(true);
+    expect(document.documentElement.getAttribute("data-darkr") === "semantic").toBe(true);
     expect(document.querySelector("#darkr-theme-styles")).not.toBeNull();
   });
 
@@ -326,7 +324,7 @@ describe("ThemeEngine", () => {
       pseudo?: string | null,
     ) => {
       const style = real(element, pseudo);
-      const semantic = document.documentElement.classList.contains(SEMANTIC_CLASS);
+      const semantic = document.documentElement.getAttribute("data-darkr") === "semantic";
       if (!semantic || !element.hasAttribute?.("data-darkr-surface")) {
         return style;
       }
@@ -395,7 +393,7 @@ describe("ThemeEngine", () => {
     expect(internals().queuedElements.size).toBeLessThan(5);
   });
   describe("native dark override", () => {
-    const themed = () => document.documentElement.classList.contains(ROOT_CLASS);
+    const themed = () => document.documentElement.hasAttribute("data-darkr");
 
     it("leaves a natively dark page untouched by default", () => {
       loadFixture("dark");
@@ -409,7 +407,7 @@ describe("ThemeEngine", () => {
       engine.apply(config({ mode: "dark" }), { overrideNativeDark: true });
       engine.flush();
       expect(themed()).toBe(true);
-      expect(document.documentElement.classList.contains(SEMANTIC_CLASS)).toBe(true);
+      expect(document.documentElement.getAttribute("data-darkr") === "semantic").toBe(true);
       expect(engine.status.nativeDark).toBe(true);
     });
 

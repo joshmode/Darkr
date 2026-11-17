@@ -182,9 +182,9 @@ for (const mode of ["sepia", "grayscale", "warm", "original"]) {
     await poll(
       () =>
         page.evaluate(() => ({
-          semantic: document.documentElement.classList.contains("darkr-semantic"),
-          gray: document.documentElement.classList.contains("darkr-grayscale"),
-          active: document.documentElement.classList.contains("darkr-active"),
+          semantic: document.documentElement.getAttribute("data-darkr") === "semantic",
+          gray: document.documentElement.getAttribute("data-darkr") === "grayscale",
+          active: document.documentElement.hasAttribute("data-darkr"),
         })),
       (s) =>
         mode === "original"
