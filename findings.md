@@ -7,6 +7,8 @@ Reviewed at commit `15d2a9f` (17 Nov 2026). Scope: everything under `src/`, `tes
 - Severity: **P0** breaks the core promise on ordinary pages · **P1** visible breakage on common patterns, or data leaving the page altered · **P2** robustness, performance, UX friction · **P3** cleanup.
 - Evidence: **[repro]** means I loaded the built extension in headless Chromium against a small fixture page and measured the result. **[code]** means it follows from reading the source and was not run.
 
+**Status.** E-01, E-02, E-03 and E-08 are fixed (commit hashes on each entry; the Phase 0 e2e cases for them now pass). E-04…E-07, E-09…E-12 and E-15 have expected-fail cases in `tests/e2e/defects.cases.mjs` awaiting their tasks.
+
 Baseline: `npm run check` passes (typecheck, 87 unit tests, package, manifest checks). I did not run `npm run test:e2e` or `test:perf`. Nothing in the repo was changed apart from adding this file and `HANDBOOK.md`.
 
 ---
@@ -48,7 +50,7 @@ Measured with a page on `127.0.0.1` embedding a viewer on `localhost`: with the 
 
 ### P0
 
-**E-01 · Text inside surfaces is mapped against the page's *light* colours on first load [repro].**
+**E-01 · Text inside surfaces is mapped against the page's *light* colours on first load [repro].** **Fixed in `3434ecd`.**
 `styleInspectedElement` finds the nearest ancestor carrying `data-darkr-surface` and reads its background with `getComputedStyle` ([theme-engine.ts:862-873](src/content/theme-engine.ts:862)). During the initial pass the stylesheet and root classes are not installed yet (`apply()` calls `inspectInitialPage()` before `installStyle()`, [:512-522](src/content/theme-engine.ts:512)), so that read returns the author's white. The engine concludes the text sits on a light surface and keeps it dark. The DOMContentLoaded `refresh()` repeats the same order, so it never self-corrects.
 
 Measured on a plain page with a header and one card, fresh load, default settings:
@@ -64,9 +66,9 @@ It also erases hierarchy: muted `#666` and primary `#111` text come out identica
 
 ### P1
 
-**E-02 · Transparent and semi-transparent text becomes opaque [repro].** See section 2.
+**E-02 · Transparent and semi-transparent text becomes opaque [repro].** See section 2. **Fixed in `d9ccc97`.**
 
-**E-03 · Frames ignore the top site's rule [repro].** See section 2. Related: `about:blank`, `srcdoc`, `blob:` and `data:` frames get no content script at all (no `match_about_blank` / `match_origin_as_fallback` in the manifest), so they stay white inside a dark page. Measured: a `srcdoc` iframe was not themed.
+**E-03 · Frames ignore the top site's rule [repro].** See section 2. Related: `about:blank`, `srcdoc`, `blob:` and `data:` frames get no content script at all (no `match_about_blank` / `match_origin_as_fallback` in the manifest), so they stay white inside a dark page. Measured: a `srcdoc` iframe was not themed. **Fixed in `df4c6bf`.**
 
 **E-04 · Darkr writes into editable content [repro].**
 Only four code editors are protected ([:148-152](src/content/theme-engine.ts:148)). Inside a plain `contenteditable`, children came back as:
@@ -92,7 +94,7 @@ From `buildDocumentCss` ([:306-359](src/content/theme-engine.ts:306)):
 - `code, pre, kbd, samp` get a background even where the author gave none.
 - `button, [role="button"] { color: text }` discards button text colours.
 
-**E-08 · Borders: only the top edge is sampled, and one colour is applied to all four [repro].**
+**E-08 · Borders: only the top edge is sampled, and one colour is applied to all four [repro].** **Fixed in `d9ccc97`.**
 `sampleStyle` reads `borderTopColor` / `borderTopStyle` only ([:163-173](src/content/theme-engine.ts:163)); the rule sets `border-color` for every side. Measured:
 
 - An element with only `border-bottom: 1px solid #eee` kept `#eee` (bright lines on dark).
