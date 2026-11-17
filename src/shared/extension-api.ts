@@ -1,9 +1,13 @@
 import type { ThemeConfig } from "./types";
 
 export interface RuntimeMessage {
-  type: "darkr:preview" | "darkr:get-status" | "darkr:get-top-host";
+  type: "darkr:preview" | "darkr:get-status" | "darkr:get-top-host" | "darkr:state";
   config?: ThemeConfig;
+  /** For darkr:state: what the toolbar should show for the sending tab. */
+  state?: PageState;
 }
+
+export type PageState = "on" | "off-site" | "paused" | "unavailable";
 
 export interface StorageChange {
   newValue?: unknown;

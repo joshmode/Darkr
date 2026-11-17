@@ -42,6 +42,16 @@
       "38": "images/toolbar-icon-38.png"
     }
   },
+  "commands": {
+    "toggle-site": {
+      "suggested_key": { "default": "Alt+Shift+D" },
+      "description": "Turn Darkr on or off for the current site"
+    },
+    "toggle-everywhere": {
+      "suggested_key": { "default": "Alt+Shift+P" },
+      "description": "Pause or resume Darkr everywhere"
+    }
+  },
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true

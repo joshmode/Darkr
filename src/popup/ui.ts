@@ -9,7 +9,7 @@ import {
   setMasterEnabled,
   setSiteAppearance,
   setSiteNativeDarkOverride,
-  setSitePolicy,
+  toggleSiteEnabled,
 } from "../shared/config";
 import {
   type ContentStatus,
@@ -427,18 +427,9 @@ view.siteToggle.addEventListener("click", async () => {
   if (!browser || !app.preferences || !app.hostname || !app.tabReachable) {
     return;
   }
-  const turningOff = resolveCurrent(app.preferences).enabled;
-  let next: DarkrPreferences;
-  if (turningOff) {
-    next = setSitePolicy(app.preferences, app.hostname, "block");
-  } else {
-    // Prefer "Automatic"; fall back to "Always" when pausing or the system
-    // appearance would keep this site unthemed.
-    const automatic = setSitePolicy(app.preferences, app.hostname, "auto");
-    next = resolveCurrent(automatic).enabled
-      ? automatic
-      : setSitePolicy(app.preferences, app.hostname, "allow");
-  }
+  const next = toggleSiteEnabled(app.preferences, app.hostname, {
+    systemDark: window.matchMedia("(prefers-color-scheme: dark)").matches,
+  });
   app.preferences = next;
   app.preview = null;
   const resolved = resolveCurrent(next);

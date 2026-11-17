@@ -46,3 +46,47 @@ describe("background top-host answer", () => {
     expect(other).not.toHaveBeenCalled();
   });
 });
+
+describe("keyboard commands", () => {
+  afterEach(() => {
+    vi.resetModules();
+    Reflect.deleteProperty(globalThis, "chrome");
+  });
+
+  it("toggle-site blocks the active tab's site and toggle-everywhere pauses", async () => {
+    const store: Record<string, unknown> = {};
+    let onCommand: ((command: string) => void) | undefined;
+    (globalThis as Record<string, unknown>).chrome = {
+      runtime: {
+        onInstalled: { addListener: () => undefined },
+        onMessage: { addListener: () => undefined },
+        openOptionsPage: async () => undefined,
+      },
+      storage: {
+        local: {
+          get: async (key: string) => ({ [key]: store[key] }),
+          set: async (items: Record<string, unknown>) => Object.assign(store, items),
+        },
+      },
+      tabs: { query: async () => [{ url: "https://news.example/story" }] },
+      commands: { onCommand: { addListener: (fn: typeof onCommand) => (onCommand = fn) } },
+    };
+    await import("../src/background/index");
+    onCommand?.("toggle-site");
+    await vi.waitFor(() => {
+      const stored = store["darkr.preferences.v1"] as {
+        sites?: Record<string, { policy: string }>;
+      };
+      expect(stored?.sites?.["news.example"]?.policy).toBe("block");
+    });
+    onCommand?.("toggle-site");
+    await vi.waitFor(() => {
+      const stored = store["darkr.preferences.v1"] as { sites?: Record<string, unknown> };
+      expect(stored?.sites?.["news.example"]).toBeUndefined();
+    });
+    onCommand?.("toggle-everywhere");
+    await vi.waitFor(() => {
+      expect((store["darkr.preferences.v1"] as { enabled: boolean }).enabled).toBe(false);
+    });
+  });
+});

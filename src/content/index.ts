@@ -8,6 +8,7 @@ import {
   getBrowserApi,
   topHostnameFromAncestorOrigins,
   type ContentStatus,
+  type PageState,
 } from "../shared/extension-api";
 import { preferencesFromStorageChange, readPreferences } from "../shared/preferences";
 import type { DarkrPreferences, ThemeConfig } from "../shared/types";
@@ -126,6 +127,17 @@ if (!window.__DARKR_CONTENT__) {
     syncToPreferences(preferences);
   };
 
+  // Lets the background show per-tab state on the toolbar icon. Only the top
+  // frame speaks for the tab, and a missing background is not an error.
+  let reportedState = "";
+  const reportState = (state: PageState): void => {
+    if (!isTopFrame || !browser || state === reportedState) {
+      return;
+    }
+    reportedState = state;
+    browser.runtime.sendMessage({ type: "darkr:state", state }).catch(() => undefined);
+  };
+
   const syncToPreferences = (preferences: DarkrPreferences): void => {
     latestPreferences = preferences;
     if (topHostname === null) {
@@ -134,6 +146,7 @@ if (!window.__DARKR_CONTENT__) {
       return;
     }
     if (!hostnamePreferenceKey(topHostname)) {
+      reportState("unavailable");
       // A host that cannot be keyed is "unavailable" in the popup; theming it
       // would leave the user with a page they cannot control.
       themingAllowed = false;
@@ -146,6 +159,7 @@ if (!window.__DARKR_CONTENT__) {
     });
     const enabled = resolved.enabled && !forcedColorsQuery?.matches;
     themingAllowed = enabled;
+    reportState(enabled ? "on" : resolved.policy === "block" ? "off-site" : "paused");
     if (enabled) {
       applyConfig(resolved.config, resolved.overrideNativeDark);
     } else {

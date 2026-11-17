@@ -384,6 +384,25 @@ export function setSitePolicy(
  * Chooses whether one site is themed over its own dark appearance. Passing
  * the global value stores nothing, so the site keeps following the global.
  */
+/**
+ * Flips Darkr on or off for one site. Off is the "Never" policy. On prefers
+ * "Automatic" and falls back to "Always" when pausing or the system appearance
+ * would otherwise keep the site unthemed.
+ */
+export function toggleSiteEnabled(
+  preferences: DarkrPreferences,
+  hostname: string,
+  environment: AppearanceEnvironment = {},
+): DarkrPreferences {
+  if (resolveAppearance(preferences, hostname, environment).enabled) {
+    return setSitePolicy(preferences, hostname, "block");
+  }
+  const automatic = setSitePolicy(preferences, hostname, "auto");
+  return resolveAppearance(automatic, hostname, environment).enabled
+    ? automatic
+    : setSitePolicy(preferences, hostname, "allow");
+}
+
 export function setSiteNativeDarkOverride(
   preferences: DarkrPreferences,
   hostname: string,

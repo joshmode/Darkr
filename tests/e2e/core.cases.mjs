@@ -70,7 +70,7 @@ test("popup renders its controls", async () => {
   await popup.goto(`chrome-extension://${env.extensionId}/popup.html`);
   await poll(
     () => popup.locator("body").innerText(),
-    (t) => t.includes("Darkr on this site") && t.includes("Appearance"),
+    (t) => t.includes("Darkr on this site") && t.includes("Pause everywhere"),
     {
       message: "popup content",
     },
@@ -197,3 +197,18 @@ for (const mode of ["sepia", "grayscale", "warm", "original"]) {
     await page.locator("#article").screenshot({ path: `test-results/article-${mode}.png` });
   });
 }
+
+test("toolbar badge reflects the page state", async () => {
+  const page = await newPage("/policy");
+  await settle(page);
+  const badge = () =>
+    env.worker.evaluate(async (url) => {
+      const [tab] = await chrome.tabs.query({ url });
+      return chrome.action.getBadgeText({ tabId: tab.id });
+    }, `${env.origin}/policy`);
+  await poll(badge, (text) => text === "", { message: "no badge while themed" });
+  await setPreferences({}, { [HOST]: { policy: "block" } });
+  await poll(badge, (text) => text === "off", { message: "off badge for a blocked site" });
+  await setPreferences({}, { [HOST]: { policy: "auto" } });
+  await poll(badge, (text) => text === "", { message: "badge cleared when themed again" });
+});
