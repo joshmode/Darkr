@@ -442,13 +442,13 @@ describe("ThemeEngine", () => {
       expect(engine.status.nativeDark).toBe(false);
     });
   });
-  it("bounds the initial queue on very large documents", () => {
+  it("queues every element of very large documents instead of dropping the tail", () => {
     loadFixture("article");
     const big = document.createElement("div");
     big.innerHTML = "<p>row</p>".repeat(12000);
     document.body.append(big);
     engine.apply(config({ mode: "dark" }));
     const queued = (engine as unknown as { queuedElements: Set<Element> }).queuedElements;
-    expect(queued.size).toBeLessThanOrEqual(9000);
+    expect(queued.size).toBeGreaterThan(10000);
   });
 });

@@ -74,7 +74,6 @@ const BORDER_SIDES = [
 const INITIAL_ELEMENT_BUDGET = 700;
 const BATCH_SIZE = 180;
 const NATIVE_DARK_THRESHOLD = 0.18;
-const MAX_TRACKED_ELEMENTS = 9000;
 /**
  * A class toggle on a container with more inspected descendants than this is
  * only re-walked when the container's own colors changed (theme classes such
@@ -839,7 +838,7 @@ export class ThemeEngine {
           this.inspectAndStyle(element);
         }
         processed += 1;
-      } else if (this.queuedElements.size < MAX_TRACKED_ELEMENTS) {
+      } else {
         // Bounded: on documents with hundreds of thousands of nodes the queue
         // itself would otherwise pin every element in memory.
         this.queuedElements.add(element);
@@ -909,15 +908,6 @@ export class ThemeEngine {
     if (!inspection) {
       if (SKIP_SUBTREES.has(element.tagName)) {
         return;
-      }
-      if (this.inspections.size >= MAX_TRACKED_ELEMENTS) {
-        // Long-lived single-page apps churn through nodes; reclaim detached
-        // ones before giving up on new elements. Checked before reading
-        // styles so a huge page does not pay for work it will discard.
-        this.pruneDetached();
-        if (this.inspections.size >= MAX_TRACKED_ELEMENTS) {
-          return;
-        }
       }
       // Hidden elements are inspected too: menus and panels revealed by CSS
       // alone (:hover, aria-expanded) must already be themed when they appear.
@@ -1374,7 +1364,13 @@ export class ThemeEngine {
   }
 
   private processQueuedBatch(): void {
-    const batch = [...this.queuedElements].slice(0, BATCH_SIZE);
+    const batch: Element[] = [];
+    for (const element of this.queuedElements) {
+      if (batch.length >= BATCH_SIZE) {
+        break;
+      }
+      batch.push(element);
+    }
     for (const element of batch) {
       this.queuedElements.delete(element);
     }

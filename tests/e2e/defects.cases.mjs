@@ -25,7 +25,6 @@ import {
 const HOST = "127.0.0.1";
 
 const KNOWN = {
-  "E-06": "tracking stops at 9,000 elements, leaving later cards light with light text (task B3)",
   "E-15": "SVG fill colours are never mapped (task B4)",
 };
 
