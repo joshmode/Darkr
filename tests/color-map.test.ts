@@ -30,3 +30,19 @@ describe("alpha handling", () => {
     expect(mapTextColor({ r: 17, g: 17, b: 17, a: 1 }, surface, tokens)).toMatch(/^#[0-9a-f]{6}$/);
   });
 });
+
+describe("text hierarchy", () => {
+  it("never maps lighter author greys brighter than darker ones", () => {
+    const luminanceOf = (css: string) => {
+      const n = Number.parseInt(css.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255].reduce((sum, c) => sum + c, 0);
+    };
+    const greys = [0x11, 0x33, 0x66, 0x88, 0xaa];
+    const mapped = greys.map((g) =>
+      luminanceOf(mapTextColor({ r: g, g, b: g, a: 1 }, surface, tokens)),
+    );
+    for (let i = 1; i < mapped.length; i += 1) {
+      expect(mapped[i]).toBeLessThanOrEqual(mapped[i - 1] as number);
+    }
+  });
+});

@@ -128,13 +128,11 @@ function textContrastTarget(original: Rgb, tokens: ThemeTokens): number {
   if (luminance >= 0.48) {
     return tokens.primaryContrast;
   }
-  if (luminance >= 0.18) {
-    return Math.max(4.8, tokens.primaryContrast * 0.82);
-  }
-  // Very dark author text is the page's primary text. Keep the author's
-  // hierarchy: the lighter the original (muted greys), the lower the target.
+  // Dark and mid-tone author text: the page's primary and secondary text. Keep
+  // the author's hierarchy by lowering the target steadily as the original gets
+  // lighter, so a muted grey never ends up brighter than the primary text.
   const base = Math.max(4.5, tokens.primaryContrast * 0.7);
-  return Math.max(4.5, base * (1 - 0.3 * Math.min(1, luminance / 0.18)));
+  return Math.max(4.5, base * (1 - 0.35 * Math.min(1, luminance / 0.48)));
 }
 
 /**
