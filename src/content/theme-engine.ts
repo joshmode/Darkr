@@ -811,20 +811,43 @@ export class ThemeEngine {
     }
   }
 
+  /**
+   * The mapped surface behind an element, taken from the engine's own records
+   * (nearest ancestor with a `mappedSurface`, crossing shadow boundaries).
+   * Never from live computed style: while the first pass runs the stylesheet
+   * is not installed yet, so computed ancestors still show the author's light
+   * colours.
+   */
+  private resolveParentSurface(element: Element, tokens: ThemeTokens): Rgb {
+    let node: Node | null = element.parentNode;
+    while (node) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const surface = this.inspections.get(node as Element)?.mappedSurface;
+        if (surface) {
+          return surface;
+        }
+        node = node.parentNode;
+      } else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (node as ShadowRoot).host) {
+        node = (node as ShadowRoot).host;
+        const surface = this.inspections.get(node as Element)?.mappedSurface;
+        if (surface) {
+          return surface;
+        }
+        node = node.parentNode;
+      } else {
+        break;
+      }
+    }
+    return tokens.background;
+  }
+
   private styleInspectedElement(element: Element, inspection: InspectedElement): void {
     const tokens = this.state.tokens;
     if (!tokens || !element.isConnected) {
       return;
     }
 
-    let surface = tokens.background;
-    const parentSurface = element.parentElement?.closest(`[${SURFACE_ATTRIBUTE}]`);
-    if (parentSurface) {
-      const resolvedParent = parseColorOrNull(getComputedStyle(parentSurface).backgroundColor);
-      if (resolvedParent) {
-        surface = resolvedParent;
-      }
-    }
+    let surface = this.resolveParentSurface(element, tokens);
     const hostStyleChanged = inlineStyleSignature(element) !== inspection.hostStyleSignature;
     if (hostStyleChanged) {
       this.cleanupElement(element, inspection);

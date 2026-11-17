@@ -130,7 +130,10 @@ function textContrastTarget(original: Rgb, tokens: ThemeTokens): number {
   if (luminance >= 0.18) {
     return Math.max(4.8, tokens.primaryContrast * 0.82);
   }
-  return Math.max(4.5, tokens.primaryContrast * 0.7);
+  // Very dark author text is the page's primary text. Keep the author's
+  // hierarchy: the lighter the original (muted greys), the lower the target.
+  const base = Math.max(4.5, tokens.primaryContrast * 0.7);
+  return Math.max(4.5, base * (1 - 0.3 * Math.min(1, luminance / 0.18)));
 }
 
 export function mapTextColor(original: Rgba, surface: Rgb, tokens: ThemeTokens): string {

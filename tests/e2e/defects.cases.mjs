@@ -25,8 +25,6 @@ import {
 const HOST = "127.0.0.1";
 
 const KNOWN = {
-  "E-01":
-    "text inside surfaces is mapped against the author's light background on first load (task A1)",
   "E-02": "transparent text is repainted opaque (task A2)",
   "E-03":
     "frames resolve preferences from their own host, and srcdoc frames get no script (task A3)",
