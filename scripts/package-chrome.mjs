@@ -32,7 +32,7 @@ Darkr stores preferences locally and makes no network requests.
 // The archive has manifest.json at its root so it can be uploaded to the
 // Chrome Web Store as-is. The README lives only in the unpacked folder.
 await rm(path.join(releases, zipName), { force: true });
-await run("zip", ["-qr", "-X", path.join(releases, zipName), "."], {
+await run("zip", ["-qr", "-X", path.join(releases, zipName), ".", "-x", "*.map"], {
   cwd: source,
 });
 console.log(`Packaged ${path.relative(root, path.join(releases, zipName))}`);

@@ -1,0 +1,22 @@
+{
+  "extensionName": {
+    "message": "Darkr",
+    "description": "Extension name shown in the browser and store."
+  },
+  "extensionDescription": {
+    "message": "A calm, local-first reading theme for the web. No account, tracking, or network requests.",
+    "description": "Short description shown in the browser and store (132 characters maximum)."
+  },
+  "actionTitle": {
+    "message": "Darkr",
+    "description": "Tooltip of the toolbar button."
+  },
+  "commandToggleSite": {
+    "message": "Turn Darkr on or off for the current site",
+    "description": "Keyboard shortcut description."
+  },
+  "commandToggleEverywhere": {
+    "message": "Pause or resume Darkr everywhere",
+    "description": "Keyboard shortcut description."
+  }
+}

@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
  *   DARKR_OUT       output directory            (default: dist/chrome-extension)
  *   DARKR_BROWSERS  comma separated esbuild targets (default: chrome109)
  *   DARKR_VERSION   overrides the manifest version
+ *   DARKR_NO_MINIFY set to 1 for unminified output
  */
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const source = path.join(projectRoot, "src");
@@ -37,8 +38,11 @@ const shared = {
   format: "iife",
   platform: "browser",
   target: targets,
-  sourcemap: false,
-  minify: false,
+  // Production builds are minified; maps are written beside the scripts but
+  // not referenced from them, and package-chrome.mjs keeps them out of the zip.
+  // DARKR_NO_MINIFY=1 gives readable output for debugging.
+  sourcemap: "external",
+  minify: process.env.DARKR_NO_MINIFY !== "1",
   legalComments: "none",
   logLevel: "info",
 };
@@ -71,6 +75,7 @@ async function copyStatic() {
   await cp(path.join(source, "images"), path.join(output, "images"), {
     recursive: true,
   });
+  await cp(path.join(source, "_locales"), path.join(output, "_locales"), { recursive: true });
 
   const manifest = JSON.parse(await readFile(manifestSource, "utf8"));
   manifest.version = process.env.DARKR_VERSION ?? manifest.version;

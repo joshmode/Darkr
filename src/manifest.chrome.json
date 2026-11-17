@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Darkr",
-  "short_name": "Darkr",
-  "description": "A calm, local-first reading theme for the web. No account, tracking, or network requests.",
+  "name": "__MSG_extensionName__",
+  "short_name": "__MSG_extensionName__",
+  "description": "__MSG_extensionDescription__",
   "version": "2.0.0",
   "minimum_chrome_version": "109",
   "icons": {
@@ -34,7 +34,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Darkr",
+    "default_title": "__MSG_actionTitle__",
     "default_icon": {
       "16": "images/toolbar-icon-16.png",
       "19": "images/toolbar-icon-19.png",
@@ -44,12 +44,16 @@
   },
   "commands": {
     "toggle-site": {
-      "suggested_key": { "default": "Alt+Shift+D" },
-      "description": "Turn Darkr on or off for the current site"
+      "suggested_key": {
+        "default": "Alt+Shift+D"
+      },
+      "description": "__MSG_commandToggleSite__"
     },
     "toggle-everywhere": {
-      "suggested_key": { "default": "Alt+Shift+P" },
-      "description": "Pause or resume Darkr everywhere"
+      "suggested_key": {
+        "default": "Alt+Shift+P"
+      },
+      "description": "__MSG_commandToggleEverywhere__"
     }
   },
   "options_ui": {
@@ -65,5 +69,6 @@
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  },
+  "default_locale": "en"
 }
