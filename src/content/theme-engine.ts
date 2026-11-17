@@ -42,12 +42,6 @@ const BORDER_SIDES = [
   },
   { key: "l", property: "Left", variable: "--darkr-element-border-left", css: "border-left-color" },
 ] as const;
-const ENGINE_STYLE_PROPERTIES = [
-  ELEMENT_SURFACE_VARIABLE,
-  ELEMENT_TEXT_VARIABLE,
-  ELEMENT_BORDER_VARIABLE,
-  ...BORDER_SIDES.map((side) => side.variable),
-] as const;
 const INITIAL_ELEMENT_BUDGET = 700;
 const BATCH_SIZE = 180;
 const NATIVE_DARK_THRESHOLD = 0.18;
@@ -201,10 +195,18 @@ function sampleStyle(style: CSSStyleDeclaration): InspectedElement["samples"] {
   };
 }
 
+/**
+ * Inline properties that change how an element is coloured or whether it is
+ * shown. Anything else (transform, top, width, will-change …) is what scripts
+ * animate every frame and must not make the engine re-inspect the element.
+ */
+const COLOR_BEARING_PROPERTY =
+  /^(color|background(-.+)?|border(-(top|right|bottom|left))?-(color|style)|fill|stroke|opacity|display|visibility)$/;
+
 function inlineStyleSignature(element: Element): string {
   const style = (element as HTMLElement).style;
   return Array.from(style)
-    .filter((property) => !ENGINE_STYLE_PROPERTIES.includes(property as never))
+    .filter((property) => COLOR_BEARING_PROPERTY.test(property))
     .map((property) => `${property}:${style.getPropertyValue(property)}`)
     .join(";");
 }
@@ -1060,9 +1062,12 @@ export class ThemeEngine {
         if (inspection) {
           const signature = inlineStyleSignature(target);
           if (signature !== inspection.hostStyleSignature) {
+            // Re-sample in place, synchronously: the observer callback runs
+            // before the next paint, so the element never shows the author's
+            // colours in between.
             this.cleanupElement(target, inspection);
             this.inspections.delete(target);
-            this.queuedElements.add(target);
+            this.inspectAndStyle(target);
           }
         } else if (target.isConnected && !target.hasAttribute(IGNORE_ATTRIBUTE)) {
           // Never inspected, typically because it was hidden during the scan

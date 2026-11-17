@@ -25,7 +25,6 @@ import {
 const HOST = "127.0.0.1";
 
 const KNOWN = {
-  "E-05": "JS-driven inline styles make the engine strip theming every other frame (task A5)",
   "E-06": "tracking stops at 9,000 elements, leaving later cards light with light text (task B3)",
   "E-07": "blanket !important rules for links, dialogs and inputs (task A6)",
   "E-09": "gradient and translucent backgrounds are ignored but their text is lightened (task A9)",
@@ -132,7 +131,11 @@ defect("E-04", "contenteditable content is left unmodified", async () => {
   assert.ok(!html.includes("data-darkr") && !html.includes("--darkr"), html);
   // Untouched markup must still be readable: children inherit the themed colours.
   assert.ok((await contrastAgainstAncestor(page, "#ep", "#editor")) >= 4.5, "editor text contrast");
-  assert.notEqual(await colorOf(page, "#ebox", "backgroundColor"), WHITE, "boxed child stayed white");
+  assert.notEqual(
+    await colorOf(page, "#ebox", "backgroundColor"),
+    WHITE,
+    "boxed child stayed white",
+  );
 });
 
 // ---------------------------------------------------------------- E-05
