@@ -45,7 +45,6 @@ const statuses = {
     active: true,
     semanticActive: true,
     nativeDark: false,
-    permissionWarning: false,
   },
   nativeDark: {
     hostname: "example.com",
@@ -53,7 +52,6 @@ const statuses = {
     active: true,
     semanticActive: false,
     nativeDark: true,
-    permissionWarning: false,
   },
 };
 

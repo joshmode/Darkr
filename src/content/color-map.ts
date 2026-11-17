@@ -178,21 +178,3 @@ export function opaqueColor(value: string): Rgba | null {
   const parsed = parseCssColor(value);
   return parsed && parsed.a >= 0.82 ? parsed : null;
 }
-
-export function isNeutralColor(color: Rgba): boolean {
-  const maximum = Math.max(color.r, color.g, color.b);
-  const minimum = Math.min(color.r, color.g, color.b);
-  return maximum - minimum < 12;
-}
-
-export function safeHex(value: Rgba): string {
-  return rgbToCss(rgb(clampChannel(value.r), clampChannel(value.g), clampChannel(value.b)));
-}
-
-export function contrastSummary(foreground: Rgb, background: Rgb): number {
-  return Number(contrastRatio(foreground, background).toFixed(2));
-}
-
-export function fallbackSurface(): Rgb {
-  return hexToRgb("#17181b") ?? rgb(23, 24, 27);
-}

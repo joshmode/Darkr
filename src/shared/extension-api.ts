@@ -1,7 +1,7 @@
 import type { ThemeConfig } from "./types";
 
 export interface RuntimeMessage {
-  type: "darkr:preview" | "darkr:get-status" | "darkr:refresh" | "darkr:get-top-host";
+  type: "darkr:preview" | "darkr:get-status" | "darkr:get-top-host";
   config?: ThemeConfig;
 }
 
@@ -20,7 +20,6 @@ export interface ContentStatus {
   active: boolean;
   semanticActive: boolean;
   nativeDark: boolean;
-  permissionWarning: boolean;
 }
 
 export interface BrowserApi {

@@ -828,7 +828,7 @@ export class ThemeEngine {
     }
     for (const [element, inspection] of this.inspections) {
       if (!element.isConnected) {
-        this.cleanupElement(element, inspection);
+        this.cleanupElement(element);
         this.inspections.delete(element);
         continue;
       }
@@ -917,7 +917,7 @@ export class ThemeEngine {
     let inspection = this.inspections.get(element);
     if (isInsideEditable(element)) {
       if (inspection) {
-        this.cleanupElement(element, inspection);
+        this.cleanupElement(element);
         this.inspections.delete(element);
       }
       return;
@@ -1008,7 +1008,7 @@ export class ThemeEngine {
         continue;
       }
       if (!next) {
-        this.cleanupElement(element, previous);
+        this.cleanupElement(element);
         this.inspections.delete(element);
         continue;
       }
@@ -1086,14 +1086,13 @@ export class ThemeEngine {
     }
 
     if (isInsideEditable(element)) {
-      this.cleanupElement(element, inspection);
+      this.cleanupElement(element);
       this.inspections.delete(element);
       return;
     }
     let surface = this.resolveParentSurface(element, tokens);
-    const hostStyleChanged = inlineStyleSignature(element) !== inspection.hostStyleSignature;
-    if (hostStyleChanged) {
-      this.cleanupElement(element, inspection);
+    if (inlineStyleSignature(element) !== inspection.hostStyleSignature) {
+      this.cleanupElement(element);
       this.inspections.delete(element);
       this.inspectAndStyle(element);
       return;
@@ -1169,9 +1168,6 @@ export class ThemeEngine {
       surface,
       tokens,
     );
-    if (hostStyleChanged) {
-      inspection.hostStyleSignature = inlineStyleSignature(element);
-    }
   }
 
   /** Maps SVG fill/stroke colours the way text colours are mapped. */
@@ -1298,7 +1294,7 @@ export class ThemeEngine {
             // Re-sample in place, synchronously: the observer callback runs
             // before the next paint, so the element never shows the author's
             // colours in between.
-            this.cleanupElement(target, inspection);
+            this.cleanupElement(target);
             this.inspections.delete(target);
             this.inspectAndStyle(target);
           }
@@ -1480,7 +1476,7 @@ export class ThemeEngine {
         // The node may be re-inserted elsewhere (a move reports a removal and
         // an addition). Strip our overrides so it is re-inspected from its
         // original author colors instead of from Darkr's mapped ones.
-        this.cleanupElement(element, inspection);
+        this.cleanupElement(element);
         this.inspections.delete(element);
       }
       if (element.shadowRoot) {
@@ -1501,7 +1497,7 @@ export class ThemeEngine {
     root.host.removeAttribute("data-darkr-shadow");
   }
 
-  private cleanupElement(element: Element, _inspection: InspectedElement): void {
+  private cleanupElement(element: Element): void {
     element.removeAttribute(SURFACE_ATTRIBUTE);
     element.removeAttribute(TEXT_ATTRIBUTE);
     element.removeAttribute(LINK_ATTRIBUTE);
@@ -1521,7 +1517,7 @@ export class ThemeEngine {
 
   private clearElements(): void {
     for (const [element, inspection] of this.inspections) {
-      this.cleanupElement(element, inspection);
+      this.cleanupElement(element);
     }
     this.inspections.clear();
     this.queuedElements.clear();

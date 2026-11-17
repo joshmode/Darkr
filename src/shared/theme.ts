@@ -16,7 +16,6 @@ import type { ThemeConfig } from "./types";
 
 export interface ThemeTokens {
   mode: Exclude<ThemeConfig["mode"], "original">;
-  isSemantic: boolean;
   scheme: "dark" | "light" | "normal";
   background: Rgb;
   raised: Rgb;
@@ -128,7 +127,6 @@ function buildSemanticTokens(
 
   return {
     mode,
-    isSemantic: true,
     scheme,
     background,
     raised,
@@ -214,7 +212,6 @@ function buildGrayscaleTokens(config: ThemeConfig): ThemeTokens {
   const neutral = rgb(128, 128, 128);
   return {
     mode: "grayscale",
-    isSemantic: false,
     scheme: "normal",
     background: neutral,
     raised: neutral,

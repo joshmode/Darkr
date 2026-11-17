@@ -69,22 +69,6 @@ a:focus-visible {
   display: none !important;
 }
 
-.app-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: var(--ui-panel);
-}
-
-.app-mark svg {
-  width: 21px;
-  height: 21px;
-}
-
 .eyebrow {
   margin: 0 0 4px;
   color: var(--ui-text-tertiary);

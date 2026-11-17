@@ -136,10 +136,35 @@ export function normalizeThemeConfig(
   };
 }
 
-export function normalizePreferences(value: unknown): DarkrPreferences {
-  if (!isRecord(value)) {
+/** Current stored schema. Bump together with a new entry in MIGRATIONS. */
+export const CURRENT_SCHEMA_VERSION = 1;
+
+/**
+ * Upgrades stored data one version at a time. `MIGRATIONS[n]` turns a version-n
+ * payload into version n+1. Empty while version 1 is the only schema; stored
+ * payloads without a version are treated as version 1.
+ */
+const MIGRATIONS: Record<number, (stored: Record<string, unknown>) => Record<string, unknown>> = {};
+
+function migratePreferences(stored: Record<string, unknown>): Record<string, unknown> {
+  let version = typeof stored.schemaVersion === "number" ? stored.schemaVersion : 1;
+  let current = stored;
+  while (version < CURRENT_SCHEMA_VERSION) {
+    const migrate = MIGRATIONS[version];
+    if (!migrate) {
+      break;
+    }
+    current = migrate(current);
+    version += 1;
+  }
+  return current;
+}
+
+export function normalizePreferences(input: unknown): DarkrPreferences {
+  if (!isRecord(input)) {
     return cloneDefaultPreferences();
   }
+  const value = migratePreferences(input);
 
   const defaults = normalizeThemeConfig(value.defaults, DEFAULT_THEME_CONFIG);
   const sites: Record<string, SiteRule> = {};
@@ -199,10 +224,6 @@ export function cloneDefaultPreferences(): DarkrPreferences {
     defaults: { ...DEFAULT_THEME_CONFIG },
     sites: {},
   };
-}
-
-export function cloneThemeConfig(config: ThemeConfig): ThemeConfig {
-  return { ...config };
 }
 
 export function themeConfigsEqual(left: ThemeConfig, right: ThemeConfig): boolean {
@@ -266,10 +287,6 @@ export function resolveAppearance(
   };
 }
 
-export function resolvedThemeConfig(preferences: DarkrPreferences, hostname: string): ThemeConfig {
-  return resolveAppearance(preferences, hostname).config;
-}
-
 export function setSiteAppearance(
   preferences: DarkrPreferences,
   hostname: string,
@@ -329,23 +346,6 @@ export function setSitePolicy(
     preferences,
     host,
     composeRule(policy, existing?.overrides, existing?.overrideNativeDark),
-  );
-}
-
-export function setSiteOverride(
-  preferences: DarkrPreferences,
-  hostname: string,
-  overrides: DomainPreferences,
-): DarkrPreferences {
-  const host = hostnamePreferenceKey(hostname);
-  if (!host) {
-    return preferences;
-  }
-  const existing = getSiteRule(preferences, host);
-  return withRule(
-    preferences,
-    host,
-    composeRule(existing?.policy ?? "auto", { ...overrides }, existing?.overrideNativeDark),
   );
 }
 

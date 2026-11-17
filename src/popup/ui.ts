@@ -424,7 +424,6 @@ async function persistPreview(): Promise<void> {
     active: true,
     semanticActive: true,
     nativeDark: app.pageStatus?.nativeDark ?? false,
-    permissionWarning: false,
   };
   render();
 }

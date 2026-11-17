@@ -85,7 +85,6 @@ describe("semantic theme tokens", () => {
 
   it("builds grayscale as a filter-only token with no semantic surface", () => {
     const tokens = buildThemeTokens(config({ mode: "grayscale", grayscaleIntensity: 100 }));
-    expect(tokens?.isSemantic).toBe(false);
     expect(tokens?.scheme).toBe("normal");
     expect(tokens?.grayscale).toBe(1);
     expect(buildThemeTokens(config({ mode: "grayscale", grayscaleIntensity: 0 }))).toBeNull();

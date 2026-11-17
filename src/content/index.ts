@@ -9,7 +9,7 @@ import {
   topHostnameFromAncestorOrigins,
   type ContentStatus,
 } from "../shared/extension-api";
-import { loadPreferences, preferencesFromStorageChange } from "../shared/preferences";
+import { preferencesFromStorageChange, readPreferences } from "../shared/preferences";
 import type { DarkrPreferences, ThemeConfig } from "../shared/types";
 import { ThemeEngine } from "./theme-engine";
 
@@ -115,7 +115,7 @@ if (!window.__DARKR_CONTENT__) {
       return;
     }
     const [preferences] = await Promise.all([
-      loadPreferences(browser.storage.local),
+      readPreferences(browser.storage.local),
       topHostnameReady,
     ]);
     syncToPreferences(preferences);
@@ -222,19 +222,9 @@ if (!window.__DARKR_CONTENT__) {
         semanticActive: engine.status.semanticActive,
         nativeDark: engine.status.nativeDark,
         active: engine.status.active,
-        permissionWarning: !browser,
       };
       sendResponse(status);
       return false;
-    }
-
-    if (message.type === "darkr:refresh") {
-      // Always answer, even if storage is unavailable (for example after the
-      // extension was reloaded), so the popup is never left waiting.
-      void applyResolvedPreferences()
-        .then(() => sendResponse({ ok: true }))
-        .catch(() => sendResponse({ ok: false }));
-      return true;
     }
 
     return false;

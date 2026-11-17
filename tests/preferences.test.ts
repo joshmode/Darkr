@@ -76,3 +76,22 @@ describe("durable preference storage", () => {
     expect(await needsOnboarding(storage)).toBe(false);
   });
 });
+
+describe("schema versions", () => {
+  it("loads a version 1 payload unchanged and tolerates a missing version", async () => {
+    const { normalizePreferences, CURRENT_SCHEMA_VERSION } = await import("../src/shared/config");
+    const v1 = {
+      schemaVersion: 1,
+      enabled: false,
+      autoMode: "system",
+      defaults: { mode: "sepia", sepiaIntensity: 40 },
+      sites: { "example.com": { policy: "block" } },
+    };
+    const loaded = normalizePreferences(v1);
+    expect(loaded.enabled).toBe(false);
+    expect(loaded.defaults.mode).toBe("sepia");
+    expect(loaded.sites["example.com"]?.policy).toBe("block");
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(normalizePreferences({ ...v1, schemaVersion: undefined }).enabled).toBe(false);
+  });
+});

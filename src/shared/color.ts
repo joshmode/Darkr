@@ -310,15 +310,6 @@ export function mixRgb(from: Rgb, to: Rgb, amount: number): Rgb {
   );
 }
 
-export function mixRgbContinuous(from: Rgb, to: Rgb, amount: number): Rgb {
-  const ratio = Math.max(0, Math.min(1, amount));
-  return {
-    r: from.r + (to.r - from.r) * ratio,
-    g: from.g + (to.g - from.g) * ratio,
-    b: from.b + (to.b - from.b) * ratio,
-  };
-}
-
 function mixLinear(from: Rgb, to: Rgb, amount: number): Rgb {
   const ratio = Math.max(0, Math.min(1, amount));
   return {

@@ -9,10 +9,19 @@ export interface StorageAreaLike {
   set(items: Record<string, unknown>): Promise<void>;
 }
 
+/**
+ * Reads preferences and lets storage errors propagate. The content script uses
+ * this so a failed read never themes a page for someone who paused Darkr.
+ */
+export async function readPreferences(storage: StorageAreaLike): Promise<DarkrPreferences> {
+  const stored = await storage.get(PREFERENCES_STORAGE_KEY);
+  return normalizePreferences(stored[PREFERENCES_STORAGE_KEY]);
+}
+
+/** Like readPreferences, but falls back to defaults for UI pages that must render. */
 export async function loadPreferences(storage: StorageAreaLike): Promise<DarkrPreferences> {
   try {
-    const stored = await storage.get(PREFERENCES_STORAGE_KEY);
-    return normalizePreferences(stored[PREFERENCES_STORAGE_KEY]);
+    return await readPreferences(storage);
   } catch {
     return cloneDefaultPreferences();
   }
