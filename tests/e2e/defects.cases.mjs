@@ -24,9 +24,7 @@ import {
 
 const HOST = "127.0.0.1";
 
-const KNOWN = {
-  "E-15": "SVG fill colours are never mapped (task B4)",
-};
+const KNOWN = {};
 
 function defect(id, name, body) {
   if (KNOWN[id] && !process.env.DARKR_E2E_SHOW_KNOWN) knownBug(id, KNOWN[id], name, body);

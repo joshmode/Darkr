@@ -32,6 +32,10 @@ const SURFACE_ATTRIBUTE = "data-darkr-surface";
 const TEXT_ATTRIBUTE = "data-darkr-text";
 const BORDER_ATTRIBUTE = "data-darkr-border";
 const IGNORE_ATTRIBUTE = "data-darkr-ignore";
+const FILL_ATTRIBUTE = "data-darkr-fill";
+const STROKE_ATTRIBUTE = "data-darkr-stroke";
+const ELEMENT_FILL_VARIABLE = "--darkr-element-fill";
+const ELEMENT_STROKE_VARIABLE = "--darkr-element-stroke";
 const ELEMENT_SURFACE_VARIABLE = "--darkr-element-surface";
 const ELEMENT_TEXT_VARIABLE = "--darkr-element-text";
 const ELEMENT_BORDER_VARIABLE = "--darkr-element-border";
@@ -117,7 +121,6 @@ const SKIP_SUBTREES = new Set([
   "IFRAME",
   "OBJECT",
   "EMBED",
-  "SVG",
   "MATH",
 ]);
 
@@ -132,6 +135,9 @@ const SKIP_TEXT_INSIDE =
 interface InspectedElement {
   background: Rgba | null;
   text: Rgba | null;
+  /** SVG paint (computed fill / stroke); null outside SVG or when `none`. */
+  fill: Rgba | null;
+  stroke: Rgba | null;
   /** Painted colour per side (top, right, bottom, left); null when not painted. */
   borders: [Rgba | null, Rgba | null, Rgba | null, Rgba | null];
   hasDirectText: boolean;
@@ -148,6 +154,7 @@ interface InspectedElement {
     background: string;
     backgroundImage: string;
     text: string;
+    paint: string;
     borders: string;
     display: string;
     visibility: string;
@@ -230,6 +237,7 @@ function sampleStyle(style: CSSStyleDeclaration): InspectedElement["samples"] {
     background: style.backgroundColor,
     backgroundImage: style.backgroundImage,
     text: style.color,
+    paint: `${style.fill}|${style.stroke}`,
     borders: BORDER_SIDES.map(
       (side) => `${style[`border${side.property}Color`]}/${style[`border${side.property}Style`]}`,
     ).join("|"),
@@ -263,6 +271,7 @@ function samplesEqual(
     left.background === right.background &&
     left.backgroundImage === right.backgroundImage &&
     left.text === right.text &&
+    left.paint === right.paint &&
     left.borders === right.borders &&
     left.display === right.display &&
     left.visibility === right.visibility &&
@@ -440,6 +449,12 @@ ${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="a"] {
   border-color: var(${ELEMENT_BORDER_VARIABLE}) !important;
 }
 ${BORDER_SIDES.map((side) => `${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="${side.key}"] {\n  ${side.css}: var(${side.variable}) !important;\n}`).join("\n")}
+${SEMANTIC_ROOT} [${FILL_ATTRIBUTE}] {
+  fill: var(${ELEMENT_FILL_VARIABLE}) !important;
+}
+${SEMANTIC_ROOT} [${STROKE_ATTRIBUTE}] {
+  stroke: var(${ELEMENT_STROKE_VARIABLE}) !important;
+}
 ${GRAYSCALE_ROOT} {
   filter: grayscale(var(--darkr-grayscale)) !important;
 }
@@ -466,6 +481,8 @@ function buildShadowCss(): string {
   background-color: var(${ELEMENT_SURFACE_VARIABLE}) !important;
 }
 :host [${TEXT_ATTRIBUTE}] { color: var(${ELEMENT_TEXT_VARIABLE}) !important; }
+:host [${FILL_ATTRIBUTE}] { fill: var(${ELEMENT_FILL_VARIABLE}) !important; }
+:host [${STROKE_ATTRIBUTE}] { stroke: var(${ELEMENT_STROKE_VARIABLE}) !important; }
 :host [${BORDER_ATTRIBUTE}~="a"] { border-color: var(${ELEMENT_BORDER_VARIABLE}) !important; }
 ${BORDER_SIDES.map((side) => `:host [${BORDER_ATTRIBUTE}~="${side.key}"] { ${side.css}: var(${side.variable}) !important; }`).join("\n")}
 }
@@ -923,6 +940,7 @@ export class ThemeEngine {
 
   private buildInspection(element: Element, style: CSSStyleDeclaration): InspectedElement {
     const textControl = element.matches(NON_TEXT_CONTROL_SELECTOR);
+    const isSvg = element instanceof SVGElement;
     const tokens = this.state.tokens;
     const samples = sampleStyle(style);
     return {
@@ -930,6 +948,8 @@ export class ThemeEngine {
         opaqueColor(samples.background) ??
         (tokens ? tokenColorFromVariable(samples.background, tokens) : null),
       text: textControl ? null : inspectableColor(samples.text, tokens),
+      fill: isSvg ? inspectableColor(style.fill, tokens) : null,
+      stroke: isSvg ? inspectableColor(style.stroke, tokens) : null,
       borders: BORDER_SIDES.map((side) =>
         hasBorderStyle(style[`border${side.property}Style`])
           ? inspectableColor(style[`border${side.property}Color`], tokens)
@@ -1133,8 +1153,43 @@ export class ThemeEngine {
     }
 
     this.styleBorders(element, inspection, surface, tokens);
+    this.stylePaint(
+      element,
+      inspection.fill,
+      FILL_ATTRIBUTE,
+      ELEMENT_FILL_VARIABLE,
+      surface,
+      tokens,
+    );
+    this.stylePaint(
+      element,
+      inspection.stroke,
+      STROKE_ATTRIBUTE,
+      ELEMENT_STROKE_VARIABLE,
+      surface,
+      tokens,
+    );
     if (hostStyleChanged) {
       inspection.hostStyleSignature = inlineStyleSignature(element);
+    }
+  }
+
+  /** Maps SVG fill/stroke colours the way text colours are mapped. */
+  private stylePaint(
+    element: Element,
+    color: Rgba | null,
+    attribute: string,
+    variable: string,
+    surface: Rgb,
+    tokens: ThemeTokens,
+  ): void {
+    const style = (element as HTMLElement).style;
+    if (color) {
+      element.setAttribute(attribute, "");
+      style.setProperty(variable, mapTextColor(color, surface, tokens));
+    } else if (element.hasAttribute(attribute)) {
+      element.removeAttribute(attribute);
+      style.removeProperty(variable);
     }
   }
 
@@ -1451,10 +1506,14 @@ export class ThemeEngine {
     element.removeAttribute(TEXT_ATTRIBUTE);
     element.removeAttribute(LINK_ATTRIBUTE);
     element.removeAttribute(BORDER_ATTRIBUTE);
+    element.removeAttribute(FILL_ATTRIBUTE);
+    element.removeAttribute(STROKE_ATTRIBUTE);
     const htmlElement = element as HTMLElement;
     htmlElement.style.removeProperty(ELEMENT_SURFACE_VARIABLE);
     htmlElement.style.removeProperty(ELEMENT_TEXT_VARIABLE);
     htmlElement.style.removeProperty(ELEMENT_BORDER_VARIABLE);
+    htmlElement.style.removeProperty(ELEMENT_FILL_VARIABLE);
+    htmlElement.style.removeProperty(ELEMENT_STROKE_VARIABLE);
     for (const side of BORDER_SIDES) {
       htmlElement.style.removeProperty(side.variable);
     }
