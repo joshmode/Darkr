@@ -23,7 +23,7 @@ test("article is themed on first load and the pre-paint hold is released", async
   await settle(page);
   const result = await page.evaluate(() => ({
     style: !!document.querySelector("#darkr-theme-styles"),
-    attrs: document.querySelectorAll("[data-darkr-surface]").length,
+    attrs: document.querySelectorAll("body [data-darkr]").length,
     imageFilter: getComputedStyle(document.querySelector("img")).filter,
   }));
   assert.ok(result.style && result.attrs > 0, JSON.stringify(result));
@@ -142,7 +142,9 @@ test("code editor widgets are protected", async () => {
   const page = await newPage("/editor");
   await settle(page);
   const result = await page.evaluate(() => ({
-    tokenTextAttrs: document.querySelector("#token").hasAttribute("data-darkr-text"),
+    tokenTextAttrs: /\bt\d+\b/.test(
+      document.querySelector("#token").getAttribute("data-darkr") ?? "",
+    ),
   }));
   assert.equal(result.tokenTextAttrs, false);
 });
@@ -154,8 +156,8 @@ test("dynamically added content is themed", async () => {
   await poll(
     () =>
       page.evaluate(() => ({
-        surface: !!document.querySelector("#dynamic .card[data-darkr-surface]"),
-        text: !!document.querySelector("#dynamic p[data-darkr-text]"),
+        surface: !!document.querySelector("#dynamic .card[data-darkr]"),
+        text: !!document.querySelector("#dynamic p[data-darkr]"),
       })),
     (r) => r.surface && r.text,
     { message: "dynamic card to be themed" },

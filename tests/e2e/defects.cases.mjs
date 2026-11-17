@@ -385,3 +385,42 @@ test("[B3] content at the restored scroll position is themed first on a long pag
     { timeout: 4000, message: "card at the viewport to be themed" },
   );
 });
+
+// ---------------------------------------------------------------- B2
+test("[B2] a configuration change rewrites the palette without touching elements", async () => {
+  const page = await newPage("/e01-surfaces");
+  await settle(page);
+  const attr = () =>
+    page.evaluate(() => document.querySelector("#para").getAttribute("data-darkr"));
+  const writes = await page.evaluate(() => {
+    window.__attrWrites = 0;
+    new MutationObserver((records) => {
+      window.__attrWrites += records.filter((r) => r.attributeName === "data-darkr").length;
+    }).observe(document.body, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["data-darkr", "style"],
+    });
+    return 0;
+  });
+  void writes;
+  const before = await attr();
+  const colourBefore = await colorOf(page, "#para");
+  await setPreferences({
+    defaults: {
+      mode: "dark",
+      darkBackground: 60,
+      darkContrast: 62,
+      sepiaIntensity: 58,
+      grayscaleIntensity: 100,
+      warmth: 35,
+    },
+  });
+  await poll(
+    () => colorOf(page, "#para"),
+    (value) => value !== colourBefore,
+    { message: "colour to change" },
+  );
+  assert.equal(await attr(), before, "element token changed");
+  assert.equal(await page.evaluate(() => window.__attrWrites), 0, "elements were rewritten");
+});

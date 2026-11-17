@@ -4,6 +4,16 @@ import { ThemeEngine, themeEngineTestUtilities } from "../src/content/theme-engi
 import { parseCssColor } from "../src/shared/color";
 import { DEFAULT_THEME_CONFIG, type ThemeConfig } from "../src/shared/types";
 
+/** Palette tokens an element carries in its `data-darkr` attribute. */
+const tokensOf = (element: Element): string[] =>
+  (element.getAttribute("data-darkr") ?? "").split(" ").filter(Boolean);
+const hasRole = (element: Element, role: string): boolean =>
+  tokensOf(element).some((token) => new RegExp(`^${role}\\d+$`).test(token));
+const withRole = (role: string): Element[] =>
+  [...document.querySelectorAll("[data-darkr]")].filter(
+    (element) => element !== document.documentElement && hasRole(element, role),
+  );
+
 function config(overrides: Partial<ThemeConfig> = {}): ThemeConfig {
   return { ...DEFAULT_THEME_CONFIG, ...overrides };
 }
@@ -56,8 +66,8 @@ describe("ThemeEngine", () => {
     expect(document.documentElement.getAttribute("data-darkr") === "semantic").toBe(true);
     const text = getComputedStyle(document.getElementById("text")!);
     expect(text.color).not.toBe("rgb(34, 34, 34)");
-    expect(document.getElementById("text")!.hasAttribute("data-darkr-text")).toBe(true);
-    expect(document.getElementById("card")!.hasAttribute("data-darkr-surface")).toBe(true);
+    expect(hasRole(document.getElementById("text")!, "t")).toBe(true);
+    expect(hasRole(document.getElementById("card")!, "s")).toBe(true);
   });
 
   it("is idempotent and removes every injected attribute and style", () => {
@@ -66,14 +76,14 @@ describe("ThemeEngine", () => {
     engine.apply(config({ mode: "dark" }));
     engine.flush();
     expect(document.querySelectorAll("style#darkr-theme-styles")).toHaveLength(1);
-    expect(document.querySelectorAll("[data-darkr-surface]").length).toBeGreaterThan(0);
+    expect(withRole("s").length).toBeGreaterThan(0);
     engine.clear();
     engine.clear();
     expect(document.querySelector("#darkr-theme-styles")).toBeNull();
-    expect(document.querySelectorAll("[data-darkr-surface]").length).toBe(0);
-    expect(document.querySelectorAll("[data-darkr-text]").length).toBe(0);
-    expect(document.querySelectorAll("[data-darkr-border]").length).toBe(0);
-    expect(document.querySelectorAll("[data-darkr-element-surface]").length).toBe(0);
+    expect(withRole("s").length).toBe(0);
+    expect(withRole("t").length).toBe(0);
+    expect(withRole("ba").length + withRole("bt").length).toBe(0);
+    expect(withRole("s").length).toBe(0);
     expect(document.documentElement.hasAttribute("data-darkr")).toBe(false);
   });
 
@@ -84,7 +94,7 @@ describe("ThemeEngine", () => {
     engine.flush();
     expect(document.querySelectorAll("style#darkr-theme-styles")).toHaveLength(1);
     expect(document.documentElement.style.getPropertyValue("--darkr-bg")).not.toBe("");
-    expect(document.getElementById("card")!.hasAttribute("data-darkr-surface")).toBe(true);
+    expect(hasRole(document.getElementById("card")!, "s")).toBe(true);
   });
 
   it("remaps host inline edits without losing the author background", () => {
@@ -96,8 +106,8 @@ describe("ThemeEngine", () => {
     engine.apply(config({ mode: "sepia" }));
     engine.flush();
     expect(card.style.backgroundColor).toBe("rgb(17, 34, 51)");
-    expect(card.hasAttribute("data-darkr-surface")).toBe(true);
-    expect(card.style.getPropertyValue("--darkr-element-surface")).not.toBe("");
+    expect(hasRole(card, "s")).toBe(true);
+    expect(engine.paletteValue(card, "s") ?? "").not.toBe("");
   });
 
   it("detects host inline edits made after observation", async () => {
@@ -108,8 +118,8 @@ describe("ThemeEngine", () => {
     card.style.backgroundColor = "#112233";
     await new Promise((resolve) => setTimeout(resolve, 70));
     engine.flush();
-    expect(card.hasAttribute("data-darkr-surface")).toBe(true);
-    expect(card.style.getPropertyValue("--darkr-element-surface")).not.toBe("");
+    expect(hasRole(card, "s")).toBe(true);
+    expect(engine.paletteValue(card, "s") ?? "").not.toBe("");
     expect(card.getAttribute("data-darkr-ignore")).toBeNull();
   });
 
@@ -121,7 +131,7 @@ describe("ThemeEngine", () => {
     engine.flush();
     expect(document.documentElement.getAttribute("data-darkr") === "grayscale").toBe(true);
     expect(document.documentElement.getAttribute("data-darkr") === "semantic").toBe(false);
-    expect(document.querySelectorAll("[data-darkr-surface]")).toHaveLength(0);
+    expect(withRole("s")).toHaveLength(0);
     expect(document.querySelector("#darkr-theme-styles")?.textContent).toContain("grayscale");
   });
 
@@ -146,8 +156,8 @@ describe("ThemeEngine", () => {
     dynamic.append(card);
     await new Promise((resolve) => setTimeout(resolve, 70));
     engine.flush();
-    expect(document.getElementById("new-text")!.hasAttribute("data-darkr-text")).toBe(true);
-    expect(card.hasAttribute("data-darkr-surface")).toBe(true);
+    expect(hasRole(document.getElementById("new-text")!, "t")).toBe(true);
+    expect(hasRole(card, "s")).toBe(true);
   });
 
   it("restyles direct-text replacements inside themed elements", async () => {
@@ -158,7 +168,7 @@ describe("ThemeEngine", () => {
     text.textContent = "Changed text";
     await new Promise((resolve) => setTimeout(resolve, 70));
     engine.flush();
-    expect(text.hasAttribute("data-darkr-text")).toBe(true);
+    expect(hasRole(text, "t")).toBe(true);
   });
 
   it("adds a shadow style and removes it on clear", () => {
@@ -202,8 +212,8 @@ describe("ThemeEngine", () => {
     document.getElementById("dynamic")!.append(image);
     engine.apply(config({ mode: "dark" }));
     engine.flush();
-    expect(image.hasAttribute("data-darkr-surface")).toBe(false);
-    expect(image.hasAttribute("data-darkr-text")).toBe(false);
+    expect(hasRole(image, "s")).toBe(false);
+    expect(hasRole(image, "t")).toBe(false);
   });
 
   it("does not apply inline text colors inside code editors", () => {
@@ -214,7 +224,7 @@ describe("ThemeEngine", () => {
     document.getElementById("dynamic")!.append(editor);
     engine.apply(config({ mode: "dark" }));
     engine.flush();
-    expect(document.getElementById("token")!.hasAttribute("data-darkr-text")).toBe(false);
+    expect(hasRole(document.getElementById("token")!, "t")).toBe(false);
   });
 
   it("resumes after BFCache suspension", () => {
@@ -245,7 +255,7 @@ describe("ThemeEngine", () => {
     engine.apply(config({ mode: "dark" }));
     engine.flush();
     const accent = document.getElementById("accent") as HTMLElement;
-    const mapped = accent.style.getPropertyValue("--darkr-element-surface");
+    const mapped = engine.paletteValue(accent, "s") ?? "";
     const parsed = parseCssColor(mapped);
     expect(parsed).not.toBeNull();
     if (!parsed) return;
@@ -260,7 +270,7 @@ describe("ThemeEngine", () => {
     engine.resume();
     engine.flush();
     const heading = document.querySelector("h1")!;
-    expect(heading.hasAttribute("data-darkr-text")).toBe(true);
+    expect(hasRole(heading, "t")).toBe(true);
   });
 
   it("releases removed-subtree bookkeeping", async () => {
@@ -305,11 +315,11 @@ describe("ThemeEngine", () => {
     engine.apply(config({ mode: "dark" }));
     engine.flush();
     const late = document.getElementById("late")!;
-    expect(late.hasAttribute("data-darkr-surface")).toBe(true);
+    expect(hasRole(late, "s")).toBe(true);
     late.style.display = "block";
     await new Promise((resolve) => setTimeout(resolve, 80));
     engine.flush();
-    expect(late.hasAttribute("data-darkr-surface")).toBe(true);
+    expect(hasRole(late, "s")).toBe(true);
   });
 
   /**
@@ -325,7 +335,7 @@ describe("ThemeEngine", () => {
     ) => {
       const style = real(element, pseudo);
       const semantic = document.documentElement.getAttribute("data-darkr") === "semantic";
-      if (!semantic || !element.hasAttribute?.("data-darkr-surface")) {
+      if (!semantic || !hasRole(element, "s")) {
         return style;
       }
       return new Proxy(style, {
@@ -367,13 +377,13 @@ describe("ThemeEngine", () => {
     engine.flush();
     const card = document.getElementById("card")!;
     expect(internals().inspections.get(card)?.background?.r).toBe(244);
-    const before = card.style.getPropertyValue("--darkr-element-surface");
+    const before = engine.paletteValue(card, "s") ?? "";
     card.classList.add("night");
     await new Promise((resolve) => setTimeout(resolve, 120));
     engine.flush();
     // 16 = #101820 read cleanly; 20 would mean Darkr's own override was read.
     expect(internals().inspections.get(card)?.background?.r).toBe(16);
-    expect(card.style.getPropertyValue("--darkr-element-surface")).not.toBe(before);
+    expect(engine.paletteValue(card, "s") ?? "").not.toBe(before);
   });
 
   it("skips re-walking a large container whose own colors did not change", async () => {
@@ -419,10 +429,10 @@ describe("ThemeEngine", () => {
       engine.apply(dark, { overrideNativeDark: true });
       engine.flush();
       expect(themed()).toBe(true);
-      expect(document.getElementById("heading")?.hasAttribute("data-darkr-text")).toBe(true);
+      expect(hasRole(document.getElementById("heading")!, "t")).toBe(true);
       engine.apply(dark, { overrideNativeDark: false });
       expect(themed()).toBe(false);
-      expect(document.querySelector("[data-darkr-text], [data-darkr-surface]")).toBeNull();
+      expect(withRole("t").concat(withRole("s"))[0] ?? null).toBeNull();
     });
 
     it("keeps the override across refresh and bfcache resume", () => {

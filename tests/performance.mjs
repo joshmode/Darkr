@@ -42,14 +42,14 @@ const startup = await page.evaluate(() => {
   return {
     domContentLoaded: timings?.domContentLoadedEventEnd ?? 0,
     load: timings?.loadEventEnd ?? 0,
-    themedElements: document.querySelectorAll("[data-darkr-surface], [data-darkr-text]").length,
+    themedElements: document.querySelectorAll("body [data-darkr]").length,
   };
 });
 await page.goto(`${origin}/large`, { waitUntil: "load" });
 await page.waitForTimeout(1200);
 const large = await page.evaluate(() => ({
   elements: document.querySelectorAll("*").length,
-  themed: document.querySelectorAll("[data-darkr-surface], [data-darkr-text]").length,
+  themed: document.querySelectorAll("body [data-darkr]").length,
   styles: document.querySelectorAll("style#darkr-theme-styles").length,
 }));
 console.log(JSON.stringify({ startup, large }, null, 2));

@@ -1,4 +1,12 @@
 import { buildThemeTokens, themeVariables, type ThemeTokens } from "../shared/theme";
+import {
+  PAGE_SURFACE,
+  Palette,
+  type PaletteEntry,
+  type PaletteRole,
+  type SurfaceRef,
+  fixedSurface,
+} from "./palette";
 import type { ThemeConfig } from "../shared/types";
 import {
   mapBorderColor,
@@ -28,22 +36,12 @@ const SEMANTIC_VALUE = "semantic";
 const GRAYSCALE_VALUE = "grayscale";
 const SEMANTIC_ROOT = `:root[${ROOT_ATTRIBUTE}="${SEMANTIC_VALUE}"]`;
 const GRAYSCALE_ROOT = `:root[${ROOT_ATTRIBUTE}="${GRAYSCALE_VALUE}"]`;
-const SURFACE_ATTRIBUTE = "data-darkr-surface";
-const TEXT_ATTRIBUTE = "data-darkr-text";
-const BORDER_ATTRIBUTE = "data-darkr-border";
 const IGNORE_ATTRIBUTE = "data-darkr-ignore";
-const NO_SHADOW_ATTRIBUTE = "data-darkr-noshadow";
-const FILL_ATTRIBUTE = "data-darkr-fill";
-const STROKE_ATTRIBUTE = "data-darkr-stroke";
-const ELEMENT_FILL_VARIABLE = "--darkr-element-fill";
-const ELEMENT_STROKE_VARIABLE = "--darkr-element-stroke";
-const ELEMENT_SURFACE_VARIABLE = "--darkr-element-surface";
-const ELEMENT_TEXT_VARIABLE = "--darkr-element-text";
-const ELEMENT_BORDER_VARIABLE = "--darkr-element-border";
 /**
- * `data-darkr-border` holds "a" when all four sides share one colour, or any of
- * "t r b l" for the sides that are painted. Unlisted sides keep the author's
- * colour (transparent sides must stay transparent: CSS triangles, ghost buttons).
+ * Elements carry their themed colours as tokens in one `data-darkr` attribute
+ * (`s3` surface, `t7` text, `ba2` all borders, `bt4 bb5` single sides, `f1` fill,
+ * `k1` stroke) plus the flags `l` (unstyled link) and `h` (drop text-shadow).
+ * The root element uses the same attribute for the active state.
  */
 /** Attributes whose change can reveal, hide or recolour content. */
 const OBSERVED_ATTRIBUTES = [
@@ -60,21 +58,14 @@ const OBSERVED_ATTRIBUTES = [
 const RESAMPLE_ATTRIBUTES = new Set(["class", "aria-expanded", "aria-hidden", "data-state"]);
 const ROOT_WATCHED_ATTRIBUTES = [ROOT_ATTRIBUTE, "class", "data-theme", "data-color-mode", "style"];
 const REDETECT_DELAY_MS = 150;
+const ELEMENT_ATTRIBUTE = "data-darkr";
+const LINK_TOKEN = "l";
+const NO_SHADOW_TOKEN = "h";
 const BORDER_SIDES = [
-  { key: "t", property: "Top", variable: "--darkr-element-border-top", css: "border-top-color" },
-  {
-    key: "r",
-    property: "Right",
-    variable: "--darkr-element-border-right",
-    css: "border-right-color",
-  },
-  {
-    key: "b",
-    property: "Bottom",
-    variable: "--darkr-element-border-bottom",
-    css: "border-bottom-color",
-  },
-  { key: "l", property: "Left", variable: "--darkr-element-border-left", css: "border-left-color" },
+  { property: "Top", role: "bt" },
+  { property: "Right", role: "br" },
+  { property: "Bottom", role: "bb" },
+  { property: "Left", role: "bl" },
 ] as const;
 const INITIAL_ELEMENT_BUDGET = 700;
 const BATCH_SIZE = 180;
@@ -143,7 +134,8 @@ interface InspectedElement {
   /** Painted colour per side (top, right, bottom, left); null when not painted. */
   borders: [Rgba | null, Rgba | null, Rgba | null, Rgba | null];
   hasDirectText: boolean;
-  mappedSurface: Rgb | null;
+  /** The surface this element paints (own background or backdrop), if any. */
+  surface: SurfaceInfo | null;
   /**
    * A gradient or translucent background Darkr does not remap. Text on it is
    * mapped against what is really painted, not against the page surface.
@@ -162,6 +154,11 @@ interface InspectedElement {
     visibility: string;
     opacity: string;
   };
+}
+
+interface SurfaceInfo {
+  ref: SurfaceRef;
+  color: Rgb;
 }
 
 type Backdrop =
@@ -209,7 +206,6 @@ function hasDirectText(element: Element): boolean {
  */
 const UA_LINK_COLORS = new Set(["0,0,238", "158,158,255"]);
 const UA_VISITED_COLORS = new Set(["85,26,139", "208,173,240"]);
-const LINK_ATTRIBUTE = "data-darkr-link";
 const rgbKey = (color: Rgba): string => `${color.r},${color.g},${color.b}`;
 
 const EDITABLE_SELECTOR = '[contenteditable]:not([contenteditable="false"]), [role="textbox"]';
@@ -396,10 +392,10 @@ ${SEMANTIC_ROOT}[${DESIGN_MODE_ATTRIBUTE}] body :where(*) {
 }
 /* Links the author left unstyled. Author-coloured links are sampled like any
    other text. */
-${SEMANTIC_ROOT} [${LINK_ATTRIBUTE}] {
+${SEMANTIC_ROOT} [${ELEMENT_ATTRIBUTE}~="${LINK_TOKEN}"] {
   color: var(--darkr-link) !important;
 }
-${SEMANTIC_ROOT} [${LINK_ATTRIBUTE}]:visited {
+${SEMANTIC_ROOT} [${ELEMENT_ATTRIBUTE}~="${LINK_TOKEN}"]:visited {
   color: var(--darkr-visited) !important;
 }
 /* Things sampling cannot reach. */
@@ -421,24 +417,8 @@ ${SEMANTIC_ROOT} ::selection {
   background: var(--darkr-selection) !important;
   color: var(--darkr-text) !important;
 }
-${SEMANTIC_ROOT} [${SURFACE_ATTRIBUTE}] {
-  background-color: var(${ELEMENT_SURFACE_VARIABLE}) !important;
-}
-${SEMANTIC_ROOT} [${TEXT_ATTRIBUTE}] {
-  color: var(${ELEMENT_TEXT_VARIABLE}) !important;
-}
-${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="a"] {
-  border-color: var(${ELEMENT_BORDER_VARIABLE}) !important;
-}
-${BORDER_SIDES.map((side) => `${SEMANTIC_ROOT} [${BORDER_ATTRIBUTE}~="${side.key}"] {\n  ${side.css}: var(${side.variable}) !important;\n}`).join("\n")}
-${SEMANTIC_ROOT} [${NO_SHADOW_ATTRIBUTE}] {
+${SEMANTIC_ROOT} [${ELEMENT_ATTRIBUTE}~="${NO_SHADOW_TOKEN}"] {
   text-shadow: none !important;
-}
-${SEMANTIC_ROOT} [${FILL_ATTRIBUTE}] {
-  fill: var(${ELEMENT_FILL_VARIABLE}) !important;
-}
-${SEMANTIC_ROOT} [${STROKE_ATTRIBUTE}] {
-  stroke: var(${ELEMENT_STROKE_VARIABLE}) !important;
 }
 ${GRAYSCALE_ROOT} {
   filter: grayscale(var(--darkr-grayscale)) !important;
@@ -452,24 +432,7 @@ function buildShadowCss(): string {
 :host {
   color: var(--darkr-text, #f4f1ea);
 }
-:host :where(h1, h2, h3, h4, h5, h6, p, li, dt, dd, blockquote, figcaption, td, th, label, legend, caption, summary) {
-  color: var(--darkr-text, #f4f1ea) !important;
-}
-:host a { color: var(--darkr-link, #84aef6) !important; }
-:host a:visited { color: var(--darkr-visited, #bf9aeb) !important; }
-:host :where(code, pre, kbd, samp) {
-  background-color: var(--darkr-code-bg, #2c2d31) !important;
-  color: var(--darkr-code-text, #e7e1d2) !important;
-}
-:host [${SURFACE_ATTRIBUTE}] {
-  background-color: var(${ELEMENT_SURFACE_VARIABLE}) !important;
-}
-:host [${TEXT_ATTRIBUTE}] { color: var(${ELEMENT_TEXT_VARIABLE}) !important; }
-:host [${NO_SHADOW_ATTRIBUTE}] { text-shadow: none !important; }
-:host [${FILL_ATTRIBUTE}] { fill: var(${ELEMENT_FILL_VARIABLE}) !important; }
-:host [${STROKE_ATTRIBUTE}] { stroke: var(${ELEMENT_STROKE_VARIABLE}) !important; }
-:host [${BORDER_ATTRIBUTE}~="a"] { border-color: var(${ELEMENT_BORDER_VARIABLE}) !important; }
-${BORDER_SIDES.map((side) => `:host [${BORDER_ATTRIBUTE}~="${side.key}"] { ${side.css}: var(${side.variable}) !important; }`).join("\n")}
+:host [${ELEMENT_ATTRIBUTE}~="${NO_SHADOW_TOKEN}"] { text-shadow: none !important; }
 }
 `;
 }
@@ -487,6 +450,7 @@ export class ThemeEngine {
   private desiredRootValue: string | null = null;
   private redetectTimer: number | null = null;
   private style: HTMLStyleElement | null = null;
+  private readonly palette = new Palette();
   private batchHandle: number | null = null;
   private idleHandle: number | null = null;
   private removalsSincePrune = 0;
@@ -504,6 +468,18 @@ export class ThemeEngine {
   constructor(doc: Document = document, win: Window = window) {
     this.doc = doc;
     this.win = win as IdleWindow;
+    this.palette.onAdd = (entry) => this.appendPaletteRule(entry);
+  }
+
+  /** The CSS colour Darkr currently paints for one role of an element (tests/debugging). */
+  paletteValue(element: Element, role: PaletteRole): string | null {
+    for (const token of (element.getAttribute(ELEMENT_ATTRIBUTE) ?? "").split(" ")) {
+      const entry = this.palette.byToken(token);
+      if (entry && token === entry.token && entry.role === role) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 
   get status(): {
@@ -571,6 +547,8 @@ export class ThemeEngine {
       nativeDark,
       hasApplied: true,
     };
+
+    this.palette.setTokens(tokens);
 
     if (wasSemantic && !isSemantic) {
       this.clearElements();
@@ -733,6 +711,7 @@ export class ThemeEngine {
     this.clearShadowStyles();
     this.style?.remove();
     this.style = null;
+    this.palette.clear();
 
     const root = this.doc.documentElement;
     root.removeAttribute(ROOT_ATTRIBUTE);
@@ -795,6 +774,35 @@ export class ThemeEngine {
     this.processElements(queued);
   }
 
+  private paletteCss(scope: string): string {
+    return this.palette
+      .rules(scope)
+      .map((css) => `@media screen { ${css} }`)
+      .join("\n");
+  }
+
+  private appendPaletteRule(entry: PaletteEntry): void {
+    if (this.style) {
+      this.insertRule(this.style, `@media screen { ${this.palette.rule(SEMANTIC_ROOT, entry)} }`);
+    }
+    for (const style of this.shadowStyles.values()) {
+      this.insertRule(style, `@media screen { ${this.palette.rule(":host", entry)} }`);
+    }
+  }
+
+  private insertRule(style: HTMLStyleElement, css: string): void {
+    try {
+      const sheet = style.sheet;
+      if (sheet) {
+        sheet.insertRule(css, sheet.cssRules.length);
+        return;
+      }
+    } catch {
+      // Fall through to the text fallback.
+    }
+    style.append(this.doc.createTextNode(`\n${css}`));
+  }
+
   private installStyle(tokens: ThemeTokens): void {
     if (!this.style) {
       this.style = this.doc.createElement("style");
@@ -802,7 +810,10 @@ export class ThemeEngine {
       this.style.setAttribute(IGNORE_ATTRIBUTE, "");
       (this.doc.head ?? this.doc.documentElement).append(this.style);
     }
-    this.style.textContent = buildDocumentCss(tokens);
+    this.style.textContent = buildDocumentCss(tokens) + this.paletteCss(SEMANTIC_ROOT);
+    for (const style of this.shadowStyles.values()) {
+      style.textContent = buildShadowCss() + this.paletteCss(":host");
+    }
     for (const [name, value] of Object.entries(themeVariables(tokens))) {
       this.doc.documentElement.style.setProperty(name, value);
     }
@@ -991,7 +1002,7 @@ export class ThemeEngine {
         (!samplesEqual(previous.samples, next.samples) ||
           previous.hasDirectText !== next.hasDirectText)
       ) {
-        next.mappedSurface = previous.mappedSurface;
+        next.surface = previous.surface;
         this.inspections.set(element, next);
       }
     }
@@ -1082,7 +1093,7 @@ export class ThemeEngine {
           : null,
       ) as InspectedElement["borders"],
       hasDirectText: !textControl && hasDirectText(element),
-      mappedSurface: null,
+      surface: null,
       backdrop: readBackdrop(samples),
       hostStyleSignature: inlineStyleSignature(element),
       samples,
@@ -1180,27 +1191,23 @@ export class ThemeEngine {
    * is not installed yet, so computed ancestors still show the author's light
    * colours.
    */
-  private resolveParentSurface(element: Element, tokens: ThemeTokens): Rgb {
+  private resolveParentSurface(element: Element): SurfaceInfo {
     let node: Node | null = element.parentNode;
     while (node) {
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const surface = this.inspections.get(node as Element)?.mappedSurface;
-        if (surface) {
-          return surface;
-        }
-        node = node.parentNode;
-      } else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (node as ShadowRoot).host) {
+      if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (node as ShadowRoot).host) {
         node = (node as ShadowRoot).host;
-        const surface = this.inspections.get(node as Element)?.mappedSurface;
+      }
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const surface = this.inspections.get(node as Element)?.surface;
         if (surface) {
           return surface;
         }
-        node = node.parentNode;
       } else {
         break;
       }
+      node = node.parentNode;
     }
-    return tokens.background;
+    return { ref: PAGE_SURFACE, color: this.palette.surfaceColor(PAGE_SURFACE) };
   }
 
   private styleInspectedElement(element: Element, inspection: InspectedElement): void {
@@ -1214,164 +1221,117 @@ export class ThemeEngine {
       this.inspections.delete(element);
       return;
     }
-    let surface = this.resolveParentSurface(element, tokens);
     if (inlineStyleSignature(element) !== inspection.hostStyleSignature) {
       this.cleanupElement(element);
       this.inspections.delete(element);
       this.inspectAndStyle(element);
       return;
     }
+    const palette = this.palette;
+    const parentSurface = this.resolveParentSurface(element);
+    const marks: string[] = [];
+    let surface = parentSurface;
+
     if (inspection.background) {
-      const mapped = mapSurfaceColor(inspection.background, tokens);
-      element.setAttribute(SURFACE_ATTRIBUTE, "");
-      (element as HTMLElement).style.setProperty(ELEMENT_SURFACE_VARIABLE, mapped);
-      surface = parseColorOrNull(mapped) ?? tokens.background;
-      inspection.mappedSurface = surface;
-    } else {
-      if (element.hasAttribute(SURFACE_ATTRIBUTE)) {
-        element.removeAttribute(SURFACE_ATTRIBUTE);
-        (element as HTMLElement).style.removeProperty(ELEMENT_SURFACE_VARIABLE);
-      }
+      const entry = palette.surface(inspection.background);
+      marks.push(entry.token);
+      surface = { ref: `e${entry.id}`, color: entry.color };
+      inspection.surface = surface;
+    } else if (inspection.backdrop) {
       // Unmapped gradient/translucent backgrounds stay as authored, so what
       // sits on them is judged against the colour actually painted.
       const backdrop = inspection.backdrop;
-      if (backdrop) {
-        surface =
-          backdrop.kind === "gradient"
-            ? backdrop.color
-            : mixRgb(surface, backdrop.color, backdrop.alpha);
-        inspection.mappedSurface = surface;
-      } else {
-        inspection.mappedSurface = null;
-      }
+      const color =
+        backdrop.kind === "gradient"
+          ? backdrop.color
+          : mixRgb(parentSurface.color, backdrop.color, backdrop.alpha);
+      surface = { ref: fixedSurface(color), color };
+      inspection.surface = surface;
+    } else {
+      inspection.surface = null;
     }
 
-    let mappedText: Rgba | null = null;
+    let mappedText: Rgb | null = null;
     if (inspection.text && inspection.hasDirectText && !isProtectedEditor(element)) {
       if (!element.matches(SKIP_TEXT_INSIDE)) {
         const key = rgbKey(inspection.text);
         const isUaLink = UA_LINK_COLORS.has(key) || UA_VISITED_COLORS.has(key);
         if (isUaLink && element.matches("a:any-link, a[href]")) {
-          // Unstyled link: let the stylesheet apply link/visited colours.
-          element.setAttribute(LINK_ATTRIBUTE, "");
-          element.removeAttribute(TEXT_ATTRIBUTE);
-          (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
+          // Unstyled link: the stylesheet applies the link/visited colours.
+          marks.push(LINK_TOKEN);
         } else {
-          element.removeAttribute(LINK_ATTRIBUTE);
-          element.setAttribute(TEXT_ATTRIBUTE, "");
-          const mapped = isUaLink
-            ? rgbToCss(UA_VISITED_COLORS.has(key) ? tokens.visited : tokens.link)
-            : mapTextColor(inspection.text, surface, tokens);
-          mappedText = parseColorOrNull(mapped);
-          (element as HTMLElement).style.setProperty(ELEMENT_TEXT_VARIABLE, mapped);
+          const entry = isUaLink
+            ? palette.linkColor(UA_VISITED_COLORS.has(key))
+            : palette.paint("t", inspection.text, surface.ref);
+          marks.push(entry.token);
+          mappedText = entry.color;
         }
-      } else {
-        element.removeAttribute(TEXT_ATTRIBUTE);
-        (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
       }
-    } else if (element.hasAttribute(TEXT_ATTRIBUTE) || element.hasAttribute(LINK_ATTRIBUTE)) {
-      element.removeAttribute(LINK_ATTRIBUTE);
-      element.removeAttribute(TEXT_ATTRIBUTE);
-      (element as HTMLElement).style.removeProperty(ELEMENT_TEXT_VARIABLE);
     }
 
-    this.styleTextShadow(element, inspection, mappedText, tokens);
-    this.styleBorders(element, inspection, surface, tokens);
-    this.stylePaint(
-      element,
-      inspection.fill,
-      FILL_ATTRIBUTE,
-      ELEMENT_FILL_VARIABLE,
-      surface,
-      tokens,
-    );
-    this.stylePaint(
-      element,
-      inspection.stroke,
-      STROKE_ATTRIBUTE,
-      ELEMENT_STROKE_VARIABLE,
-      surface,
-      tokens,
-    );
+    if (this.dropsLightShadow(inspection, mappedText, tokens)) {
+      marks.push(NO_SHADOW_TOKEN);
+    }
+    this.borderMarks(inspection, surface.ref, marks);
+    if (inspection.fill) {
+      marks.push(palette.paint("f", inspection.fill, surface.ref).token);
+    }
+    if (inspection.stroke) {
+      marks.push(palette.paint("k", inspection.stroke, surface.ref).token);
+    }
+
+    const value = marks.join(" ");
+    if (value) {
+      if (element.getAttribute(ELEMENT_ATTRIBUTE) !== value) {
+        element.setAttribute(ELEMENT_ATTRIBUTE, value);
+      }
+    } else if (element.hasAttribute(ELEMENT_ATTRIBUTE)) {
+      element.removeAttribute(ELEMENT_ATTRIBUTE);
+    }
   }
 
   /**
    * Light halos (`text-shadow: 0 1px 0 #fff`) designed for dark text turn into
    * a glow once the text is light, so they are dropped on dark schemes.
    */
-  private styleTextShadow(
-    element: Element,
+  private dropsLightShadow(
     inspection: InspectedElement,
-    mappedText: Rgba | null,
+    mappedText: Rgb | null,
     tokens: ThemeTokens,
-  ): void {
+  ): boolean {
     const shadow = inspection.samples.textShadow;
-    let drop = false;
-    if (tokens.scheme === "dark" && mappedText && shadow && shadow !== "none") {
-      const textLuminance = relativeLuminance(mappedText);
-      drop = (shadow.match(/rgba?\([^)]*\)/g) ?? []).some((value) => {
-        const color = parseColorOrNull(value);
-        return color !== null && isPainted(color) && relativeLuminance(color) > textLuminance;
-      });
+    if (tokens.scheme !== "dark" || !mappedText || !shadow || shadow === "none") {
+      return false;
     }
-    if (drop) {
-      element.setAttribute(NO_SHADOW_ATTRIBUTE, "");
-    } else if (element.hasAttribute(NO_SHADOW_ATTRIBUTE)) {
-      element.removeAttribute(NO_SHADOW_ATTRIBUTE);
-    }
+    const textLuminance = relativeLuminance(mappedText);
+    return (shadow.match(/rgba?\([^)]*\)/g) ?? []).some((value) => {
+      const color = parseColorOrNull(value);
+      return color !== null && isPainted(color) && relativeLuminance(color) > textLuminance;
+    });
   }
 
-  /** Maps SVG fill/stroke colours the way text colours are mapped. */
-  private stylePaint(
-    element: Element,
-    color: Rgba | null,
-    attribute: string,
-    variable: string,
-    surface: Rgb,
-    tokens: ThemeTokens,
-  ): void {
-    const style = (element as HTMLElement).style;
-    if (color) {
-      element.setAttribute(attribute, "");
-      style.setProperty(variable, mapTextColor(color, surface, tokens));
-    } else if (element.hasAttribute(attribute)) {
-      element.removeAttribute(attribute);
-      style.removeProperty(variable);
-    }
-  }
-
-  private styleBorders(
-    element: Element,
-    inspection: InspectedElement,
-    surface: Rgb,
-    tokens: ThemeTokens,
-  ): void {
-    const style = (element as HTMLElement).style;
-    const mapped = inspection.borders.map((color) =>
-      color ? mapBorderColor(color, surface, tokens) : null,
-    );
-    const painted = BORDER_SIDES.filter((_, index) => mapped[index] !== null);
-    for (const side of BORDER_SIDES) {
-      style.removeProperty(side.variable);
-    }
-    if (painted.length === 0) {
-      element.removeAttribute(BORDER_ATTRIBUTE);
-      style.removeProperty(ELEMENT_BORDER_VARIABLE);
+  /** Border tokens: one for all four sides when they share a colour, else one per painted side. */
+  private borderMarks(inspection: InspectedElement, surface: SurfaceRef, marks: string[]): void {
+    const painted = inspection.borders;
+    const count = painted.filter((color) => color !== null).length;
+    if (count === 0) {
       return;
     }
-    if (painted.length === 4 && mapped.every((value) => value === mapped[0])) {
-      element.setAttribute(BORDER_ATTRIBUTE, "a");
-      style.setProperty(ELEMENT_BORDER_VARIABLE, mapped[0] as string);
+    const first = painted[0];
+    if (
+      count === 4 &&
+      first &&
+      painted.every((color) => color !== null && rgbToCss(color) === rgbToCss(first))
+    ) {
+      marks.push(this.palette.paint("ba", first, surface).token);
       return;
     }
-    style.removeProperty(ELEMENT_BORDER_VARIABLE);
     BORDER_SIDES.forEach((side, index) => {
-      const value = mapped[index];
-      if (value) {
-        style.setProperty(side.variable, value);
+      const color = painted[index];
+      if (color) {
+        marks.push(this.palette.paint(side.role, color, surface).token);
       }
     });
-    element.setAttribute(BORDER_ATTRIBUTE, painted.map((side) => side.key).join(" "));
   }
 
   private attachShadowStyle(root: ShadowRoot): void {
@@ -1381,7 +1341,7 @@ export class ThemeEngine {
     const style = this.doc.createElement("style");
     style.setAttribute(IGNORE_ATTRIBUTE, "");
     style.setAttribute("data-darkr-shadow-style", "");
-    style.textContent = buildShadowCss();
+    style.textContent = buildShadowCss() + this.paletteCss(":host");
     root.append(style);
     root.host.setAttribute("data-darkr-shadow", "");
     this.shadowStyles.set(root, style);
@@ -1653,22 +1613,7 @@ export class ThemeEngine {
   }
 
   private cleanupElement(element: Element): void {
-    element.removeAttribute(SURFACE_ATTRIBUTE);
-    element.removeAttribute(TEXT_ATTRIBUTE);
-    element.removeAttribute(LINK_ATTRIBUTE);
-    element.removeAttribute(BORDER_ATTRIBUTE);
-    element.removeAttribute(FILL_ATTRIBUTE);
-    element.removeAttribute(STROKE_ATTRIBUTE);
-    element.removeAttribute(NO_SHADOW_ATTRIBUTE);
-    const htmlElement = element as HTMLElement;
-    htmlElement.style.removeProperty(ELEMENT_SURFACE_VARIABLE);
-    htmlElement.style.removeProperty(ELEMENT_TEXT_VARIABLE);
-    htmlElement.style.removeProperty(ELEMENT_BORDER_VARIABLE);
-    htmlElement.style.removeProperty(ELEMENT_FILL_VARIABLE);
-    htmlElement.style.removeProperty(ELEMENT_STROKE_VARIABLE);
-    for (const side of BORDER_SIDES) {
-      htmlElement.style.removeProperty(side.variable);
-    }
+    element.removeAttribute(ELEMENT_ATTRIBUTE);
   }
 
   private clearElements(): void {
