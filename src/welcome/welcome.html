@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Welcome to Darkr</title>
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="welcome.css" />
+  </head>
+  <body>
+    <main class="welcome">
+      <header class="hero">
+        <img src="images/icon-128.png" width="56" height="56" alt="" aria-hidden="true" />
+        <h1>Welcome to Darkr</h1>
+        <p class="lede">Darkr restyles the pages you read into Dark, Sepia, Grayscale or Warm Light — entirely on your device.</p>
+      </header>
+
+      <section class="card" aria-labelledby="try-heading">
+        <h2 id="try-heading">Try it</h2>
+        <div id="mode-picker" class="segmented" role="radiogroup" aria-label="Sample appearance" style="--segment-count: 4">
+          <button class="mode-button is-selected" type="button" role="radio" aria-checked="true" data-mode="dark"><span>Dark</span></button>
+          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="sepia"><span>Sepia</span></button>
+          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="grayscale"><span>Gray</span></button>
+          <button class="mode-button" type="button" role="radio" aria-checked="false" data-mode="warm"><span>Warm</span></button>
+        </div>
+        <article id="sample" class="sample">
+          <h3>A calm reading surface</h3>
+          <p>Readability comes from predictable contrast and restrained colour. <a href="#sample">A sample link</a> and <span class="muted-line">some quieter supporting text</span>.</p>
+        </article>
+      </section>
+
+      <section class="card" aria-labelledby="start-heading">
+        <h2 id="start-heading">Getting started</h2>
+        <ol class="steps">
+          <li><strong>Pin the icon.</strong> Open the puzzle-piece menu in your toolbar and pin Darkr so the switch is one click away.</li>
+          <li><strong>Reload open tabs.</strong> Pages that were open before you installed Darkr need a reload before they can be themed.</li>
+          <li><strong>Use the switch.</strong> The popup turns Darkr on or off for the site you're on, and changes appearance for this site or all sites.</li>
+          <li><strong>Shortcuts.</strong> <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> toggles the current site, <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> pauses everywhere. You can change them in your browser's extension shortcuts page.</li>
+        </ol>
+      </section>
+
+      <section class="card" aria-labelledby="privacy-heading">
+        <h2 id="privacy-heading">Private by design</h2>
+        <p>Darkr makes no network requests and collects nothing: no analytics, accounts, page text or browsing history. Your settings stay in local extension storage.</p>
+      </section>
+
+      <footer class="actions">
+        <button id="open-settings" class="text-button" type="button">Open settings</button>
+        <button id="done" class="text-button text-button--solid" type="button">Got it</button>
+      </footer>
+    </main>
+    <script type="module" src="welcome.js"></script>
+  </body>
+</html>

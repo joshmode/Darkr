@@ -22,9 +22,11 @@ interface BackgroundApi {
       ): void;
     };
     openOptionsPage(): Promise<void>;
+    getURL(path: string): string;
   };
   storage: { local: StorageAreaLike };
   tabs?: {
+    create?(properties: { url: string }): Promise<unknown>;
     query(query: { active: boolean; currentWindow: boolean }): Promise<Array<{ url?: string }>>;
   };
   /** Not available in every browser (Safari has no keyboard commands). */
@@ -110,10 +112,11 @@ if (api) {
     }
     void needsOnboarding(api.storage.local).then((required) => {
       if (required) {
-        void api.runtime.openOptionsPage().catch(() => {
-          // Safari may decline programmatic opening. The permanent settings
-          // entry point remains available from the toolbar popup.
-        });
+        const welcome = api.runtime.getURL("welcome.html");
+        const opened = api.tabs?.create?.({ url: welcome });
+        // Safari may decline programmatic opening. The permanent settings
+        // entry point remains available from the toolbar popup.
+        void (opened ?? api.runtime.openOptionsPage()).catch(() => undefined);
       }
     });
   });

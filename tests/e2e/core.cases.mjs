@@ -328,3 +328,21 @@ test("settings: include subdomains extends a Never rule to subdomains", async ()
     { message: "subdomain stays unthemed" },
   );
 });
+
+test("welcome page: live sample follows the mode buttons and Got it completes onboarding", async () => {
+  const page = await env.context.newPage();
+  await page.goto(`chrome-extension://${env.extensionId}/welcome.html`);
+  const sampleBackground = () =>
+    page.evaluate(() => getComputedStyle(document.querySelector("#sample")).backgroundColor);
+  const dark = await sampleBackground();
+  await page.click('[data-mode="sepia"]');
+  await poll(sampleBackground, (value) => value !== dark, { message: "sample to change colour" });
+  assert.ok((await page.locator("body").innerText()).includes("no network requests"));
+  const needs = () =>
+    env.worker.evaluate(
+      async () => (await chrome.storage.local.get("darkr.onboarding.v1"))["darkr.onboarding.v1"],
+    );
+  assert.notEqual(await needs(), true);
+  await page.evaluate(() => document.getElementById("done").click());
+  await poll(needs, (value) => value === true, { message: "onboarding completed" });
+});

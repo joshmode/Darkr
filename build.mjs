@@ -48,6 +48,7 @@ const entries = [
   ["background/index.ts", "background.js"],
   ["popup/ui.ts", "popup.js"],
   ["options/ui.ts", "options.js"],
+  ["welcome/ui.ts", "welcome.js"],
 ].map(([entry, outfile]) => ({
   entryPoints: [path.join(source, entry)],
   outfile: path.join(output, outfile),
@@ -58,6 +59,8 @@ const staticFiles = [
   ["popup/popup.css", "popup.css"],
   ["options/options.html", "options.html"],
   ["options/options.css", "options.css"],
+  ["welcome/welcome.html", "welcome.html"],
+  ["welcome/welcome.css", "welcome.css"],
   ["styles/base.css", "base.css"],
 ];
 
