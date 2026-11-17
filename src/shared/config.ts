@@ -13,8 +13,10 @@ import {
   type ThemeConfig,
 } from "./types";
 
+// Underscores occur in real hostnames (CI previews, internal services) and
+// browsers load them, so they are accepted inside labels.
 const HOSTNAME_PATTERN =
-  /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+  /^(?=.{1,253}$)(?:[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?\.)*[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?$/;
 
 export function clamp(value: number, minimum = 0, maximum = 100): number {
   if (!Number.isFinite(value)) {

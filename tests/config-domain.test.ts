@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  hostnamePreferenceKey,
   normalizeHostname,
   normalizePreferences,
   removeSiteRule,
@@ -209,5 +210,12 @@ describe("native dark override", () => {
     expect(stored.sites["a.com"]).toEqual({ policy: "auto", overrideNativeDark: false });
     expect(stored.sites["b.com"]).toBeUndefined();
     expect(normalizePreferences({ overrideNativeDark: "true" }).overrideNativeDark).toBe(false);
+  });
+});
+
+describe("hostnames with underscores", () => {
+  it("are keyable so the popup and content script agree", () => {
+    expect(normalizeHostname("my_app.preview.example.com")).toBe("my_app.preview.example.com");
+    expect(hostnamePreferenceKey("_dmarc.example.com")).toBe("_dmarc.example.com");
   });
 });

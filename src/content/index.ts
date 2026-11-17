@@ -128,6 +128,14 @@ if (!window.__DARKR_CONTENT__) {
       // the latest preferences once it is known.
       return;
     }
+    if (!hostnamePreferenceKey(topHostname)) {
+      // A host that cannot be keyed is "unavailable" in the popup; theming it
+      // would leave the user with a page they cannot control.
+      themingAllowed = false;
+      engine.clear();
+      currentConfig = null;
+      return;
+    }
     const resolved = resolveAppearance(preferences, topHostname, {
       systemDark: isSystemDark(),
     });
