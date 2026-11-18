@@ -275,7 +275,7 @@ body {
 
 .site-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px auto;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto) auto;
   gap: 7px;
   margin-top: 16px;
   padding-top: 16px;
