@@ -43,26 +43,26 @@ export function splitSelectors(list: string): string[] {
 
 function walk(rules: CSSRuleList, wrappers: string[], out: StateRule[]): void {
   for (const rule of Array.from(rules)) {
-    if (rule instanceof CSSStyleRule) {
-      const selectors = splitSelectors(rule.selectorText).filter(
+    if (rule.type === 1) {
+      const styleRule = rule as CSSStyleRule;
+      const selectors = splitSelectors(styleRule.selectorText).filter(
         (selector) => STATE.test(selector) && !selector.includes("::") && !selector.includes("&"),
       );
       if (selectors.length === 0) continue;
-      const background = opaqueColor(rule.style.backgroundColor ?? "");
-      const text = parseColorOrNull(rule.style.color ?? "");
-      const borderValue = rule.style.borderTopColor || rule.style.borderColor || "";
+      const background = opaqueColor(styleRule.style.backgroundColor ?? "");
+      const text = parseColorOrNull(styleRule.style.color ?? "");
+      const borderValue = styleRule.style.borderTopColor || styleRule.style.borderColor || "";
       const border = parseColorOrNull(borderValue);
       if (background || text || border) {
         out.push({ wrappers: [...wrappers], selectors, background, text, border });
       }
-    } else if (rule instanceof CSSMediaRule) {
-      walk(
-        rule.cssRules,
-        [...wrappers, `@media ${rule.conditionText ?? rule.media?.mediaText ?? "all"}`],
-        out,
-      );
-    } else if (rule instanceof CSSSupportsRule) {
-      walk(rule.cssRules, [...wrappers, `@supports ${rule.conditionText}`], out);
+    } else if (rule.type === 4) {
+      const media = rule as CSSMediaRule;
+      const condition = media.conditionText ?? media.media?.mediaText ?? "all";
+      walk(media.cssRules, [...wrappers, `@media ${condition}`], out);
+    } else if (rule.type === 12) {
+      const supports = rule as CSSSupportsRule;
+      walk(supports.cssRules, [...wrappers, `@supports ${supports.conditionText}`], out);
     } else if ("cssRules" in rule && (rule as CSSGroupingRule).cssRules) {
       // @layer and similar grouping rules: their contents still apply.
       walk((rule as CSSGroupingRule).cssRules, wrappers, out);
