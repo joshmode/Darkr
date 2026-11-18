@@ -49,9 +49,15 @@ function walk(rules: CSSRuleList, wrappers: string[], out: StateRule[]): void {
         (selector) => STATE.test(selector) && !selector.includes("::") && !selector.includes("&"),
       );
       if (selectors.length === 0) continue;
-      const background = opaqueColor(styleRule.style.backgroundColor ?? "");
-      const text = parseColorOrNull(styleRule.style.color ?? "");
-      const borderValue = styleRule.style.borderTopColor || styleRule.style.borderColor || "";
+      const background = opaqueColor(
+        styleRule.style.getPropertyValue("background-color") ||
+          styleRule.style.getPropertyValue("background"),
+      );
+      const text = parseColorOrNull(styleRule.style.getPropertyValue("color"));
+      const borderValue =
+        styleRule.style.getPropertyValue("border-top-color") ||
+        styleRule.style.getPropertyValue("border-color") ||
+        "";
       const border = parseColorOrNull(borderValue);
       if (background || text || border) {
         out.push({ wrappers: [...wrappers], selectors, background, text, border });
