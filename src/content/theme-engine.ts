@@ -1,5 +1,6 @@
 import { buildThemeTokens, themeVariables, type ThemeTokens } from "../shared/theme";
 import { ElementRecords } from "./records";
+import { type StateRule, collectStateRules } from "./state-rules";
 import {
   PAGE_SURFACE,
   Palette,
@@ -54,6 +55,7 @@ const RESAMPLE_ATTRIBUTES = new Set(["class", "aria-expanded", "aria-hidden", "d
 const ROOT_WATCHED_ATTRIBUTES = [ROOT_ATTRIBUTE, "class", "data-theme", "data-color-mode", "style"];
 const REDETECT_DELAY_MS = 150;
 const SHADOW_SWEEP_DELAY_MS = 800;
+const STATE_SCAN_DELAY_MS = 300;
 /** jsdom cannot compute pseudo-element styles (it logs "not implemented"). */
 const SAMPLE_PSEUDO = typeof navigator === "undefined" || !/jsdom/i.test(navigator.userAgent);
 const ELEMENT_ATTRIBUTE = "data-darkr";
@@ -459,6 +461,14 @@ export class ThemeEngine {
   private desiredRootValue: string | null = null;
   private redetectTimer: number | null = null;
   private shadowSweepTimer: number | null = null;
+  private stateRules: StateRule[] = [];
+  private stateScanTimer: number | null = null;
+  private readonly onResourceLoad = (event: Event): void => {
+    const target = event.target as Element | null;
+    if (target && (target.localName === "link" || target.localName === "style")) {
+      this.scheduleStateScan();
+    }
+  };
   private style: HTMLStyleElement | null = null;
   private readonly palette = new Palette();
   private batchHandle: number | null = null;
@@ -559,6 +569,7 @@ export class ThemeEngine {
     };
 
     this.palette.setTokens(tokens);
+    this.doc.addEventListener("load", this.onResourceLoad, true);
 
     if (wasSemantic && !isSemantic) {
       this.clearElements();
@@ -719,6 +730,12 @@ export class ThemeEngine {
   }
 
   private teardownPageRendering(): void {
+    this.doc.removeEventListener("load", this.onResourceLoad, true);
+    if (this.stateScanTimer !== null) {
+      this.win.clearTimeout(this.stateScanTimer);
+      this.stateScanTimer = null;
+    }
+    this.stateRules = [];
     this.stopObserver();
     this.cancelScheduledWork();
     this.clearElements();
@@ -817,6 +834,51 @@ export class ThemeEngine {
     }, SHADOW_SWEEP_DELAY_MS);
   }
 
+  /**
+   * Hover, focus and active colours come from the page's readable style sheets
+   * (see state-rules.ts). Re-scanned when sheets are added or finish loading.
+   */
+  private scheduleStateScan(): void {
+    if (this.stateScanTimer !== null) {
+      return;
+    }
+    this.stateScanTimer = this.win.setTimeout(() => {
+      this.stateScanTimer = null;
+      const tokens = this.state.tokens;
+      if (!tokens || this.state.config?.mode === "grayscale" || !this.style) {
+        return;
+      }
+      this.stateRules = collectStateRules(this.doc);
+      this.installStyle(tokens);
+    }, STATE_SCAN_DELAY_MS);
+  }
+
+  private stateCss(): string {
+    const out: string[] = [];
+    for (const rule of this.stateRules) {
+      const body: string[] = [];
+      let surface = PAGE_SURFACE;
+      if (rule.background) {
+        const entry = this.palette.quiet("s", rule.background);
+        body.push(`background-color: ${entry.value} !important;`);
+        surface = `e${entry.id}`;
+      }
+      if (rule.text) {
+        body.push(`color: ${this.palette.quiet("t", rule.text, surface).value} !important;`);
+      }
+      if (rule.border) {
+        body.push(
+          `border-color: ${this.palette.quiet("ba", rule.border, surface).value} !important;`,
+        );
+      }
+      const selector = rule.selectors.map((part) => `${SEMANTIC_ROOT} ${part}`).join(", ");
+      const open = ["@media screen", ...rule.wrappers].map((wrapper) => `${wrapper} {`).join(" ");
+      const close = " }".repeat(rule.wrappers.length + 1);
+      out.push(`${open} ${selector} { ${body.join(" ")} }${close}`);
+    }
+    return out.join("\n");
+  }
+
   private paletteCss(scope: string): string {
     return this.palette
       .rules(scope)
@@ -853,7 +915,7 @@ export class ThemeEngine {
       this.style.setAttribute(IGNORE_ATTRIBUTE, "");
       (this.doc.head ?? this.doc.documentElement).append(this.style);
     }
-    this.style.textContent = buildDocumentCss(tokens) + this.paletteCss(SEMANTIC_ROOT);
+    this.style.textContent = `${buildDocumentCss(tokens)}${this.paletteCss(SEMANTIC_ROOT)}\n${this.stateCss()}`;
     for (const style of this.shadowStyles.values()) {
       style.textContent = buildShadowCss() + this.paletteCss(":host");
     }
@@ -913,6 +975,7 @@ export class ThemeEngine {
     // One batched read/write for everything above the fold, document order.
     this.processElements(initial);
     this.scheduleShadowSweep();
+    this.scheduleStateScan();
     if (this.queuedElements.size > 0) {
       this.prioritiseViewport();
       this.scheduleIdleWork();
@@ -1565,6 +1628,17 @@ export class ThemeEngine {
     }
     if (records.some((record) => record.type === "childList" && record.addedNodes.length > 0)) {
       this.scheduleShadowSweep();
+    }
+    if (
+      records.some((record) =>
+        Array.from(record.addedNodes).some(
+          (node) =>
+            node.nodeType === Node.ELEMENT_NODE &&
+            ((node as Element).localName === "style" || (node as Element).localName === "link"),
+        ),
+      )
+    ) {
+      this.scheduleStateScan();
     }
     if (this.queuedElements.size > 0) {
       this.scheduleBatchWork();

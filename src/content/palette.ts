@@ -46,6 +46,8 @@ export interface PaletteEntry {
   color: Rgb;
   /** Token written to elements. */
   readonly token: string;
+  /** Used by state rules (hover, focus) only; never written to elements. */
+  readonly silent: boolean;
 }
 
 const PROPERTY: Record<PaletteRole, string> = {
@@ -141,6 +143,12 @@ export class Palette {
     return this.get(role, kind, original, surface);
   }
 
+  /** A colour for a state rule: tracked and recomputed like any entry, but with no attribute rule. */
+  quiet(role: PaletteRole, original: Rgba, surface: SurfaceRef = PAGE_SURFACE): PaletteEntry {
+    const kind = role === "s" ? "surface" : TEXT_ROLES.has(role) ? "text" : "border";
+    return this.get(role, kind, original, surface, true);
+  }
+
   /** The theme's own link / visited colour as a text entry. */
   linkColor(visited: boolean): PaletteEntry {
     return this.get("t", visited ? "visited" : "link", null, PAGE_SURFACE);
@@ -148,7 +156,7 @@ export class Palette {
 
   /** CSS rules for every entry, each prefixed with `scope` (a selector ending before the attribute). */
   rules(scope: string): string[] {
-    return this.entries.map((entry) => rule(scope, entry));
+    return this.entries.filter((entry) => !entry.silent).map((entry) => rule(scope, entry));
   }
 
   rule(scope: string, entry: PaletteEntry): string {
@@ -160,8 +168,9 @@ export class Palette {
     kind: EntryKind,
     original: Rgba | null,
     surface: SurfaceRef,
+    silent = false,
   ): PaletteEntry {
-    const key = `${role}|${kind}|${original ? rgbToCss(original) : ""}|${surface}`;
+    const key = `${silent ? "q" : ""}${role}|${kind}|${original ? rgbToCss(original) : ""}|${surface}`;
     const known = this.byKey.get(key);
     if (known) {
       return known;
@@ -176,11 +185,14 @@ export class Palette {
       value: "transparent",
       color: { r: 0, g: 0, b: 0 },
       token: `${role}${id}`,
+      silent,
     };
     this.byKey.set(key, entry);
     this.entries.push(entry);
     this.compute(entry);
-    this.onAdd?.(entry);
+    if (!silent) {
+      this.onAdd?.(entry);
+    }
     return entry;
   }
 

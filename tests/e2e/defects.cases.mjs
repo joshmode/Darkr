@@ -471,3 +471,34 @@ test("[E-20] ::before / ::after backgrounds and borders are themed", async () =>
     },
   );
 });
+
+// ---------------------------------------------------------------- hover / focus
+test("[E-20] hover, focus and active colours from readable sheets are themed", async () => {
+  const page = await newPage("/e21-hover");
+  await settle(page);
+  await page.hover("#btn");
+  await poll(
+    () => colorOf(page, "#btn", "backgroundColor"),
+    (v) => luminanceOf(v) < 0.2,
+    {
+      message: "hovered button to be dark",
+    },
+  );
+  assert.ok((await contrastAgainstAncestor(page, "#btn", "#btn")) >= 4.5, "hover text contrast");
+  await page.hover("#row");
+  await poll(
+    () => colorOf(page, "#row", "backgroundColor"),
+    (v) => luminanceOf(v) < 0.2,
+    {
+      message: "hovered row (inside @media) to be dark",
+    },
+  );
+  await page.focus("#field");
+  await poll(
+    () => colorOf(page, "#field", "backgroundColor"),
+    (v) => luminanceOf(v) < 0.2,
+    {
+      message: "focused field to be dark",
+    },
+  );
+});
