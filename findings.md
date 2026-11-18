@@ -7,7 +7,7 @@ Reviewed at commit `15d2a9f` (17 Nov 2026). Scope: everything under `src/`, `tes
 - Severity: **P0** breaks the core promise on ordinary pages · **P1** visible breakage on common patterns, or data leaving the page altered · **P2** robustness, performance, UX friction · **P3** cleanup.
 - Evidence: **[repro]** means I loaded the built extension in headless Chromium against a small fixture page and measured the result. **[code]** means it follows from reading the source and was not run.
 
-**Status.** Every finding in sections 3 and 4 and the release gaps in section 5 is addressed on this branch; see each entry for its commit. Remaining by design: state-dependent colours (hover) need a stylesheet-rewriting engine (§6); the shipped UI is English only (the catalogue is ready for translators); signed-in apps such as web mail and the browser's real print preview were not exercised (see docs/TESTING.md).
+**Status.** Every finding in sections 3 and 4 and the release gaps in section 5 is addressed on this branch; see each entry for its commit. Not exercised, because they need accounts or a real browser profile: signed-in apps such as web mail, the browser's real print preview, Incognito, and Safari (see docs/TESTING.md and docs/SAFARI-HANDOFF.md). The Spanish and French strings are machine-drafted.
 
 Baseline: `npm run check` passes (typecheck, 87 unit tests, package, manifest checks). I did not run `npm run test:e2e` or `test:perf`. Nothing in the repo was changed apart from adding this file and `HANDBOOK.md`.
 
@@ -140,7 +140,7 @@ Each inline custom property it sets produces a `style` mutation record that is t
 **E-19 · `text-shadow` and `box-shadow` are untouched [repro].** **Fixed in `48ca10d` for `text-shadow` (light halos dropped on dark themes); `box-shadow` left alone as planned.**
 `text-shadow: 0 1px 0 #fff` survives onto light text as a halo. Light box-shadows glow on dark surfaces.
 
-**E-20 · Pseudo-elements are out of reach [code].** **Fixed for `::before`/`::after` backgrounds, text and borders. Hover and other state-dependent colours remain out of reach of an element-sampling engine (findings §6).**
+**E-20 · Pseudo-elements are out of reach [code].** **Fixed: `::before`/`::after` backgrounds, text and borders are sampled, and hover/focus/active colours are re-emitted from the page's readable style sheets. Cross-origin sheets stay out of reach (reading them needs a network fetch).**
 `::before`/`::after` backgrounds and borders (custom checkboxes, dividers, overlays) keep their light colours. This is inherent to sampling elements.
 
 **E-21 · Forced-colors mode [code].** **Fixed in `bfd3b24`.**

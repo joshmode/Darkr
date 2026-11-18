@@ -136,8 +136,10 @@ explicitly selected grayscale effect.
 
 - Canvas-rendered applications cannot be recolored. Frames are themed by their
   own copy of Darkr, following the top-level site's rule.
-- Hover and pseudo-element (`::before`/`::after`) colours, gradients and
-  images are not remapped; text over them is kept readable instead.
+- Gradients and images are not remapped; text over them is kept readable
+  instead. Hover, focus and active colours are themed only when they come from
+  style sheets the browser lets Darkr read (same-origin or CORS-enabled);
+  cross-origin sheets would need a network fetch, which Darkr never makes.
 - Closed shadow roots cannot be styled. Open shadow roots receive a style sheet.
 - Some sites use inline styles or third-party widgets that do not expose stable
   semantic colors; Darkr preserves author inline edits rather than repeatedly

@@ -16,6 +16,7 @@ needs checking there. "Fallback" says what the code does when the API is absent.
 | `@media screen` around the generated sheet | `src/content/theme-engine.ts` | Universal. |
 | `chrome.scripting.executeScript` | `src/background/index.ts` (`injectIntoOpenTabs`, on install and update) | Yes. Skipped when `api.scripting` is absent, and each tab's failure is swallowed. Requires the `scripting` permission in the manifest (added to the Chrome manifest; the Safari manifest must add it or lose the feature). |
 | `adoptedStyleSheets` | **Not used.** Palette rules are appended to a `<style>` element with `CSSStyleSheet.insertRule`, with a text-node fallback if `insertRule` throws. Constructed sheets from a content script were not adopted because cross-world adoption is unverified in Chrome 109 and Safari. |
+| `document.styleSheets[n].cssRules` | `src/content/state-rules.ts` (hover/focus colours) | Yes. Unreadable (cross-origin) sheets throw and are skipped; the feature then simply does nothing for them. |
 | `WeakRef` | `src/content/records.ts` (element records). Chrome 84+, Safari 14.1+. No fallback: if absent the content script would fail to run. |
 | `i18n.getMessage` | `src/shared/i18n.ts`. Falls back to the English text in the markup/code if the API is missing or returns nothing. `_locales/` must be in the Safari bundle (build copies it). |
 | `getComputedStyle(el, "::before")` | `src/content/theme-engine.ts` (`readPseudo`) | Standard; skipped only under jsdom. |

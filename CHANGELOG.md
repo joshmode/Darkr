@@ -36,6 +36,8 @@
 - The pre-paint hold applies to the top document only.
 
 ### Added
+- Hover, focus and active colours from readable style sheets are themed (E-20).
+- Spanish and French UI (machine-drafted; native review welcome).
 - `::before`/`::after` backgrounds, text and borders are themed (E-20).
 - Shadow roots attached after load are picked up (E-16).
 - Palette indexing: one `data-darkr` token attribute per element, one rule per
