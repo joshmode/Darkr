@@ -1,0 +1,946 @@
+{
+  "extensionName": {
+    "message": "Darkr",
+    "description": "Extension name shown in the browser and store."
+  },
+  "extensionDescription": {
+    "message": "Un tema de lectura tranquilo y local para la web. Sin cuenta, seguimiento ni solicitudes de red.",
+    "description": "Short description shown in the browser and store (132 characters maximum)."
+  },
+  "actionTitle": {
+    "message": "Darkr",
+    "description": "Tooltip of the toolbar button."
+  },
+  "commandToggleSite": {
+    "message": "Activar o desactivar Darkr en el sitio actual",
+    "description": "Keyboard shortcut description."
+  },
+  "commandToggleEverywhere": {
+    "message": "Pausar o reanudar Darkr en todas partes",
+    "description": "Keyboard shortcut description."
+  },
+  "popupDarkr": {
+    "message": "Darkr",
+    "description": "UI text on the popup page."
+  },
+  "popupDarkrOnThisSite": {
+    "message": "Darkr en este sitio",
+    "description": "UI text on the popup page."
+  },
+  "popupLoading": {
+    "message": "Cargando…",
+    "description": "UI text on the popup page."
+  },
+  "popupThisSiteAlreadyHas": {
+    "message": "Este sitio ya tiene una apariencia oscura. Darkr no la modifica a menos que lo indiques.",
+    "description": "UI text on the popup page."
+  },
+  "popupUseDarkrInstead": {
+    "message": "Usar Darkr en su lugar",
+    "description": "UI text on the popup page."
+  },
+  "popupDarkrCanTReach": {
+    "message": "Darkr aún no puede acceder a esta página. Si acaba de instalarse o actualizarse, recarga la página. Las páginas del navegador y la tienda web nunca se tematizan.",
+    "description": "UI text on the popup page."
+  },
+  "popupReloadPage": {
+    "message": "Recargar página",
+    "description": "UI text on the popup page."
+  },
+  "popupAppearance": {
+    "message": "Apariencia",
+    "description": "UI text on the popup page."
+  },
+  "popupSurface": {
+    "message": "superficie",
+    "description": "UI text on the popup page."
+  },
+  "popupText": {
+    "message": "Texto",
+    "description": "UI text on the popup page."
+  },
+  "popupLink": {
+    "message": "Enlace",
+    "description": "UI text on the popup page."
+  },
+  "popupMuted": {
+    "message": "Atenuado",
+    "description": "UI text on the popup page."
+  },
+  "popupThisSite": {
+    "message": "Este sitio",
+    "description": "UI text on the popup page."
+  },
+  "popupAllSites": {
+    "message": "Todos los sitios",
+    "description": "UI text on the popup page."
+  },
+  "popupChangesApplyToEvery": {
+    "message": "Los cambios se aplican a todos los sitios.",
+    "description": "UI text on the popup page."
+  },
+  "popupReset": {
+    "message": "Restablecer",
+    "description": "UI text on the popup page."
+  },
+  "popupDark": {
+    "message": "Oscuro",
+    "description": "UI text on the popup page."
+  },
+  "popupSepia": {
+    "message": "Sepia",
+    "description": "UI text on the popup page."
+  },
+  "popupGray": {
+    "message": "Gris",
+    "description": "UI text on the popup page."
+  },
+  "popupWarm": {
+    "message": "Cálido",
+    "description": "UI text on the popup page."
+  },
+  "popupBackground": {
+    "message": "Fondo",
+    "description": "UI text on the popup page."
+  },
+  "popupCharcoal": {
+    "message": "Carbón",
+    "description": "UI text on the popup page."
+  },
+  "popupPitchBlack": {
+    "message": "Negro puro",
+    "description": "UI text on the popup page."
+  },
+  "popupLightGrey": {
+    "message": "Gris claro",
+    "description": "UI text on the popup page."
+  },
+  "popupContrast": {
+    "message": "Contraste",
+    "description": "UI text on the popup page."
+  },
+  "popupBalanced": {
+    "message": "Equilibrado",
+    "description": "UI text on the popup page."
+  },
+  "popupLower": {
+    "message": "Menor",
+    "description": "UI text on the popup page."
+  },
+  "popupHigher": {
+    "message": "Mayor",
+    "description": "UI text on the popup page."
+  },
+  "popupSepiaIntensity": {
+    "message": "Intensidad de sepia",
+    "description": "UI text on the popup page."
+  },
+  "popupPaper": {
+    "message": "Papel",
+    "description": "UI text on the popup page."
+  },
+  "popupSubtle": {
+    "message": "Sutil",
+    "description": "UI text on the popup page."
+  },
+  "popupDesaturation": {
+    "message": "Desaturación",
+    "description": "UI text on the popup page."
+  },
+  "popupFull": {
+    "message": "Completa",
+    "description": "UI text on the popup page."
+  },
+  "popupOff": {
+    "message": "Desactivada",
+    "description": "UI text on the popup page."
+  },
+  "popupWarmth": {
+    "message": "Calidez",
+    "description": "UI text on the popup page."
+  },
+  "popupCool": {
+    "message": "Fría",
+    "description": "UI text on the popup page."
+  },
+  "popupAVisualReadingAdjustment": {
+    "message": "Un ajuste visual para leer. No garantiza una reducción concreta de la luz azul de la pantalla.",
+    "description": "UI text on the popup page."
+  },
+  "popupPauseEverywhere": {
+    "message": "Pausar en todas partes",
+    "description": "UI text on the popup page."
+  },
+  "popupOpenSettings": {
+    "message": "Abrir ajustes",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupSettings": {
+    "message": "Ajustes",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupPreviewOfHowPages": {
+    "message": "Vista previa del aspecto de las páginas",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupApplyChangesTo": {
+    "message": "Aplicar los cambios a",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupAppearanceMode": {
+    "message": "Modo de apariencia",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupDarkAppearance": {
+    "message": "Apariencia oscura",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupSepiaAppearance": {
+    "message": "Apariencia sepia",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupGrayscaleAppearance": {
+    "message": "Apariencia en escala de grises",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "popupWarmLightAppearance": {
+    "message": "Apariencia de luz cálida",
+    "description": "Accessible label/tooltip on the popup page."
+  },
+  "optionsDarkrSettings": {
+    "message": "Ajustes de Darkr",
+    "description": "UI text on the options page."
+  },
+  "optionsReadingUtility": {
+    "message": "utilidad de lectura",
+    "description": "UI text on the options page."
+  },
+  "optionsExtensionEnabled": {
+    "message": "Extensión activada",
+    "description": "UI text on the options page."
+  },
+  "optionsDefaults": {
+    "message": "Valores predeterminados",
+    "description": "UI text on the options page."
+  },
+  "optionsDefaultAppearance": {
+    "message": "Apariencia predeterminada",
+    "description": "UI text on the options page."
+  },
+  "optionsRestoreDefaults": {
+    "message": "Restaurar valores",
+    "description": "UI text on the options page."
+  },
+  "optionsSitesWithTheirOwn": {
+    "message": "Sitios con su propio modo oscuro",
+    "description": "UI text on the options page."
+  },
+  "optionsLeaveThemAsThey": {
+    "message": "Dejarlos como están (recomendado)",
+    "description": "UI text on the options page."
+  },
+  "optionsApplyDarkrToThem": {
+    "message": "Aplicar Darkr también a ellos",
+    "description": "UI text on the options page."
+  },
+  "optionsDarkrNormallySkipsPages": {
+    "message": "Darkr normalmente omite las páginas que ya son oscuras. Elige «Aplicar Darkr» para sustituir su modo oscuro en todas partes; aún puedes cambiarlo por sitio desde la ventana de la barra de herramientas.",
+    "description": "UI text on the options page."
+  },
+  "optionsDefaultMode": {
+    "message": "Modo predeterminado",
+    "description": "UI text on the options page."
+  },
+  "optionsDark": {
+    "message": "Oscuro",
+    "description": "UI text on the options page."
+  },
+  "optionsSepia": {
+    "message": "Sepia",
+    "description": "UI text on the options page."
+  },
+  "optionsGrayscale": {
+    "message": "Escala de grises",
+    "description": "UI text on the options page."
+  },
+  "optionsWarmLight": {
+    "message": "Luz cálida",
+    "description": "UI text on the options page."
+  },
+  "optionsSurface": {
+    "message": "superficie",
+    "description": "UI text on the options page."
+  },
+  "optionsText": {
+    "message": "Texto",
+    "description": "UI text on the options page."
+  },
+  "optionsLink": {
+    "message": "Enlace",
+    "description": "UI text on the options page."
+  },
+  "optionsMuted": {
+    "message": "Atenuado",
+    "description": "UI text on the options page."
+  },
+  "optionsDarkBackground": {
+    "message": "Fondo oscuro",
+    "description": "UI text on the options page."
+  },
+  "optionsCharcoal": {
+    "message": "Carbón",
+    "description": "UI text on the options page."
+  },
+  "optionsPitchBlack": {
+    "message": "Negro puro",
+    "description": "UI text on the options page."
+  },
+  "optionsLightGrey": {
+    "message": "Gris claro",
+    "description": "UI text on the options page."
+  },
+  "optionsContrast": {
+    "message": "Contraste",
+    "description": "UI text on the options page."
+  },
+  "optionsBalanced": {
+    "message": "Equilibrado",
+    "description": "UI text on the options page."
+  },
+  "optionsLower": {
+    "message": "Menor",
+    "description": "UI text on the options page."
+  },
+  "optionsHigher": {
+    "message": "Mayor",
+    "description": "UI text on the options page."
+  },
+  "optionsSepiaIntensity": {
+    "message": "Intensidad de sepia",
+    "description": "UI text on the options page."
+  },
+  "optionsPaper": {
+    "message": "Papel",
+    "description": "UI text on the options page."
+  },
+  "optionsSubtle": {
+    "message": "Sutil",
+    "description": "UI text on the options page."
+  },
+  "optionsStrong": {
+    "message": "Fuerte",
+    "description": "UI text on the options page."
+  },
+  "optionsFull": {
+    "message": "Completa",
+    "description": "UI text on the options page."
+  },
+  "optionsOff": {
+    "message": "Desactivada",
+    "description": "UI text on the options page."
+  },
+  "optionsCool": {
+    "message": "Fría",
+    "description": "UI text on the options page."
+  },
+  "optionsWarm": {
+    "message": "Cálida",
+    "description": "UI text on the options page."
+  },
+  "optionsDefaultsApplyToSites": {
+    "message": "Los valores predeterminados se aplican a los sitios sin una regla guardada. Los valores son porcentajes; la calidez es un ajuste visual, no una reducción medida de la luz azul.",
+    "description": "UI text on the options page."
+  },
+  "optionsPerSitePreferences": {
+    "message": "Preferencias por sitio",
+    "description": "UI text on the options page."
+  },
+  "optionsSiteRules": {
+    "message": "Reglas de sitio",
+    "description": "UI text on the options page."
+  },
+  "optionsClearAllSiteRules": {
+    "message": "Borrar todas las reglas",
+    "description": "UI text on the options page."
+  },
+  "optionsAlwaysThemesAListed": {
+    "message": "«Siempre» tematiza un sitio de la lista aunque Darkr esté en pausa. «Nunca» lo deja intacto. Los sitios sin regla son «Automático», que sigue el ajuste siguiente.",
+    "description": "UI text on the options page."
+  },
+  "optionsAutomaticSitesFollow": {
+    "message": "Los sitios automáticos siguen",
+    "description": "UI text on the options page."
+  },
+  "optionsGlobalOnOffSwitch": {
+    "message": "El interruptor global",
+    "description": "UI text on the options page."
+  },
+  "optionsSystemAppearanceThemedOnly": {
+    "message": "La apariencia del sistema (solo se tematiza en modo oscuro)",
+    "description": "UI text on the options page."
+  },
+  "optionsSearchRules": {
+    "message": "Buscar reglas",
+    "description": "UI text on the options page."
+  },
+  "optionsNoSiteRulesYet": {
+    "message": "Aún no hay reglas de sitio.",
+    "description": "UI text on the options page."
+  },
+  "optionsUseTheToolbarPopup": {
+    "message": "Usa la ventana de la barra de herramientas o añade abajo un nombre de host exacto.",
+    "description": "UI text on the options page."
+  },
+  "optionsWebsiteHostname": {
+    "message": "Nombre de host del sitio",
+    "description": "UI text on the options page."
+  },
+  "optionsNeverTheme": {
+    "message": "No tematizar nunca",
+    "description": "UI text on the options page."
+  },
+  "optionsAlwaysTheme": {
+    "message": "Tematizar siempre",
+    "description": "UI text on the options page."
+  },
+  "optionsAddSite": {
+    "message": "Añadir sitio",
+    "description": "UI text on the options page."
+  },
+  "optionsBackup": {
+    "message": "Copia de seguridad",
+    "description": "UI text on the options page."
+  },
+  "optionsExportAndImport": {
+    "message": "Exportar e importar",
+    "description": "UI text on the options page."
+  },
+  "optionsSaveYourSettingsAs": {
+    "message": "Guarda tus ajustes en un archivo o carga uno. Los archivos importados se comprueban y se ignora lo que no se reconoce. Nada sale de tu dispositivo.",
+    "description": "UI text on the options page."
+  },
+  "optionsExportSettings": {
+    "message": "Exportar ajustes",
+    "description": "UI text on the options page."
+  },
+  "optionsImportSettings": {
+    "message": "Importar ajustes…",
+    "description": "UI text on the options page."
+  },
+  "optionsFirstRun": {
+    "message": "Primer uso",
+    "description": "UI text on the options page."
+  },
+  "optionsBeforeYouBrowse": {
+    "message": "Antes de navegar",
+    "description": "UI text on the options page."
+  },
+  "optionsGotIt": {
+    "message": "Entendido",
+    "description": "UI text on the options page."
+  },
+  "optionsPrivacy": {
+    "message": "Privacidad",
+    "description": "UI text on the options page."
+  },
+  "optionsSettingsStayInLocal": {
+    "message": "Los ajustes permanecen en el almacenamiento local de la extensión. Darkr no recopila texto de páginas, historial de navegación, analíticas ni datos de cuenta.",
+    "description": "UI text on the options page."
+  },
+  "optionsWebsiteAccess": {
+    "message": "Acceso a sitios web",
+    "description": "UI text on the options page."
+  },
+  "optionsYourBrowserControlsWhich": {
+    "message": "Tu navegador controla qué sitios puede leer y rediseñar Darkr. Si una página no cambia, revisa el acceso de Darkr al sitio.",
+    "description": "UI text on the options page."
+  },
+  "optionsAboutPermissions": {
+    "message": "Acerca de y permisos",
+    "description": "UI text on the options page."
+  },
+  "optionsPrivacyPolicy": {
+    "message": "Política de privacidad",
+    "description": "UI text on the options page."
+  },
+  "optionsSource": {
+    "message": "Código fuente",
+    "description": "UI text on the options page."
+  },
+  "optionsReportAnIssue": {
+    "message": "Informar de un problema",
+    "description": "UI text on the options page."
+  },
+  "optionsDarkr": {
+    "message": "Darkr",
+    "description": "UI text on the options page."
+  },
+  "optionsUndo": {
+    "message": "Deshacer",
+    "description": "UI text on the options page."
+  },
+  "optionsAQuieterWeb": {
+    "message": "Una web más tranquila.",
+    "description": "UI text on the options page."
+  },
+  "optionsYourBrowserControlsWhich2": {
+    "message": "Tu navegador controla qué sitios puede leer y rediseñar Darkr. Si una página no cambia, revisa el acceso de Darkr al sitio en los ajustes del navegador.",
+    "description": "UI text on the options page."
+  },
+  "optionsPauseOrResumeDarkr": {
+    "message": "Pausar o reanudar Darkr en todas partes",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "optionsPreviewOfTheDefault": {
+    "message": "Vista previa de la apariencia predeterminada",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "optionsFilterByHostname": {
+    "message": "Filtrar por nombre de host",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "optionsSavedSiteOverrides": {
+    "message": "Reglas de sitio guardadas",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "optionsWebsitePolicy": {
+    "message": "Política del sitio",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "optionsProjectLinks": {
+    "message": "Enlaces del proyecto",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "optionsCloseAboutDialog": {
+    "message": "Cerrar el cuadro «Acerca de»",
+    "description": "Accessible label/tooltip on the options page."
+  },
+  "welcomeWelcomeToDarkr": {
+    "message": "Te damos la bienvenida a Darkr",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeDarkrRestylesThePages": {
+    "message": "Darkr transforma las páginas que lees en Oscuro, Sepia, Escala de grises o Luz cálida, todo en tu propio dispositivo.",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeTryIt": {
+    "message": "Pruébalo",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeDark": {
+    "message": "Oscuro",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeSepia": {
+    "message": "Sepia",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeGray": {
+    "message": "Gris",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeWarm": {
+    "message": "Cálido",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeACalmReadingSurface": {
+    "message": "Una superficie de lectura tranquila",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeASampleLink": {
+    "message": "Un enlace de ejemplo",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeSomeQuieterSupportingText": {
+    "message": "un texto de apoyo más discreto",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeGettingStarted": {
+    "message": "Primeros pasos",
+    "description": "UI text on the welcome page."
+  },
+  "welcomePrivateByDesign": {
+    "message": "Privado por diseño",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeDarkrMakesNoNetwork": {
+    "message": "Darkr no hace solicitudes de red y no recopila nada: ni analíticas, ni cuentas, ni texto de páginas, ni historial. Tus ajustes permanecen en el almacenamiento local de la extensión.",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeOpenSettings": {
+    "message": "Abrir ajustes",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeGotIt": {
+    "message": "Entendido",
+    "description": "UI text on the welcome page."
+  },
+  "welcomeSampleAppearance": {
+    "message": "Apariencia de ejemplo",
+    "description": "Accessible label/tooltip on the welcome page."
+  },
+  "levelSubtle": {
+    "message": "Sutil",
+    "description": "Message shown by the extension UI."
+  },
+  "levelPaper": {
+    "message": "Papel",
+    "description": "Message shown by the extension UI."
+  },
+  "levelStrong": {
+    "message": "Fuerte",
+    "description": "Message shown by the extension UI."
+  },
+  "levelFull": {
+    "message": "Completa",
+    "description": "Message shown by the extension UI."
+  },
+  "warmthOriginal": {
+    "message": "Original",
+    "description": "Message shown by the extension UI."
+  },
+  "warmthCreamy": {
+    "message": "Cremoso",
+    "description": "Message shown by the extension UI."
+  },
+  "warmthIvory": {
+    "message": "Marfil cálido",
+    "description": "Message shown by the extension UI."
+  },
+  "darkOled": {
+    "message": "Negro OLED",
+    "description": "Message shown by the extension UI."
+  },
+  "darkNearBlack": {
+    "message": "Casi negro",
+    "description": "Message shown by the extension UI."
+  },
+  "darkCharcoal": {
+    "message": "Carbón",
+    "description": "Message shown by the extension UI."
+  },
+  "darkGrey": {
+    "message": "Gris oscuro",
+    "description": "Message shown by the extension UI."
+  },
+  "darkLightGrey": {
+    "message": "Gris claro",
+    "description": "Message shown by the extension UI."
+  },
+  "contrastSoft": {
+    "message": "Suave",
+    "description": "Message shown by the extension UI."
+  },
+  "contrastBalanced": {
+    "message": "Equilibrado",
+    "description": "Message shown by the extension UI."
+  },
+  "contrastHigh": {
+    "message": "Alto",
+    "description": "Message shown by the extension UI."
+  },
+  "popupSaveError": {
+    "message": "No se pudieron guardar los ajustes",
+    "description": "Message shown by the extension UI."
+  },
+  "popupUnavailable": {
+    "message": "No disponible en esta página",
+    "description": "Message shown by the extension UI."
+  },
+  "popupOnlyStandard": {
+    "message": "Solo disponible en páginas web estándar",
+    "description": "Message shown by the extension UI."
+  },
+  "popupOffSite": {
+    "message": "Desactivado en este sitio",
+    "description": "Message shown by the extension UI."
+  },
+  "popupPausedEverywhere": {
+    "message": "En pausa en todas partes",
+    "description": "Message shown by the extension UI."
+  },
+  "popupSiteAlreadyDark": {
+    "message": "El sitio ya tiene una apariencia oscura",
+    "description": "Message shown by the extension UI."
+  },
+  "popupOn": {
+    "message": "Activado",
+    "description": "Message shown by the extension UI."
+  },
+  "popupResume": {
+    "message": "Reanudar en todas partes",
+    "description": "Message shown by the extension UI."
+  },
+  "popupCustomised": {
+    "message": "Personalizado para este sitio.",
+    "description": "Message shown by the extension UI."
+  },
+  "popupScopeSite": {
+    "message": "Los cambios se aplican solo a este sitio.",
+    "description": "Message shown by the extension UI."
+  },
+  "popupScopeAll": {
+    "message": "Los cambios se aplican a todos los sitios.",
+    "description": "Message shown by the extension UI."
+  },
+  "popupNativeGrayscale": {
+    "message": "Este sitio ya tiene una apariencia oscura. La escala de grises es el efecto activo.",
+    "description": "Message shown by the extension UI."
+  },
+  "popupNativeOver": {
+    "message": "Este sitio tiene su propia apariencia oscura. Darkr se aplica sobre ella.",
+    "description": "Message shown by the extension UI."
+  },
+  "popupNativeLeft": {
+    "message": "Este sitio ya tiene una apariencia oscura, así que Darkr no lo modifica.",
+    "description": "Message shown by the extension UI."
+  },
+  "popupReloadToApply": {
+    "message": "Recarga esta página para aplicar los cambios",
+    "description": "Message shown by the extension UI."
+  },
+  "popupReloadFailed": {
+    "message": "No se pudo recargar la página",
+    "description": "Message shown by the extension UI."
+  },
+  "popupSettingsUnavailable": {
+    "message": "Ajustes no disponibles",
+    "description": "Message shown by the extension UI."
+  },
+  "popupExtensionUnavailable": {
+    "message": "Extensión no disponible",
+    "description": "Message shown by the extension UI."
+  },
+  "valueTextPercent": {
+    "message": "$DESCRIPTION$, $PERCENT$ por ciento",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "description": {
+        "content": "$1"
+      },
+      "percent": {
+        "content": "$2"
+      }
+    }
+  },
+  "badgeOn": {
+    "message": "Darkr — activado en este sitio",
+    "description": "Message shown by the extension UI."
+  },
+  "badgeOffSite": {
+    "message": "Darkr — desactivado en este sitio",
+    "description": "Message shown by the extension UI."
+  },
+  "badgePaused": {
+    "message": "Darkr — en pausa en todas partes",
+    "description": "Message shown by the extension UI."
+  },
+  "badgeUnavailable": {
+    "message": "Darkr — no disponible en esta página",
+    "description": "Message shown by the extension UI."
+  },
+  "optNeverTheme": {
+    "message": "No tematizar nunca",
+    "description": "Message shown by the extension UI."
+  },
+  "optAutomatic": {
+    "message": "Automático",
+    "description": "Message shown by the extension UI."
+  },
+  "optAlways": {
+    "message": "Siempre",
+    "description": "Message shown by the extension UI."
+  },
+  "optNever": {
+    "message": "Nunca",
+    "description": "Message shown by the extension UI."
+  },
+  "optRemove": {
+    "message": "Quitar",
+    "description": "Message shown by the extension UI."
+  },
+  "optOverNativeDark": {
+    "message": "sobre su modo oscuro",
+    "description": "Message shown by the extension UI."
+  },
+  "optNativeDarkKept": {
+    "message": "modo oscuro propio conservado",
+    "description": "Message shown by the extension UI."
+  },
+  "optIncludeSubdomains": {
+    "message": "Incluir subdominios",
+    "description": "Message shown by the extension UI."
+  },
+  "optSubdomainsUnavailable": {
+    "message": "No disponible para dominios compartidos o de nivel superior",
+    "description": "Message shown by the extension UI."
+  },
+  "optExtensionEnabled": {
+    "message": "Extensión activada",
+    "description": "Message shown by the extension UI."
+  },
+  "optExtensionPaused": {
+    "message": "Extensión en pausa",
+    "description": "Message shown by the extension UI."
+  },
+  "optSaveError": {
+    "message": "No se pudieron guardar los ajustes",
+    "description": "Message shown by the extension UI."
+  },
+  "optExtensionUnavailable": {
+    "message": "Extensión no disponible",
+    "description": "Message shown by the extension UI."
+  },
+  "optNoRules": {
+    "message": "Aún no hay reglas de sitio.",
+    "description": "Message shown by the extension UI."
+  },
+  "optNoMatch": {
+    "message": "Ninguna regla coincide.",
+    "description": "Message shown by the extension UI."
+  },
+  "optDefaultsRestored": {
+    "message": "Apariencia predeterminada restaurada.",
+    "description": "Message shown by the extension UI."
+  },
+  "optEnterHost": {
+    "message": "Introduce un nombre de host como example.com.",
+    "description": "Message shown by the extension UI."
+  },
+  "optNoPorts": {
+    "message": "Las reglas solo coinciden con nombres de host; quita el número de puerto.",
+    "description": "Message shown by the extension UI."
+  },
+  "optExported": {
+    "message": "Ajustes exportados.",
+    "description": "Message shown by the extension UI."
+  },
+  "optBadFile": {
+    "message": "Ese archivo no es una exportación de ajustes de Darkr. No se ha cambiado nada.",
+    "description": "Message shown by the extension UI."
+  },
+  "optImported": {
+    "message": "Ajustes importados.",
+    "description": "Message shown by the extension UI."
+  },
+  "optModeDarkLabel": {
+    "message": "Oscuro",
+    "description": "Message shown by the extension UI."
+  },
+  "optModeSepiaLabel": {
+    "message": "Sepia",
+    "description": "Message shown by the extension UI."
+  },
+  "optModeGrayLabel": {
+    "message": "Escala de grises",
+    "description": "Message shown by the extension UI."
+  },
+  "optModeWarmLabel": {
+    "message": "Luz cálida",
+    "description": "Message shown by the extension UI."
+  },
+  "optContrastSuffix": {
+    "message": "contraste $LEVEL$",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "level": {
+        "content": "$1"
+      }
+    }
+  },
+  "optIntensity": {
+    "message": "intensidad del $PERCENT$ %",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "optPolicyFor": {
+    "message": "Política para $HOST$",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "optRemoveRuleFor": {
+    "message": "Quitar la regla de sitio de $HOST$",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "optRemovedOne": {
+    "message": "Se quitó 1 regla de sitio.",
+    "description": "Message shown by the extension UI."
+  },
+  "optRemovedMany": {
+    "message": "Se quitaron $COUNT$ reglas de sitio.",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optInvalidHost": {
+    "message": "«$HOST$» no es un nombre de host válido.",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "optImportedOne": {
+    "message": "Ajustes importados con 1 regla de sitio.",
+    "description": "Message shown by the extension UI."
+  },
+  "optImportedMany": {
+    "message": "Ajustes importados con $COUNT$ reglas de sitio.",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optLocalSettings": {
+    "message": "Darkr $VERSION$ · Ajustes locales",
+    "description": "Message shown by the extension UI.",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeStepPin": {
+    "message": "<b>Fija el icono.</b> Abre el menú con forma de pieza de puzle de la barra de herramientas y fija Darkr para tener el interruptor a un clic.",
+    "description": "Text with simple <b> (bold) and <k> (keyboard key) markup."
+  },
+  "welcomeStepOpenTabs": {
+    "message": "<b>Pestañas ya abiertas.</b> Darkr se carga en las pestañas abiertas al instalarse. Si alguna sigue sin cambiar, recárgala.",
+    "description": "Text with simple <b> (bold) and <k> (keyboard key) markup."
+  },
+  "welcomeStepSwitch": {
+    "message": "<b>Usa el interruptor.</b> La ventana activa o desactiva Darkr en el sitio donde estás y cambia la apariencia de este sitio o de todos.",
+    "description": "Text with simple <b> (bold) and <k> (keyboard key) markup."
+  },
+  "welcomeStepShortcuts": {
+    "message": "<b>Atajos.</b> <k>Alt</k>+<k>Shift</k>+<k>D</k> activa o desactiva el sitio actual y <k>Alt</k>+<k>Shift</k>+<k>P</k> pausa en todas partes. Puedes cambiarlos en la página de atajos de extensiones de tu navegador.",
+    "description": "Text with simple <b> (bold) and <k> (keyboard key) markup."
+  },
+  "optionsDomainsMatched": {
+    "message": "Los dominios coinciden de forma exacta. Un ajuste para <b>example.com</b> no se aplica automáticamente a <b>docs.example.com</b> salvo que marques <b>Incluir subdominios</b> en esa regla. El alias <b>www.</b> se trata como el mismo sitio cuando queda un nombre de host válido.",
+    "description": "Text with simple <b> (bold) and <k> (keyboard key) markup."
+  },
+  "optionsExampleCom": {
+    "message": "example.com",
+    "description": "Placeholder example hostname in the add-site field."
+  }
+}

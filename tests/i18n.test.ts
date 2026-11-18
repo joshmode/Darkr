@@ -124,3 +124,30 @@ describe("localizeDocument", () => {
     document.body.innerHTML = "";
   });
 });
+
+describe("translated catalogues", () => {
+  const locales = readdirSync(join(src, "_locales")).filter((name) => name !== "en");
+
+  it("ships at least Spanish and French", () => {
+    expect(locales).toEqual(expect.arrayContaining(["es", "fr"]));
+  });
+
+  for (const locale of locales) {
+    it(`${locale} has every key, the same placeholders and the same markup as English`, () => {
+      const translated = JSON.parse(
+        readFileSync(join(src, "_locales", locale, "messages.json"), "utf8"),
+      ) as typeof messages;
+      expect(Object.keys(translated).sort()).toEqual(Object.keys(messages).sort());
+      for (const [key, english] of Object.entries(messages)) {
+        const other = translated[key];
+        expect(other?.message, `${locale}: ${key}`).toBeTruthy();
+        expect(Object.keys(other?.placeholders ?? {}).sort(), `${locale}: ${key}`).toEqual(
+          Object.keys(english.placeholders ?? {}).sort(),
+        );
+        const tokens = (text: string) =>
+          [...text.matchAll(/\$[A-Za-z0-9_@]+\$|<\/?[bk]>/g)].map((m) => m[0].toLowerCase()).sort();
+        expect(tokens(other?.message ?? ""), `${locale}: ${key}`).toEqual(tokens(english.message));
+      }
+    });
+  }
+});
